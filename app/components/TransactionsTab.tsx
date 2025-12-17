@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
+import { useAccounts } from "../hooks/useAccounts";
 
 const DEFAULT_DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
 const DEFAULT_ACCOUNT_ID = "a2e100cb-ac0a-4a31-a21f-9e8f803d042c";
@@ -39,6 +40,7 @@ interface TransactionsResponse {
 }
 
 export function TransactionsTab() {
+  const { accounts, loading: accountsLoading } = useAccounts();
   const [domainId, setDomainId] = useState(DEFAULT_DOMAIN_ID);
   const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
   const [ledgerId, setLedgerId] = useState(DEFAULT_LEDGER_ID);
@@ -47,6 +49,18 @@ export function TransactionsTab() {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<TransactionsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Get specific transaction state
+  const [transactionId, setTransactionId] = useState("");
+  const [getTransactionDomainId, setGetTransactionDomainId] = useState(
+    DEFAULT_DOMAIN_ID
+  );
+  const [getTransactionLoading, setGetTransactionLoading] = useState(false);
+  const [getTransactionResponse, setGetTransactionResponse] =
+    useState<unknown>(null);
+  const [getTransactionError, setGetTransactionError] = useState<string | null>(
+    null
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,6 +94,40 @@ export function TransactionsTab() {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGetTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGetTransactionLoading(true);
+    setGetTransactionError(null);
+    setGetTransactionResponse(null);
+
+    try {
+      const res = await fetch("/api/transactions/get", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          domainId: getTransactionDomainId,
+          transactionId,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to get transaction");
+      }
+
+      const result = await res.json();
+      setGetTransactionResponse(result);
+    } catch (err) {
+      setGetTransactionError(
+        err instanceof Error ? err.message : "An error occurred"
+      );
+    } finally {
+      setGetTransactionLoading(false);
     }
   };
 
@@ -123,14 +171,24 @@ export function TransactionsTab() {
               >
                 Account ID (Optional)
               </label>
-              <input
-                type="text"
+              <select
                 id="accountId"
                 value={accountId}
                 onChange={(e) => setAccountId(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                placeholder="Enter account ID"
-              />
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
+                disabled={accountsLoading}
+              >
+                <option value="">None</option>
+                {accountsLoading ? (
+                  <option>Loading accounts...</option>
+                ) : (
+                  accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.alias} ({account.id})
+                    </option>
+                  ))
+                )}
+              </select>
             </div>
 
             <div>
@@ -423,6 +481,117 @@ export function TransactionsTab() {
       {response && (
         <div>
           <JsonViewer data={response} title="Full Transactions Response" />
+        </div>
+      )}
+
+      {/* Get Specific Transaction Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          Get Transaction
+        </h2>
+        <p className="text-sm text-gray-600 mb-6">
+          Retrieve a specific transaction by its ID to view its details.
+        </p>
+        <form onSubmit={handleGetTransaction} className="space-y-4">
+          <div>
+            <label
+              htmlFor="getTransactionDomainId"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Domain ID
+            </label>
+            <input
+              type="text"
+              id="getTransactionDomainId"
+              value={getTransactionDomainId}
+              onChange={(e) => setGetTransactionDomainId(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              placeholder="Enter domain ID"
+              required
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="transactionId"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Transaction ID
+            </label>
+            <input
+              type="text"
+              id="transactionId"
+              value={transactionId}
+              onChange={(e) => setTransactionId(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              placeholder="Enter transaction ID"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={getTransactionLoading}
+            className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition-colors shadow-sm"
+          >
+            {getTransactionLoading ? (
+              <span className="flex items-center justify-center">
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Loading...
+              </span>
+            ) : (
+              "Get Transaction"
+            )}
+          </button>
+        </form>
+      </div>
+
+      {getTransactionError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <svg
+              className="w-5 h-5 text-red-600 mr-2"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <p className="text-sm text-red-800 font-medium">
+              Error: {getTransactionError}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {getTransactionResponse !== null && (
+        <div>
+          <JsonViewer
+            data={getTransactionResponse}
+            title="Transaction Details"
+          />
         </div>
       )}
     </div>

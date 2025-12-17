@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
+import { useAccounts } from "../hooks/useAccounts";
 
 const DEFAULT_DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
 const DEFAULT_ACCOUNT_ID = "a2e100cb-ac0a-4a31-a21f-9e8f803d042c";
 const DEFAULT_DESTINATION_ADDRESS = "rf4CHK31ruoevVC7RNVWqXAuE1yhzVjq6H";
 
 export function MPTPaymentTab() {
+  const { accounts, loading: accountsLoading } = useAccounts();
   const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
   const [destinationAddress, setDestinationAddress] = useState(
     DEFAULT_DESTINATION_ADDRESS
@@ -77,15 +79,24 @@ export function MPTPaymentTab() {
             >
               Account ID
             </label>
-            <input
-              type="text"
+            <select
               id="accountId"
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              placeholder="Enter account ID"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
               required
-            />
+              disabled={accountsLoading}
+            >
+              {accountsLoading ? (
+                <option>Loading accounts...</option>
+              ) : (
+                accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.alias} ({account.id})
+                  </option>
+                ))
+              )}
+            </select>
           </div>
 
           <div>

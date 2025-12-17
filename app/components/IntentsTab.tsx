@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
+import { useAccounts } from "../hooks/useAccounts";
 
 const DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
 const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
 const DEFAULT_ACCOUNT_ID = "a2e100cb-ac0a-4a31-a21f-9e8f803d042c";
 
 export function IntentsTab() {
+  const { accounts, loading: accountsLoading } = useAccounts();
   const [issuanceId, setIssuanceId] = useState("");
   const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
   const [loading, setLoading] = useState(false);
@@ -123,15 +125,24 @@ export function IntentsTab() {
             >
               Account ID
             </label>
-            <input
-              type="text"
+            <select
               id="accountId"
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              placeholder="Enter Account ID (e.g., a2e100cb-ac0a-4a31-a21f-9e8f803d042c)"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
               required
-            />
+              disabled={accountsLoading}
+            >
+              {accountsLoading ? (
+                <option>Loading accounts...</option>
+              ) : (
+                accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.alias} ({account.id})
+                  </option>
+                ))
+              )}
+            </select>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
