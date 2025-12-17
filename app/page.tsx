@@ -5,6 +5,7 @@ import { RequestsTab } from "./components/RequestsTab";
 import { IntentsTab } from "./components/IntentsTab";
 import { BalancesTab } from "./components/BalancesTab";
 import { TransfersTab } from "./components/TransfersTab";
+import { TickersTab } from "./components/TickersTab";
 
 type Tab =
   | "requests"
@@ -70,11 +71,7 @@ export default function Home() {
             {activeTab === "requests" && <RequestsTab />}
             {activeTab === "intents" && <IntentsTab />}
             {activeTab === "transactions" && <TransfersTab />}
-            {activeTab === "tickers" && (
-              <div className="text-center py-12 text-gray-500">
-                <p className="text-lg">Tickers tab - Coming soon</p>
-              </div>
-            )}
+            {activeTab === "tickers" && <TickersTab />}
             {activeTab === "balances" && <BalancesTab />}
             {activeTab === "mpt-authorize" && (
               <div className="text-center py-12 text-gray-500">
@@ -92,4 +89,3 @@ export default function Home() {
     </div>
   );
 }
-

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 
 const DEFAULT_DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
+const DEFAULT_ACCOUNT_ID = "a2e100cb-ac0a-4a31-a21f-9e8f803d042c";
 
 interface TransferItem {
   id: string;
@@ -40,6 +41,17 @@ export function TransfersTab() {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<TransfersResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Release transfers state
+  const [selectedTransferIds, setSelectedTransferIds] = useState<string[]>([]);
+  const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
+  const [releaseLoading, setReleaseLoading] = useState(false);
+  const [releaseResponse, setReleaseResponse] = useState<{
+    request: unknown;
+    response: unknown;
+  } | null>(null);
+  const [releaseError, setReleaseError] = useState<string | null>(null);
+  const [showRequestModal, setShowRequestModal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +93,52 @@ export function TransfersTab() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
+
+  const handleTransferSelect = (transferId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedTransferIds([...selectedTransferIds, transferId]);
+    } else {
+      setSelectedTransferIds(
+        selectedTransferIds.filter((id) => id !== transferId)
+      );
+    }
+  };
+
+  const handleReleaseTransfers = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setReleaseLoading(true);
+    setReleaseError(null);
+    setReleaseResponse(null);
+
+    try {
+      const res = await fetch("/api/intents/release-transfers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          accountId,
+          transferIds: selectedTransferIds,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to release transfers");
+      }
+
+      const result = await res.json();
+      setReleaseResponse(result);
+      setShowRequestModal(true);
+    } catch (err) {
+      setReleaseError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setReleaseLoading(false);
+    }
+  };
+
+  const quarantinedTransfers =
+    response?.items.filter((item) => item.quarantined) || [];
 
   return (
     <div className="space-y-6">
@@ -296,10 +354,14 @@ export function TransfersTab() {
                         {item.senders.map((sender, idx) => (
                           <div key={idx} className="font-mono text-xs">
                             <p className="text-gray-600">
-                              {sender.accountId.substring(0, 8)}...
+                              {sender.accountId
+                                ? `${sender.accountId.substring(0, 8)}...`
+                                : "-"}
                             </p>
                             <p className="text-gray-500">
-                              {formatAmount(sender.amount)}
+                              {sender.amount
+                                ? formatAmount(sender.amount)
+                                : "-"}
                             </p>
                           </div>
                         ))}
@@ -309,10 +371,14 @@ export function TransfersTab() {
                       {item.recipient ? (
                         <div className="text-sm text-gray-900">
                           <p className="font-mono text-xs text-gray-600">
-                            {item.recipient.accountId.substring(0, 8)}...
+                            {item.recipient.accountId
+                              ? `${item.recipient.accountId.substring(0, 8)}...`
+                              : "-"}
                           </p>
                           <p className="text-gray-500">
-                            {formatAmount(item.recipient.amount)}
+                            {item.recipient.amount
+                              ? formatAmount(item.recipient.amount)
+                              : "-"}
                           </p>
                         </div>
                       ) : (
@@ -343,6 +409,190 @@ export function TransfersTab() {
       {response && (
         <div>
           <JsonViewer data={response} title="Full Transfers Response" />
+        </div>
+      )}
+
+      {/* Release Quarantined Transfers Section */}
+      {response && quarantinedTransfers.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Release Quarantined Transfers
+          </h2>
+          <p className="text-sm text-gray-600 mb-6">
+            Select quarantined transfers to release and create a release intent.
+          </p>
+          <form onSubmit={handleReleaseTransfers} className="space-y-4">
+            <div>
+              <label
+                htmlFor="accountId"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Account ID
+              </label>
+              <input
+                type="text"
+                id="accountId"
+                value={accountId}
+                onChange={(e) => setAccountId(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                placeholder="Enter account ID"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Quarantined Transfers ({selectedTransferIds.length}{" "}
+                selected)
+              </label>
+              <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto">
+                {quarantinedTransfers.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    No quarantined transfers found.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {quarantinedTransfers.map((transfer) => (
+                      <label
+                        key={transfer.id}
+                        className="flex items-start p-2 hover:bg-gray-50 rounded cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedTransferIds.includes(transfer.id)}
+                          onChange={(e) =>
+                            handleTransferSelect(transfer.id, e.target.checked)
+                          }
+                          className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <div className="ml-3 flex-1">
+                          <p className="text-sm font-mono text-gray-900">
+                            {transfer.id}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Ticker: {transfer.tickerId.substring(0, 16)}... | Value:{" "}
+                            {formatAmount(transfer.value)} | Kind: {transfer.kind}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={releaseLoading || selectedTransferIds.length === 0}
+              className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition-colors shadow-sm"
+            >
+              {releaseLoading ? (
+                <span className="flex items-center justify-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Releasing...
+                </span>
+              ) : (
+                `Release ${selectedTransferIds.length} Transfer${selectedTransferIds.length !== 1 ? "s" : ""}`
+              )}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {releaseError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <svg
+              className="w-5 h-5 text-red-600 mr-2"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <p className="text-sm text-red-800 font-medium">
+              Error: {releaseError}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Request Modal */}
+      {showRequestModal && releaseResponse && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowRequestModal(false)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Release Intent Request
+              </h2>
+              <button
+                onClick={() => setShowRequestModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 overflow-auto flex-1">
+              <JsonViewer data={releaseResponse.request} title="Request" />
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+              <button
+                onClick={() => setShowRequestModal(false)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {releaseResponse && (
+        <div>
+          <JsonViewer
+            data={releaseResponse.response}
+            title="Release Intent Response"
+          />
         </div>
       )}
     </div>
