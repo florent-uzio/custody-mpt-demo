@@ -1,0 +1,10 @@
+var R=require("../../../../chunks/[turbopack]_runtime.js")("server/app/api/tickers/get/route.js")
+R.c("server/chunks/node_modules_next_295b319b._.js")
+R.c("server/chunks/node_modules_custody_dist_7b6fc55c._.js")
+R.c("server/chunks/node_modules_axios_lib_965bc11c._.js")
+R.c("server/chunks/node_modules_mime-db_f53cdd2e._.js")
+R.c("server/chunks/node_modules_79171c1f._.js")
+R.c("server/chunks/[root-of-the-server]__f3ba0abe._.js")
+R.c("server/chunks/_next-internal_server_app_api_tickers_get_route_actions_e675060c.js")
+R.m("[project]/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/app/api/tickers/get/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)")
+module.exports=R.m("[project]/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/app/api/tickers/get/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)").exports
