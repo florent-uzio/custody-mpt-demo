@@ -1,8 +1,0 @@
-{
-  "/api/accounts/balances/route": "app/api/accounts/balances/route.js",
-  "/api/intents/get/route": "app/api/intents/get/route.js",
-  "/api/intents/propose/route": "app/api/intents/propose/route.js",
-  "/api/requests/state/route": "app/api/requests/state/route.js",
-  "/api/tickers/get/route": "app/api/tickers/get/route.js",
-  "/page": "app/page.js"
-}
