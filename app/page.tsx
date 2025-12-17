@@ -6,6 +6,7 @@ import { IntentsTab } from "./components/IntentsTab";
 import { BalancesTab } from "./components/BalancesTab";
 import { TransfersTab } from "./components/TransfersTab";
 import { TickersTab } from "./components/TickersTab";
+import { MPTPaymentTab } from "./components/MPTPaymentTab";
 
 type Tab =
   | "requests"
@@ -13,7 +14,7 @@ type Tab =
   | "transactions"
   | "tickers"
   | "balances"
-  | "mpt-authorize"
+  // | "mpt-authorize"
   | "mpt-payment";
 
 export default function Home() {
@@ -25,7 +26,7 @@ export default function Home() {
     { id: "transactions", label: "Transactions", icon: "💸" },
     { id: "tickers", label: "Tickers", icon: "📊" },
     { id: "balances", label: "Balances", icon: "💰" },
-    { id: "mpt-authorize", label: "MPT Authorize", icon: "✅" },
+    // { id: "mpt-authorize", label: "MPT Authorize", icon: "✅" },
     { id: "mpt-payment", label: "MPT Payment", icon: "💳" },
   ];
 
@@ -73,16 +74,12 @@ export default function Home() {
             {activeTab === "transactions" && <TransfersTab />}
             {activeTab === "tickers" && <TickersTab />}
             {activeTab === "balances" && <BalancesTab />}
-            {activeTab === "mpt-authorize" && (
+            {/* {activeTab === "mpt-authorize" && (
               <div className="text-center py-12 text-gray-500">
                 <p className="text-lg">MPT Authorize tab - Coming soon</p>
               </div>
-            )}
-            {activeTab === "mpt-payment" && (
-              <div className="text-center py-12 text-gray-500">
-                <p className="text-lg">MPT Payment tab - Coming soon</p>
-              </div>
-            )}
+            )} */}
+            {activeTab === "mpt-payment" && <MPTPaymentTab />}
           </div>
         </div>
       </div>
