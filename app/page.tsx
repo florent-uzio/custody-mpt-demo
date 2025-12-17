@@ -7,10 +7,12 @@ import { BalancesTab } from "./components/BalancesTab";
 import { TransfersTab } from "./components/TransfersTab";
 import { TickersTab } from "./components/TickersTab";
 import { MPTPaymentTab } from "./components/MPTPaymentTab";
+import { TransactionsTab } from "./components/TransactionsTab";
 
 type Tab =
   | "requests"
   | "intents"
+  | "transfers"
   | "transactions"
   | "tickers"
   | "balances"
@@ -23,7 +25,8 @@ export default function Home() {
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "requests", label: "Requests", icon: "📋" },
     { id: "intents", label: "Intents", icon: "🎯" },
-    { id: "transactions", label: "Transactions", icon: "💸" },
+    { id: "transfers", label: "Transfers", icon: "💸" },
+    { id: "transactions", label: "Transactions", icon: "📝" },
     { id: "tickers", label: "Tickers", icon: "📊" },
     { id: "balances", label: "Balances", icon: "💰" },
     // { id: "mpt-authorize", label: "MPT Authorize", icon: "✅" },
@@ -71,7 +74,8 @@ export default function Home() {
           <div className="p-6">
             {activeTab === "requests" && <RequestsTab />}
             {activeTab === "intents" && <IntentsTab />}
-            {activeTab === "transactions" && <TransfersTab />}
+            {activeTab === "transfers" && <TransfersTab />}
+            {activeTab === "transactions" && <TransactionsTab />}
             {activeTab === "tickers" && <TickersTab />}
             {activeTab === "balances" && <BalancesTab />}
             {/* {activeTab === "mpt-authorize" && (
