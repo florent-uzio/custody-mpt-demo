@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RequestsTab } from "./components/RequestsTab";
 import { IntentsTab } from "./components/IntentsTab";
 import { BalancesTab } from "./components/BalancesTab";
@@ -21,8 +21,30 @@ type Tab =
   | "mpt-payment"
   | "submitted-intents";
 
+const NOTES_STORAGE_KEY = "mpt_demo_notes";
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("requests");
+  const [notes, setNotes] = useState<string>("");
+
+  useEffect(() => {
+    // Load notes from localStorage
+    if (typeof window !== "undefined") {
+      const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
+      if (savedNotes) {
+        setNotes(savedNotes);
+      }
+    }
+  }, []);
+
+  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newNotes = e.target.value;
+    setNotes(newNotes);
+    // Save to localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem(NOTES_STORAGE_KEY, newNotes);
+    }
+  };
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "requests", label: "Requests", icon: "📋" },
@@ -46,6 +68,28 @@ export default function Home() {
           </h1>
           <p className="text-gray-600">
             Showcase MPT operations with Ripple Custody system
+          </p>
+        </div>
+
+        {/* Notes Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+          <label
+            htmlFor="notes"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Notes{" "}
+            <span className="text-gray-400 font-normal">(MPT IDs, etc.)</span>
+          </label>
+          <textarea
+            id="notes"
+            value={notes}
+            onChange={handleNotesChange}
+            rows={4}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-y font-mono text-sm"
+            placeholder="Save your MPT IDs, notes, or any other information here...&#10;&#10;Example:&#10;MPT Issuance ID: 00CA8BD9F2582AF39B51725D510C5401ED4495ECFB250591"
+          />
+          <p className="mt-2 text-xs text-gray-500">
+            Your notes are automatically saved and will persist across sessions.
           </p>
         </div>
 
