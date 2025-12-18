@@ -5,7 +5,7 @@ import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 
 const DEFAULT_DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
-const DEFAULT_ACCOUNT_ID = "a2e100cb-ac0a-4a31-a21f-9e8f803d042c";
+const DEFAULT_ACCOUNT_ID = "3c339cbb-cb57-4a6c-aa54-297b4e09fc8c";
 const DEFAULT_LEDGER_ID = "xrpl-testnet-august-2024";
 
 interface TransactionItem {
@@ -52,9 +52,8 @@ export function TransactionsTab() {
 
   // Get specific transaction state
   const [transactionId, setTransactionId] = useState("");
-  const [getTransactionDomainId, setGetTransactionDomainId] = useState(
-    DEFAULT_DOMAIN_ID
-  );
+  const [getTransactionDomainId, setGetTransactionDomainId] =
+    useState(DEFAULT_DOMAIN_ID);
   const [getTransactionLoading, setGetTransactionLoading] = useState(false);
   const [getTransactionResponse, setGetTransactionResponse] =
     useState<unknown>(null);
@@ -597,4 +596,3 @@ export function TransactionsTab() {
     </div>
   );
 }
-

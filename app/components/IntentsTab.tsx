@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
+import { saveSubmittedIntent } from "../utils/intentStorage";
 
 const DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
 const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
-const DEFAULT_ACCOUNT_ID = "a2e100cb-ac0a-4a31-a21f-9e8f803d042c";
+const DEFAULT_ACCOUNT_ID = "3c339cbb-cb57-4a6c-aa54-297b4e09fc8c";
 
 export function IntentsTab() {
   const { accounts, loading: accountsLoading } = useAccounts();
@@ -47,6 +48,16 @@ export function IntentsTab() {
 
       const result = await res.json();
       setResponse(result);
+
+      // Save to localStorage if we have a requestId
+      // The response from custody.intents.propose typically has an 'id' field
+      const requestId = result?.id || result?.requestId || result?.data?.id;
+      if (requestId) {
+        saveSubmittedIntent({
+          type: "MPTAuthorize",
+          requestId: requestId,
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

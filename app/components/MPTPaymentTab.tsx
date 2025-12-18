@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
+import { saveSubmittedIntent } from "../utils/intentStorage";
 
 const DEFAULT_DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
-const DEFAULT_ACCOUNT_ID = "a2e100cb-ac0a-4a31-a21f-9e8f803d042c";
+const DEFAULT_ACCOUNT_ID = "3c339cbb-cb57-4a6c-aa54-297b4e09fc8c";
 const DEFAULT_DESTINATION_ADDRESS = "rf4CHK31ruoevVC7RNVWqXAuE1yhzVjq6H";
 
 export function MPTPaymentTab() {
@@ -54,6 +55,17 @@ export function MPTPaymentTab() {
       const result = await res.json();
       setResponse(result);
       setShowRequestModal(true);
+      
+      // Save to localStorage if we have a requestId
+      // The payment API returns { request: ..., response: result }
+      const responseData = result?.response || result;
+      const requestId = responseData?.id || responseData?.requestId || responseData?.data?.id;
+      if (requestId) {
+        saveSubmittedIntent({
+          type: "Payment",
+          requestId: requestId,
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

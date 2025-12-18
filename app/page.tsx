@@ -8,6 +8,7 @@ import { TransfersTab } from "./components/TransfersTab";
 import { TickersTab } from "./components/TickersTab";
 import { MPTPaymentTab } from "./components/MPTPaymentTab";
 import { TransactionsTab } from "./components/TransactionsTab";
+import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
 
 type Tab =
   | "requests"
@@ -17,7 +18,8 @@ type Tab =
   | "tickers"
   | "balances"
   // | "mpt-authorize"
-  | "mpt-payment";
+  | "mpt-payment"
+  | "submitted-intents";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("requests");
@@ -31,6 +33,7 @@ export default function Home() {
     { id: "balances", label: "Balances", icon: "💰" },
     // { id: "mpt-authorize", label: "MPT Authorize", icon: "✅" },
     { id: "mpt-payment", label: "MPT Payment", icon: "💳" },
+    { id: "submitted-intents", label: "Submitted Intents", icon: "📜" },
   ];
 
   return (
@@ -84,6 +87,7 @@ export default function Home() {
               </div>
             )} */}
             {activeTab === "mpt-payment" && <MPTPaymentTab />}
+            {activeTab === "submitted-intents" && <SubmittedIntentsTab />}
           </div>
         </div>
       </div>
