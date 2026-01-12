@@ -55,4 +55,3 @@ export function useAccounts() {
 
   return { accounts, loading, error };
 }
-

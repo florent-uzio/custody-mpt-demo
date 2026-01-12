@@ -4,10 +4,10 @@ import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { saveSubmittedIntent } from "../utils/intentStorage";
+import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
 
 const DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
 const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
-const DEFAULT_ACCOUNT_ID = "3c339cbb-cb57-4a6c-aa54-297b4e09fc8c";
 
 export function IntentsTab() {
   const { accounts, loading: accountsLoading } = useAccounts();

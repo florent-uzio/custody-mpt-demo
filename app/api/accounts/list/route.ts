@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
     const result = await custody.accounts.list({
       domainId,
     });
+    console.log("result", { accounts: result.items });
 
     return NextResponse.json(result);
   } catch (error) {
@@ -45,12 +46,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to list accounts",
+          error instanceof Error ? error.message : "Failed to list accounts",
       },
       { status: 500 }
     );
   }
 }
-

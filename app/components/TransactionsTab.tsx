@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
+import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
 
 const DEFAULT_DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
-const DEFAULT_ACCOUNT_ID = "3c339cbb-cb57-4a6c-aa54-297b4e09fc8c";
 const DEFAULT_LEDGER_ID = "xrpl-testnet-august-2024";
 
 interface TransactionItem {
