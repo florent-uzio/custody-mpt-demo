@@ -7,6 +7,7 @@ import { BalancesTab } from "./components/BalancesTab";
 import { TransfersTab } from "./components/TransfersTab";
 import { TickersTab } from "./components/TickersTab";
 import { MPTPaymentTab } from "./components/MPTPaymentTab";
+import { MPTAuthorizeTab } from "./components/MPTAuthorizeTab";
 import { TransactionsTab } from "./components/TransactionsTab";
 import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
 import { DomainsTab } from "./components/DomainsTab";
@@ -23,6 +24,7 @@ type Tab =
   | "transactions"
   | "tickers"
   | "balances"
+  | "mpt-authorize"
   | "mpt-payment"
   | "submitted-intents";
 
@@ -57,13 +59,14 @@ export default function Home() {
     { id: "domains", label: "Domains", icon: "🌐", category: "General" },
     { id: "accounts", label: "Accounts", icon: "👤", category: "General" },
     { id: "requests", label: "Requests", icon: "📋", category: "Operations" },
-    { id: "intents", label: "Intents", icon: "🎯", category: "Operations" },
+    { id: "intents", label: "Get Intent", icon: "🎯", category: "Operations" },
     { id: "transfers", label: "Transfers", icon: "💸", category: "Operations" },
     { id: "transactions", label: "Transactions", icon: "📝", category: "Operations" },
+    { id: "submitted-intents", label: "Submitted Intents", icon: "📜", category: "Operations" },
     { id: "tickers", label: "Tickers", icon: "📊", category: "Data" },
     { id: "balances", label: "Balances", icon: "💰", category: "Data" },
-    { id: "mpt-payment", label: "MPT Payment", icon: "💳", category: "MPT" },
-    { id: "submitted-intents", label: "Submitted Intents", icon: "📜", category: "Operations" },
+    { id: "mpt-authorize", label: "MPT Authorize", icon: "✅", category: "XRPL" },
+    { id: "mpt-payment", label: "MPT Payment", icon: "💳", category: "XRPL" },
   ];
 
   const groupedTabs = tabs.reduce((acc, tab) => {
@@ -241,10 +244,11 @@ export default function Home() {
                 {activeTab === "intents" && <IntentsTab />}
                 {activeTab === "transfers" && <TransfersTab />}
                 {activeTab === "transactions" && <TransactionsTab />}
+                {activeTab === "submitted-intents" && <SubmittedIntentsTab />}
                 {activeTab === "tickers" && <TickersTab />}
                 {activeTab === "balances" && <BalancesTab />}
+                {activeTab === "mpt-authorize" && <MPTAuthorizeTab />}
                 {activeTab === "mpt-payment" && <MPTPaymentTab />}
-                {activeTab === "submitted-intents" && <SubmittedIntentsTab />}
               </div>
             </div>
           </main>
