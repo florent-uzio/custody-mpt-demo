@@ -4,8 +4,8 @@ import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
+import { useDefaultDomain } from "../contexts/DomainContext";
 
-const DEFAULT_DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
 const DEFAULT_LEDGER_ID = "xrpl-testnet-august-2024";
 
 interface TransactionItem {
@@ -41,7 +41,8 @@ interface TransactionsResponse {
 
 export function TransactionsTab() {
   const { accounts, loading: accountsLoading } = useAccounts();
-  const [domainId, setDomainId] = useState(DEFAULT_DOMAIN_ID);
+  const { defaultDomainId } = useDefaultDomain();
+  const [domainId, setDomainId] = useState(defaultDomainId);
   const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
   const [ledgerId, setLedgerId] = useState(DEFAULT_LEDGER_ID);
   const [sortBy, setSortBy] = useState<string>("registeredAt");
@@ -53,7 +54,7 @@ export function TransactionsTab() {
   // Get specific transaction state
   const [transactionId, setTransactionId] = useState("");
   const [getTransactionDomainId, setGetTransactionDomainId] =
-    useState(DEFAULT_DOMAIN_ID);
+    useState(defaultDomainId);
   const [getTransactionLoading, setGetTransactionLoading] = useState(false);
   const [getTransactionResponse, setGetTransactionResponse] =
     useState<unknown>(null);

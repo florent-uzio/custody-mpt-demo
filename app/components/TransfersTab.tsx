@@ -4,8 +4,7 @@ import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
-
-const DEFAULT_DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
+import { useDefaultDomain } from "../contexts/DomainContext";
 
 interface TransferItem {
   id: string;
@@ -37,7 +36,8 @@ interface TransfersResponse {
 
 export function TransfersTab() {
   const { accounts, loading: accountsLoading } = useAccounts();
-  const [domainId, setDomainId] = useState(DEFAULT_DOMAIN_ID);
+  const { defaultDomainId } = useDefaultDomain();
+  const [domainId, setDomainId] = useState(defaultDomainId);
   const [kind, setKind] = useState<string>("Transfer");
   const [quarantined, setQuarantined] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -145,9 +145,7 @@ export function TransfersTab() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Transfers
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Transfers</h2>
         <p className="text-sm text-gray-600 mb-6">
           View transfer transactions for a specific domain.
         </p>
@@ -481,8 +479,9 @@ export function TransfersTab() {
                             {transfer.id}
                           </p>
                           <p className="text-xs text-gray-500">
-                            Ticker: {transfer.tickerId.substring(0, 16)}... | Value:{" "}
-                            {formatAmount(transfer.value)} | Kind: {transfer.kind}
+                            Ticker: {transfer.tickerId.substring(0, 16)}... |
+                            Value: {formatAmount(transfer.value)} | Kind:{" "}
+                            {transfer.kind}
                           </p>
                         </div>
                       </label>
@@ -522,7 +521,9 @@ export function TransfersTab() {
                   Releasing...
                 </span>
               ) : (
-                `Release ${selectedTransferIds.length} Transfer${selectedTransferIds.length !== 1 ? "s" : ""}`
+                `Release ${selectedTransferIds.length} Transfer${
+                  selectedTransferIds.length !== 1 ? "s" : ""
+                }`
               )}
             </button>
           </form>
@@ -609,4 +610,3 @@ export function TransfersTab() {
     </div>
   );
 }
-
