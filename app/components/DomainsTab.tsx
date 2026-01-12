@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
+import { CopyButton } from "./CopyButton";
+import { useDefaultDomain } from "../contexts/DomainContext";
 
 interface DomainData {
   id: string;
@@ -24,6 +26,72 @@ interface DomainsResponse {
   count: number;
   currentStartingAfter?: string;
   nextStartingAfter?: string;
+}
+
+function DomainCard({ domain }: { domain: DomainItem }) {
+  const { setDefaultDomainId } = useDefaultDomain();
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+          Domain ID
+        </p>
+        <div className="flex items-center gap-1">
+          <p className="text-sm font-mono text-gray-900 break-all flex-1">
+            {domain.data.id}
+          </p>
+          <CopyButton text={domain.data.id} />
+        </div>
+      </div>
+
+      {domain.data.alias && (
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+            Alias
+          </p>
+          <p className="text-base font-semibold text-gray-900">
+            {domain.data.alias}
+          </p>
+        </div>
+      )}
+
+      {!domain.data.alias && (
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+            Alias
+          </p>
+          <p className="text-sm text-gray-400 italic">No alias set</p>
+        </div>
+      )}
+
+      {domain.data.lock && (
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+            Lock Status
+          </p>
+          <span
+            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+              domain.data.lock === "Unlocked"
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
+            {domain.data.lock}
+          </span>
+        </div>
+      )}
+
+      <div className="pt-2 border-t border-gray-100">
+        <button
+          onClick={() => setDefaultDomainId(domain.data.id)}
+          className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+        >
+          Set as default
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function DomainsTab() {
@@ -137,55 +205,7 @@ export function DomainsTab() {
                 key={domain.data.id}
                 className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
               >
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      Domain ID
-                    </p>
-                    <p className="text-sm font-mono text-gray-900 break-all">
-                      {domain.data.id}
-                    </p>
-                  </div>
-
-                  {domain.data.alias && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                        Alias
-                      </p>
-                      <p className="text-base font-semibold text-gray-900">
-                        {domain.data.alias}
-                      </p>
-                    </div>
-                  )}
-
-                  {!domain.data.alias && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                        Alias
-                      </p>
-                      <p className="text-sm text-gray-400 italic">
-                        No alias set
-                      </p>
-                    </div>
-                  )}
-
-                  {domain.data.lock && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                        Lock Status
-                      </p>
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          domain.data.lock === "Unlocked"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {domain.data.lock}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                <DomainCard domain={domain} />
               </div>
             ))}
           </div>

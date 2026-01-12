@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { QueryProvider } from "./providers/QueryProvider";
+import { DomainProvider } from "./contexts/DomainContext";
 
 export const metadata: Metadata = {
-  title: "Ripple Custody MPT Demo",
-  description: "Showcase MPT operations with Ripple Custody system",
+  title: "Ripple Custody",
+  description: "Ripple Custody Operations Dashboard",
 };
 
 export default function RootLayout({
@@ -13,8 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <QueryProvider>
+          <DomainProvider>{children}</DomainProvider>
+        </QueryProvider>
+      </body>
     </html>
   );
 }
-

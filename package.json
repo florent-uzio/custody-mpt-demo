@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.16",
     "@types/uuid": "^10.0.0",
     "custody": "github:florent-uzio/custody.js",
     "dayjs": "^1.11.19",

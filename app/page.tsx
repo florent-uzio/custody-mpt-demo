@@ -10,9 +10,13 @@ import { MPTPaymentTab } from "./components/MPTPaymentTab";
 import { TransactionsTab } from "./components/TransactionsTab";
 import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
 import { DomainsTab } from "./components/DomainsTab";
+import { AccountsTab } from "./components/AccountsTab";
+import { useDefaultDomain } from "./contexts/DomainContext";
+import { CopyButton } from "./components/CopyButton";
 
 type Tab =
   | "domains"
+  | "accounts"
   | "requests"
   | "intents"
   | "transfers"
@@ -28,6 +32,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("domains");
   const [notes, setNotes] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { defaultDomainId, setDefaultDomainId } = useDefaultDomain();
 
   useEffect(() => {
     // Load notes from localStorage
@@ -50,6 +55,7 @@ export default function Home() {
 
   const tabs: { id: Tab; label: string; icon: string; category?: string }[] = [
     { id: "domains", label: "Domains", icon: "🌐", category: "General" },
+    { id: "accounts", label: "Accounts", icon: "👤", category: "General" },
     { id: "requests", label: "Requests", icon: "📋", category: "Operations" },
     { id: "intents", label: "Intents", icon: "🎯", category: "Operations" },
     { id: "transfers", label: "Transfers", icon: "💸", category: "Operations" },
@@ -131,6 +137,30 @@ export default function Home() {
                 </div>
               ))}
             </nav>
+
+            {/* Default Domain ID Section */}
+            <div className="p-4 border-t border-gray-200">
+              <label
+                htmlFor="defaultDomainId"
+                className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Default Domain ID
+              </label>
+              <div className="flex items-center gap-1">
+                <input
+                  type="text"
+                  id="defaultDomainId"
+                  value={defaultDomainId}
+                  onChange={(e) => setDefaultDomainId(e.target.value)}
+                  className="flex-1 min-w-0 px-3 py-2 text-xs font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                  placeholder="Enter domain UUID"
+                />
+                {defaultDomainId && <CopyButton text={defaultDomainId} />}
+              </div>
+              <p className="mt-1.5 text-xs text-gray-400">
+                Used as default for API calls
+              </p>
+            </div>
           </div>
         </aside>
 
@@ -206,6 +236,7 @@ export default function Home() {
               {/* Tab Content */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 {activeTab === "domains" && <DomainsTab />}
+                {activeTab === "accounts" && <AccountsTab />}
                 {activeTab === "requests" && <RequestsTab />}
                 {activeTab === "intents" && <IntentsTab />}
                 {activeTab === "transfers" && <TransfersTab />}
