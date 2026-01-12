@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-
-const DEFAULT_DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
+import { useDefaultDomain } from "../contexts/DomainContext";
 
 export interface Account {
   id: string;
@@ -9,6 +8,7 @@ export interface Account {
 }
 
 export function useAccounts() {
+  const { defaultDomainId } = useDefaultDomain();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export function useAccounts() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            domainId: DEFAULT_DOMAIN_ID,
+            domainId: defaultDomainId,
           }),
         });
 

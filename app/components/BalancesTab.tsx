@@ -3,9 +3,7 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
-import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
-
-const DEFAULT_DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
+import { useDefaultDomain } from "../contexts/DomainContext";
 
 interface BalanceItem {
   accountReference: {
@@ -29,8 +27,9 @@ interface BalancesResponse {
 
 export function BalancesTab() {
   const { accounts, loading: accountsLoading } = useAccounts();
-  const [domainId, setDomainId] = useState(DEFAULT_DOMAIN_ID);
-  const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
+  const { defaultDomainId } = useDefaultDomain();
+  const [domainId, setDomainId] = useState(defaultDomainId);
+  const [accountId, setAccountId] = useState("");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<BalancesResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
