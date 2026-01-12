@@ -1,28 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { RippleCustody } from "custody";
+import { NextResponse } from "next/server";
+import { getCustodySDK } from "@/app/lib/custody";
 
-// Initialize RippleCustody SDK (server-side only)
-function getCustodySDK() {
-  const authUrl = process.env.AUTH_URL;
-  const apiUrl = process.env.API_URL;
-  const privateKey = process.env.PRIVATE_KEY || "";
-  const publicKey = process.env.PUBLIC_KEY || "";
-
-  if (!authUrl || !apiUrl) {
-    throw new Error(
-      "Missing required environment variables: AUTH_URL and API_URL"
-    );
-  }
-
-  return new RippleCustody({
-    authUrl,
-    apiUrl,
-    privateKey,
-    publicKey,
-  });
-}
-
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const custody = getCustodySDK();
     const result = await custody.domains.list();
@@ -33,12 +12,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to list domains",
+          error instanceof Error ? error.message : "Failed to list domains",
       },
       { status: 500 }
     );
   }
 }
-

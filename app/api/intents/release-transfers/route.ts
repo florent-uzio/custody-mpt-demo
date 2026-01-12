@@ -1,32 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { RippleCustody } from "custody";
+import { getCustodySDK } from "@/app/lib/custody";
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import type { Core_ProposeIntentBody } from "custody";
 
 const DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
 const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
-
-// Initialize RippleCustody SDK (server-side only)
-function getCustodySDK() {
-  const authUrl = process.env.AUTH_URL;
-  const apiUrl = process.env.API_URL;
-  const privateKey = process.env.PRIVATE_KEY || "";
-  const publicKey = process.env.PUBLIC_KEY || "";
-
-  if (!authUrl || !apiUrl) {
-    throw new Error(
-      "Missing required environment variables: AUTH_URL and API_URL"
-    );
-  }
-
-  return new RippleCustody({
-    authUrl,
-    apiUrl,
-    privateKey,
-    publicKey,
-  });
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,7 +19,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!transferIds || !Array.isArray(transferIds) || transferIds.length === 0) {
+    if (
+      !transferIds ||
+      !Array.isArray(transferIds) ||
+      transferIds.length === 0
+    ) {
       return NextResponse.json(
         { error: "transferIds array is required and must not be empty" },
         { status: 400 }
@@ -88,4 +71,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
