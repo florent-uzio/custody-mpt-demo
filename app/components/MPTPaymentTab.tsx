@@ -5,16 +5,12 @@ import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { saveSubmittedIntent } from "../utils/intentStorage";
 import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
-
-const DEFAULT_DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
-const DEFAULT_DESTINATION_ADDRESS = "rf4CHK31ruoevVC7RNVWqXAuE1yhzVjq6H";
+import { useDefaultDomain } from "../contexts/DomainContext";
 
 export function MPTPaymentTab() {
   const { accounts, loading: accountsLoading } = useAccounts();
   const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
-  const [destinationAddress, setDestinationAddress] = useState(
-    DEFAULT_DESTINATION_ADDRESS
-  );
+  const [destinationAddress, setDestinationAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [issuanceId, setIssuanceId] = useState("");
   const [description, setDescription] = useState("MPT Payment");
@@ -25,6 +21,7 @@ export function MPTPaymentTab() {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const { defaultDomainId } = useDefaultDomain();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +38,7 @@ export function MPTPaymentTab() {
         body: JSON.stringify({
           accountId,
           destinationAddress,
+          domainId: defaultDomainId,
           amount,
           issuanceId,
           description,
@@ -55,11 +53,12 @@ export function MPTPaymentTab() {
       const result = await res.json();
       setResponse(result);
       setShowRequestModal(true);
-      
+
       // Save to localStorage if we have a requestId
       // The payment API returns { request: ..., response: result }
       const responseData = result?.response || result;
-      const requestId = responseData?.id || responseData?.requestId || responseData?.data?.id;
+      const requestId =
+        responseData?.id || responseData?.requestId || responseData?.data?.id;
       if (requestId) {
         saveSubmittedIntent({
           type: "Payment",
@@ -198,7 +197,7 @@ export function MPTPaymentTab() {
               <div>
                 <span className="text-gray-600">Domain ID:</span>
                 <span className="ml-2 font-mono text-xs text-gray-800">
-                  {DEFAULT_DOMAIN_ID}
+                  {defaultDomainId}
                 </span>
               </div>
               <div>
@@ -334,4 +333,3 @@ export function MPTPaymentTab() {
     </div>
   );
 }
-

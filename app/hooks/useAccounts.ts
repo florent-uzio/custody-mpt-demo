@@ -14,6 +14,13 @@ export function useAccounts() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Don't fetch if no domain ID is set
+    if (!defaultDomainId) {
+      setAccounts([]);
+      setLoading(false);
+      return;
+    }
+
     const fetchAccounts = async () => {
       setLoading(true);
       setError(null);
@@ -51,7 +58,7 @@ export function useAccounts() {
     };
 
     fetchAccounts();
-  }, []);
+  }, [defaultDomainId]);
 
   return { accounts, loading, error };
 }

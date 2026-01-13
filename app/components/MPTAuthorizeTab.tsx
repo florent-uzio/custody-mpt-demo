@@ -5,11 +5,12 @@ import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { saveSubmittedIntent } from "../utils/intentStorage";
 import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
+import { useDefaultDomain } from "../contexts/DomainContext";
 
-const DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
 const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
 
 export function MPTAuthorizeTab() {
+  const { defaultDomainId } = useDefaultDomain();
   const { accounts, loading: accountsLoading } = useAccounts();
   const [issuanceId, setIssuanceId] = useState("");
   const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
@@ -126,7 +127,7 @@ export function MPTAuthorizeTab() {
               <div>
                 <span className="text-gray-600">Domain ID:</span>
                 <span className="ml-2 font-mono text-xs text-gray-800">
-                  {DOMAIN_ID}
+                  {defaultDomainId || "Not set"}
                 </span>
               </div>
               <div>
