@@ -8,6 +8,7 @@ import { TransfersTab } from "./components/TransfersTab";
 import { TickersTab } from "./components/TickersTab";
 import { MPTPaymentTab } from "./components/MPTPaymentTab";
 import { MPTAuthorizeTab } from "./components/MPTAuthorizeTab";
+import { MPTCreateTab } from "./components/MPTCreateTab";
 import { TransactionsTab } from "./components/TransactionsTab";
 import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
 import { DomainsTab } from "./components/DomainsTab";
@@ -24,6 +25,7 @@ type Tab =
   | "transactions"
   | "tickers"
   | "balances"
+  | "mpt-create"
   | "mpt-authorize"
   | "mpt-payment"
   | "submitted-intents";
@@ -75,6 +77,12 @@ export default function Home() {
     },
     { id: "tickers", label: "Tickers", icon: "📊", category: "Data" },
     { id: "balances", label: "Balances", icon: "💰", category: "Data" },
+    {
+      id: "mpt-create",
+      label: "MPT Create",
+      icon: "🪙",
+      category: "XRPL",
+    },
     {
       id: "mpt-authorize",
       label: "MPT Authorize",
@@ -277,6 +285,7 @@ export default function Home() {
                 {activeTab === "submitted-intents" && <SubmittedIntentsTab />}
                 {activeTab === "tickers" && <TickersTab />}
                 {activeTab === "balances" && <BalancesTab />}
+                {activeTab === "mpt-create" && <MPTCreateTab />}
                 {activeTab === "mpt-authorize" && <MPTAuthorizeTab />}
                 {activeTab === "mpt-payment" && <MPTPaymentTab />}
               </div>
