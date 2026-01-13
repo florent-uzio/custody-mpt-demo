@@ -61,11 +61,26 @@ export default function Home() {
     { id: "requests", label: "Requests", icon: "📋", category: "Operations" },
     { id: "intents", label: "Get Intent", icon: "🎯", category: "Operations" },
     { id: "transfers", label: "Transfers", icon: "💸", category: "Operations" },
-    { id: "transactions", label: "Transactions", icon: "📝", category: "Operations" },
-    { id: "submitted-intents", label: "Submitted Intents", icon: "📜", category: "Operations" },
+    {
+      id: "transactions",
+      label: "Transactions",
+      icon: "📝",
+      category: "Operations",
+    },
+    {
+      id: "submitted-intents",
+      label: "Submitted Intents",
+      icon: "📜",
+      category: "Operations",
+    },
     { id: "tickers", label: "Tickers", icon: "📊", category: "Data" },
     { id: "balances", label: "Balances", icon: "💰", category: "Data" },
-    { id: "mpt-authorize", label: "MPT Authorize", icon: "✅", category: "XRPL" },
+    {
+      id: "mpt-authorize",
+      label: "MPT Authorize",
+      icon: "✅",
+      category: "XRPL",
+    },
     { id: "mpt-payment", label: "MPT Payment", icon: "💳", category: "XRPL" },
   ];
 
@@ -94,55 +109,25 @@ export default function Home() {
           className={`
             fixed lg:static inset-y-0 left-0 z-50
             bg-white border-r border-gray-200 shadow-sm transition-all duration-300 ease-in-out
-            ${sidebarOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0 lg:w-0"}
+            ${
+              sidebarOpen
+                ? "translate-x-0 w-64"
+                : "-translate-x-full lg:translate-x-0 lg:w-0"
+            }
             overflow-hidden
           `}
         >
           <div className="h-full flex flex-col">
             {/* Sidebar Header */}
             <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-gray-900">Ripple Custody</h2>
+              <h2 className="text-lg font-bold text-gray-900">
+                Ripple Custody
+              </h2>
               <p className="text-xs text-gray-500 mt-1">Operations Dashboard</p>
             </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto p-4 space-y-6">
-              {Object.entries(groupedTabs).map(([category, categoryTabs]) => (
-                <div key={category}>
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
-                    {category}
-                  </h3>
-                  <div className="space-y-1">
-                    {categoryTabs.map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => {
-                          setActiveTab(tab.id);
-                          // Close sidebar on mobile after selection
-                          if (typeof window !== "undefined" && window.innerWidth < 1024) {
-                            setSidebarOpen(false);
-                          }
-                        }}
-                        className={`
-                          w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
-                          ${
-                            activeTab === tab.id
-                              ? "bg-blue-50 text-blue-700 border border-blue-200"
-                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                          }
-                        `}
-                      >
-                        <span className="text-lg flex-shrink-0">{tab.icon}</span>
-                        <span className="truncate">{tab.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </nav>
-
             {/* Default Domain ID Section */}
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-4 border-b border-gray-200">
               <label
                 htmlFor="defaultDomainId"
                 className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
@@ -164,6 +149,47 @@ export default function Home() {
                 Used as default for API calls
               </p>
             </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 overflow-y-auto p-4 space-y-6">
+              {Object.entries(groupedTabs).map(([category, categoryTabs]) => (
+                <div key={category}>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
+                    {category}
+                  </h3>
+                  <div className="space-y-1">
+                    {categoryTabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                          setActiveTab(tab.id);
+                          // Close sidebar on mobile after selection
+                          if (
+                            typeof window !== "undefined" &&
+                            window.innerWidth < 1024
+                          ) {
+                            setSidebarOpen(false);
+                          }
+                        }}
+                        className={`
+                          w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
+                          ${
+                            activeTab === tab.id
+                              ? "bg-blue-50 text-blue-700 border border-blue-200"
+                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                          }
+                        `}
+                      >
+                        <span className="text-lg flex-shrink-0">
+                          {tab.icon}
+                        </span>
+                        <span className="truncate">{tab.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </nav>
           </div>
         </aside>
 
@@ -205,7 +231,8 @@ export default function Home() {
                   {tabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
                 </h1>
                 <p className="text-sm text-gray-600">
-                  {tabs.find((t) => t.id === activeTab)?.category || "General"} Operations
+                  {tabs.find((t) => t.id === activeTab)?.category || "General"}{" "}
+                  Operations
                 </p>
               </div>
             </div>
@@ -221,7 +248,9 @@ export default function Home() {
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
                   Notes{" "}
-                  <span className="text-gray-400 font-normal">(MPT IDs, etc.)</span>
+                  <span className="text-gray-400 font-normal">
+                    (MPT IDs, etc.)
+                  </span>
                 </label>
                 <textarea
                   id="notes"
@@ -232,7 +261,8 @@ export default function Home() {
                   placeholder="Save your MPT IDs, notes, or any other information here...&#10;&#10;Example:&#10;MPT Issuance ID: 00CA8BD9F2582AF39B51725D510C5401ED4495ECFB250591"
                 />
                 <p className="mt-2 text-xs text-gray-500">
-                  Your notes are automatically saved and will persist across sessions.
+                  Your notes are automatically saved and will persist across
+                  sessions.
                 </p>
               </div>
 
