@@ -9,6 +9,7 @@ import { TickersTab } from "./components/TickersTab";
 import { MPTPaymentTab } from "./components/MPTPaymentTab";
 import { MPTAuthorizeTab } from "./components/MPTAuthorizeTab";
 import { MPTCreateTab } from "./components/MPTCreateTab";
+import { MPTSetTab } from "./components/MPTSetTab";
 import { TransactionsTab } from "./components/TransactionsTab";
 import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
 import { DomainsTab } from "./components/DomainsTab";
@@ -28,6 +29,7 @@ type Tab =
   | "mpt-create"
   | "mpt-authorize"
   | "mpt-payment"
+  | "mpt-set"
   | "submitted-intents";
 
 const NOTES_STORAGE_KEY = "mpt_demo_notes";
@@ -90,6 +92,12 @@ export default function Home() {
       category: "XRPL",
     },
     { id: "mpt-payment", label: "MPT Payment", icon: "💳", category: "XRPL" },
+    {
+      id: "mpt-set",
+      label: "MPT Set",
+      icon: "⚙️",
+      category: "XRPL",
+    },
   ];
 
   const groupedTabs = tabs.reduce((acc, tab) => {
@@ -288,6 +296,7 @@ export default function Home() {
                 {activeTab === "mpt-create" && <MPTCreateTab />}
                 {activeTab === "mpt-authorize" && <MPTAuthorizeTab />}
                 {activeTab === "mpt-payment" && <MPTPaymentTab />}
+                {activeTab === "mpt-set" && <MPTSetTab />}
               </div>
             </div>
           </main>
