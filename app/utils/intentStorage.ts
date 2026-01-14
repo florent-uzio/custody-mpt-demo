@@ -1,6 +1,6 @@
 export interface SubmittedIntent {
   id: string; // Unique ID for this record
-  type: "MPTAuthorize" | "Payment";
+  type: "MPTAuthorize" | "MPTIssuanceCreate" | "MPTIssuanceSet" | "Payment";
   requestId: string;
   submittedAt: string;
   intentId?: string; // Will be fetched later from Request API
@@ -8,7 +8,9 @@ export interface SubmittedIntent {
 
 const STORAGE_KEY = "submitted_intents";
 
-export function saveSubmittedIntent(intent: Omit<SubmittedIntent, "id" | "submittedAt">) {
+export function saveSubmittedIntent(
+  intent: Omit<SubmittedIntent, "id" | "submittedAt">
+) {
   const intents = getSubmittedIntents();
   const newIntent: SubmittedIntent = {
     ...intent,
@@ -39,4 +41,3 @@ export function clearSubmittedIntents() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(STORAGE_KEY);
 }
-
