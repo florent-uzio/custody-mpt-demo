@@ -1,6 +1,11 @@
 export interface SubmittedIntent {
   id: string; // Unique ID for this record
-  type: "MPTAuthorize" | "MPTIssuanceCreate" | "MPTIssuanceSet" | "Payment";
+  type:
+    | "MPTAuthorize"
+    | "MPTIssuanceCreate"
+    | "MPTIssuanceSet"
+    | "MPTIssuanceDestroy"
+    | "Payment";
   requestId: string;
   submittedAt: string;
   intentId?: string; // Will be fetched later from Request API

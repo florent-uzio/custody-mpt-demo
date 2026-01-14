@@ -10,6 +10,7 @@ import { MPTPaymentTab } from "./components/MPTPaymentTab";
 import { MPTAuthorizeTab } from "./components/MPTAuthorizeTab";
 import { MPTCreateTab } from "./components/MPTCreateTab";
 import { MPTSetTab } from "./components/MPTSetTab";
+import { MPTDestroyTab } from "./components/MPTDestroyTab";
 import { TransactionsTab } from "./components/TransactionsTab";
 import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
 import { DomainsTab } from "./components/DomainsTab";
@@ -30,6 +31,7 @@ type Tab =
   | "mpt-authorize"
   | "mpt-payment"
   | "mpt-set"
+  | "mpt-destroy"
   | "submitted-intents";
 
 const NOTES_STORAGE_KEY = "mpt_demo_notes";
@@ -96,6 +98,12 @@ export default function Home() {
       id: "mpt-set",
       label: "MPT Set",
       icon: "⚙️",
+      category: "XRPL",
+    },
+    {
+      id: "mpt-destroy",
+      label: "MPT Destroy",
+      icon: "🗑️",
       category: "XRPL",
     },
   ];
@@ -297,6 +305,7 @@ export default function Home() {
                 {activeTab === "mpt-authorize" && <MPTAuthorizeTab />}
                 {activeTab === "mpt-payment" && <MPTPaymentTab />}
                 {activeTab === "mpt-set" && <MPTSetTab />}
+                {activeTab === "mpt-destroy" && <MPTDestroyTab />}
               </div>
             </div>
           </main>
