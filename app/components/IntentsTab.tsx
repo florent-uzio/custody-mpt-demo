@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
+import { useDefaultDomain } from "../contexts/DomainContext";
 
 export function IntentsTab() {
+  const { defaultDomainId } = useDefaultDomain();
   const [intentId, setIntentId] = useState("");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<unknown>(null);
@@ -11,6 +13,12 @@ export function IntentsTab() {
 
   const handleGetIntent = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!defaultDomainId) {
+      setError("Please set a default domain ID in the sidebar first");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setResponse(null);
@@ -23,6 +31,7 @@ export function IntentsTab() {
         },
         body: JSON.stringify({
           intentId,
+          domainId: defaultDomainId,
         }),
       });
 

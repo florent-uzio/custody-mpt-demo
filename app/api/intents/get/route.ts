@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCustodySDK } from "@/app/lib/custody";
 
-const DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { intentId } = body;
+    const { intentId, domainId } = body;
 
     if (!intentId) {
       return NextResponse.json(
@@ -15,9 +13,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!domainId) {
+      return NextResponse.json(
+        { error: "domainId is required" },
+        { status: 400 }
+      );
+    }
+
     const custody = getCustodySDK();
     const result = await custody.intents.get({
-      domainId: DOMAIN_ID,
+      domainId: domainId,
       intentId: intentId,
     });
 
@@ -26,8 +31,7 @@ export async function POST(request: NextRequest) {
     console.error("Error getting intent:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to get intent",
+        error: error instanceof Error ? error.message : "Failed to get intent",
       },
       { status: 500 }
     );
