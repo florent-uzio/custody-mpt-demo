@@ -201,12 +201,6 @@ export function MPTPaymentTab() {
                 </span>
               </div>
               <div>
-                <span className="text-gray-600">User ID:</span>
-                <span className="ml-2 font-mono text-xs text-gray-800">
-                  6ac20654-450e-29e4-65e2-1bdecb7db7c4
-                </span>
-              </div>
-              <div>
                 <span className="text-gray-600">Ledger:</span>
                 <span className="ml-2 text-gray-800">
                   xrpl-testnet-august-2024
