@@ -5,6 +5,7 @@ export interface SubmittedIntent {
     | "MPTIssuanceCreate"
     | "MPTIssuanceSet"
     | "MPTIssuanceDestroy"
+    | "CreateUser"
     | "Payment";
   requestId: string;
   submittedAt: string;

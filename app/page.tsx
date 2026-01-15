@@ -11,6 +11,7 @@ import { MPTAuthorizeTab } from "./components/MPTAuthorizeTab";
 import { MPTCreateTab } from "./components/MPTCreateTab";
 import { MPTSetTab } from "./components/MPTSetTab";
 import { MPTDestroyTab } from "./components/MPTDestroyTab";
+import { UserCreateTab } from "./components/UserCreateTab";
 import { TransactionsTab } from "./components/TransactionsTab";
 import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
 import { DomainsTab } from "./components/DomainsTab";
@@ -21,6 +22,7 @@ import { CopyButton } from "./components/CopyButton";
 type Tab =
   | "domains"
   | "accounts"
+  | "user-invitations"
   | "requests"
   | "intents"
   | "transfers"
@@ -64,6 +66,12 @@ export default function Home() {
   const tabs: { id: Tab; label: string; icon: string; category?: string }[] = [
     { id: "domains", label: "Domains", icon: "🌐", category: "General" },
     { id: "accounts", label: "Accounts", icon: "👤", category: "General" },
+    {
+      id: "user-invitations",
+      label: "User Invitations",
+      icon: "✉️",
+      category: "Users",
+    },
     { id: "requests", label: "Requests", icon: "📋", category: "Operations" },
     { id: "intents", label: "Get Intent", icon: "🎯", category: "Operations" },
     { id: "transfers", label: "Transfers", icon: "💸", category: "Operations" },
@@ -294,6 +302,7 @@ export default function Home() {
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 {activeTab === "domains" && <DomainsTab />}
                 {activeTab === "accounts" && <AccountsTab />}
+                {activeTab === "user-invitations" && <UserCreateTab />}
                 {activeTab === "requests" && <RequestsTab />}
                 {activeTab === "intents" && <IntentsTab />}
                 {activeTab === "transfers" && <TransfersTab />}
