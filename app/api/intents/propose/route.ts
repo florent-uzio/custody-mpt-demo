@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCustodySDK } from "@/app/lib/custody";
+import { getCustodySDK, getCurrentUser } from "@/app/lib/custody";
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import type { Core_ProposeIntentBody } from "custody";
 
-const DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
-const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { issuanceId, accountId } = body;
+    const { issuanceId, accountId, domainId } = body;
+
+    if (!domainId) {
+      return NextResponse.json(
+        { error: "domainId is required" },
+        { status: 400 }
+      );
+    }
 
     if (!issuanceId) {
       return NextResponse.json(
@@ -26,15 +30,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get current user info from the SDK
+    const currentUser = await getCurrentUser(domainId);
+
     // Build the MPT Authorize intent request
     const mptAuthorizeRequest: Core_ProposeIntentBody = {
       request: {
         author: {
-          id: CURRENT_USER_ID,
-          domainId: DOMAIN_ID,
+          id: currentUser.userId,
+          domainId: currentUser.domainId,
         },
         expiryAt: dayjs().add(1, "day").toISOString(),
-        targetDomainId: DOMAIN_ID,
+        targetDomainId: currentUser.domainId,
         id: uuidv4(),
         payload: {
           id: uuidv4(),

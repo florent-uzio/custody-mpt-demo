@@ -7,8 +7,6 @@ import { saveSubmittedIntent } from "../utils/intentStorage";
 import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
 import { useDefaultDomain } from "../contexts/DomainContext";
 
-const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
-
 export function MPTAuthorizeTab() {
   const { defaultDomainId } = useDefaultDomain();
   const { accounts, loading: accountsLoading } = useAccounts();
@@ -31,6 +29,7 @@ export function MPTAuthorizeTab() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          domainId: defaultDomainId,
           issuanceId,
           accountId,
         }),
@@ -131,12 +130,6 @@ export function MPTAuthorizeTab() {
                 </span>
               </div>
               <div>
-                <span className="text-gray-600">User ID:</span>
-                <span className="ml-2 font-mono text-xs text-gray-800">
-                  {CURRENT_USER_ID}
-                </span>
-              </div>
-              <div>
                 <span className="text-gray-600">Ledger:</span>
                 <span className="ml-2 text-gray-800">
                   xrpl-testnet-august-2024
@@ -212,4 +205,3 @@ export function MPTAuthorizeTab() {
     </div>
   );
 }
-
