@@ -121,6 +121,7 @@ export function TransfersTab() {
         body: JSON.stringify({
           accountId,
           transferIds: selectedTransferIds,
+          domainId: domainId || defaultDomainId,
         }),
       });
 
