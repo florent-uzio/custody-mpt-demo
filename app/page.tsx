@@ -16,12 +16,14 @@ import { TransactionsTab } from "./components/TransactionsTab";
 import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
 import { DomainsTab } from "./components/DomainsTab";
 import { AccountsTab } from "./components/AccountsTab";
+import { AccountCreateTab } from "./components/AccountCreateTab";
 import { useDefaultDomain } from "./contexts/DomainContext";
 import { CopyButton } from "./components/CopyButton";
 
 type Tab =
   | "domains"
   | "accounts"
+  | "account-create"
   | "user-invitations"
   | "requests"
   | "intents"
@@ -66,6 +68,12 @@ export default function Home() {
   const tabs: { id: Tab; label: string; icon: string; category?: string }[] = [
     { id: "domains", label: "Domains", icon: "🌐", category: "General" },
     { id: "accounts", label: "Accounts", icon: "👤", category: "General" },
+    {
+      id: "account-create",
+      label: "Create Account",
+      icon: "➕",
+      category: "General",
+    },
     {
       id: "user-invitations",
       label: "User Invitations",
@@ -302,6 +310,7 @@ export default function Home() {
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 {activeTab === "domains" && <DomainsTab />}
                 {activeTab === "accounts" && <AccountsTab />}
+                {activeTab === "account-create" && <AccountCreateTab />}
                 {activeTab === "user-invitations" && <UserCreateTab />}
                 {activeTab === "requests" && <RequestsTab />}
                 {activeTab === "intents" && <IntentsTab />}

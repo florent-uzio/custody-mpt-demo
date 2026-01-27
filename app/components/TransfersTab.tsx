@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
@@ -54,6 +54,16 @@ export function TransfersTab() {
   } | null>(null);
   const [releaseError, setReleaseError] = useState<string | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
+
+  // Sync accountId with loaded accounts
+  useEffect(() => {
+    if (accounts.length > 0) {
+      const accountExists = accounts.some((account) => account.id === accountId);
+      if (!accountExists) {
+        setAccountId(accounts[0].id);
+      }
+    }
+  }, [accounts, accountId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

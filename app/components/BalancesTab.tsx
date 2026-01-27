@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { useDefaultDomain } from "../contexts/DomainContext";
@@ -33,6 +33,13 @@ export function BalancesTab() {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<BalancesResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Set accountId to first account when accounts finish loading
+  useEffect(() => {
+    if (!accountsLoading && accounts.length > 0 && !accountId) {
+      setAccountId(accounts[0].id);
+    }
+  }, [accounts, accountsLoading, accountId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
