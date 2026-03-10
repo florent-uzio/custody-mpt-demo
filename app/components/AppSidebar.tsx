@@ -57,7 +57,8 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const { defaultDomainId, setDefaultDomainId } = useDefaultDomain();
   const pathname = usePathname();
-  const isNavMode = pathname.startsWith("/intents");
+  const isNavMode =
+    pathname.startsWith("/intents") || pathname.startsWith("/transactions");
 
   const groupedTabs = TABS.reduce(
     (acc, tab) => {
@@ -70,6 +71,7 @@ export function AppSidebar({
 
   const isActive = (tab: (typeof TABS)[0]) => {
     if (tab.id === "intents-list") return pathname.startsWith("/intents");
+    if (tab.id === "transactions") return pathname.startsWith("/transactions");
     if (isNavMode) return false;
     return activeTab === tab.id;
   };
