@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { RequestsTab } from "./components/RequestsTab";
 import { IntentsTab } from "./components/IntentsTab";
 import { BalancesTab } from "./components/BalancesTab";
@@ -36,7 +37,8 @@ type Tab =
   | "mpt-payment"
   | "mpt-set"
   | "mpt-destroy"
-  | "submitted-intents";
+  | "submitted-intents"
+  | "intents-list";
 
 const NOTES_STORAGE_KEY = "mpt_demo_notes";
 
@@ -93,6 +95,12 @@ export default function Home() {
       id: "submitted-intents",
       label: "Submitted Intents",
       icon: "📜",
+      category: "Operations",
+    },
+    {
+      id: "intents-list",
+      label: "Intents List",
+      icon: "🗂️",
       category: "Operations",
     },
     { id: "tickers", label: "Tickers", icon: "📊", category: "Data" },
@@ -198,34 +206,45 @@ export default function Home() {
                     {category}
                   </h3>
                   <div className="space-y-1">
-                    {categoryTabs.map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => {
-                          setActiveTab(tab.id);
-                          // Close sidebar on mobile after selection
-                          if (
-                            typeof window !== "undefined" &&
-                            window.innerWidth < 1024
-                          ) {
-                            setSidebarOpen(false);
-                          }
-                        }}
-                        className={`
-                          w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
-                          ${
-                            activeTab === tab.id
-                              ? "bg-blue-50 text-blue-700 border border-blue-200"
-                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                          }
-                        `}
-                      >
-                        <span className="text-lg flex-shrink-0">
-                          {tab.icon}
-                        </span>
-                        <span className="truncate">{tab.label}</span>
-                      </button>
-                    ))}
+                    {categoryTabs.map((tab) =>
+                      tab.id === "intents-list" ? (
+                        <Link
+                          key={tab.id}
+                          href={`/intents${defaultDomainId ? `?domainId=${defaultDomainId}` : ""}`}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                        >
+                          <span className="text-lg flex-shrink-0">{tab.icon}</span>
+                          <span className="truncate">{tab.label}</span>
+                        </Link>
+                      ) : (
+                        <button
+                          key={tab.id}
+                          onClick={() => {
+                            setActiveTab(tab.id);
+                            // Close sidebar on mobile after selection
+                            if (
+                              typeof window !== "undefined" &&
+                              window.innerWidth < 1024
+                            ) {
+                              setSidebarOpen(false);
+                            }
+                          }}
+                          className={`
+                            w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
+                            ${
+                              activeTab === tab.id
+                                ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                            }
+                          `}
+                        >
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
+                          <span className="truncate">{tab.label}</span>
+                        </button>
+                      )
+                    )}
                   </div>
                 </div>
               ))}
