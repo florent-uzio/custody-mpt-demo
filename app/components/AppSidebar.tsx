@@ -11,7 +11,6 @@ export type Tab =
   | "account-create"
   | "user-invitations"
   | "requests"
-  | "intents"
   | "transfers"
   | "transactions"
   | "tickers"
@@ -30,7 +29,6 @@ export const TABS: { id: Tab; label: string; icon: string; category: string }[] 
   { id: "account-create", label: "Create Account", icon: "➕", category: "General" },
   { id: "user-invitations", label: "User Invitations", icon: "✉️", category: "Users" },
   { id: "requests", label: "Requests", icon: "📋", category: "Operations" },
-  { id: "intents", label: "Get Intent", icon: "🎯", category: "Operations" },
   { id: "transfers", label: "Transfers", icon: "💸", category: "Operations" },
   { id: "transactions", label: "Transactions", icon: "📝", category: "Operations" },
   { id: "submitted-intents", label: "Submitted Intents", icon: "📜", category: "Operations" },

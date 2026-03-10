@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { RequestsTab } from "./components/RequestsTab";
-import { IntentsTab } from "./components/IntentsTab";
 import { BalancesTab } from "./components/BalancesTab";
 import { TransfersTab } from "./components/TransfersTab";
 import { TickersTab } from "./components/TickersTab";
@@ -140,7 +139,6 @@ export default function Home() {
                 {activeTab === "account-create" && <AccountCreateTab />}
                 {activeTab === "user-invitations" && <UserCreateTab />}
                 {activeTab === "requests" && <RequestsTab />}
-                {activeTab === "intents" && <IntentsTab />}
                 {activeTab === "transfers" && <TransfersTab />}
                 {activeTab === "transactions" && <TransactionsTab />}
                 {activeTab === "submitted-intents" && <SubmittedIntentsTab />}
