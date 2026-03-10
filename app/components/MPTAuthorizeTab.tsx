@@ -23,7 +23,7 @@ export function MPTAuthorizeTab() {
     setResponse(null);
 
     try {
-      const res = await fetch("/api/intents/propose", {
+      const res = await fetch("/api/mpt/authorize", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
