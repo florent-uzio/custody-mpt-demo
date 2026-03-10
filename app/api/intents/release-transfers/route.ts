@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     if (!accountId) {
       return NextResponse.json(
         { error: "accountId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -23,14 +23,14 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: "transferIds array is required and must not be empty" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!domainId) {
       return NextResponse.json(
         { error: "domainId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
             ? error.message
             : "Failed to propose release intent",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

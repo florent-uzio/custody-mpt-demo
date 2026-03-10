@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
@@ -30,11 +30,35 @@ interface TransferDetail {
 
 const KIND_CONFIG: Record<
   string,
-  { headerBg: string; badgeBg: string; badgeText: string; dot: string; border: string }
+  {
+    headerBg: string;
+    badgeBg: string;
+    badgeText: string;
+    dot: string;
+    border: string;
+  }
 > = {
-  Transfer: { headerBg: "from-blue-500 to-blue-600",     badgeBg: "bg-blue-100",   badgeText: "text-blue-800",   dot: "bg-blue-400",   border: "border-blue-200" },
-  Fee:      { headerBg: "from-yellow-400 to-orange-400", badgeBg: "bg-yellow-100", badgeText: "text-yellow-800", dot: "bg-yellow-400", border: "border-yellow-200" },
-  Recovery: { headerBg: "from-purple-500 to-purple-600", badgeBg: "bg-purple-100", badgeText: "text-purple-800", dot: "bg-purple-400", border: "border-purple-200" },
+  Transfer: {
+    headerBg: "from-blue-500 to-blue-600",
+    badgeBg: "bg-blue-100",
+    badgeText: "text-blue-800",
+    dot: "bg-blue-400",
+    border: "border-blue-200",
+  },
+  Fee: {
+    headerBg: "from-yellow-400 to-orange-400",
+    badgeBg: "bg-yellow-100",
+    badgeText: "text-yellow-800",
+    dot: "bg-yellow-400",
+    border: "border-yellow-200",
+  },
+  Recovery: {
+    headerBg: "from-purple-500 to-purple-600",
+    badgeBg: "bg-purple-100",
+    badgeText: "text-purple-800",
+    dot: "bg-purple-400",
+    border: "border-purple-200",
+  },
 };
 
 const FALLBACK_CONFIG = {
@@ -100,7 +124,31 @@ export default function TransferDetailPage() {
   const domainId = searchParams.get("domainId") ?? "";
   const { sidebarOpen, setSidebarOpen } = useSidebarContext();
 
-  const { data: transfer, isLoading, isError, error } = useQuery({
+  const releaseMutation = useMutation({
+    mutationFn: async (accountId: string) => {
+      const res = await fetch("/api/intents/release-transfers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountId,
+          transferIds: [transferId],
+          domainId,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to release transfer");
+      }
+      return res.json();
+    },
+  });
+
+  const {
+    data: transfer,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["transfer", transferId, domainId],
     queryFn: async () => {
       const res = await fetch("/api/transfers/get", {
@@ -118,12 +166,16 @@ export default function TransferDetailPage() {
     staleTime: 60_000,
   });
 
-  const cfg = transfer ? (KIND_CONFIG[transfer.kind] ?? FALLBACK_CONFIG) : FALLBACK_CONFIG;
+  const cfg = transfer
+    ? (KIND_CONFIG[transfer.kind] ?? FALLBACK_CONFIG)
+    : FALLBACK_CONFIG;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Gradient header */}
-      <div className={`bg-gradient-to-r ${cfg.headerBg} shadow-md flex-shrink-0`}>
+      <div
+        className={`bg-gradient-to-r ${cfg.headerBg} shadow-md flex-shrink-0`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
@@ -132,11 +184,26 @@ export default function TransferDetailPage() {
                 className="mt-0.5 p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white"
                 aria-label="Toggle sidebar"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   {sidebarOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
                   )}
                 </svg>
               </button>
@@ -149,14 +216,19 @@ export default function TransferDetailPage() {
                     Transfers
                   </Link>
                   <span className="text-white/40 text-xs">/</span>
-                  <span className="text-white/80 text-xs font-medium">Detail</span>
+                  <span className="text-white/80 text-xs font-medium">
+                    Detail
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-white font-mono text-sm font-semibold break-all">
                     {transferId}
                   </h1>
                   <div className="bg-white/20 rounded p-0.5">
-                    <CopyButton text={transferId} className="text-white hover:bg-white/20" />
+                    <CopyButton
+                      text={transferId}
+                      className="text-white hover:bg-white/20"
+                    />
                   </div>
                 </div>
               </div>
@@ -180,9 +252,25 @@ export default function TransferDetailPage() {
           {/* Loading */}
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
-              <svg className="animate-spin w-8 h-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <svg
+                className="animate-spin w-8 h-8 text-blue-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
               <p className="text-gray-500 text-sm">Loading transfer…</p>
             </div>
@@ -191,11 +279,21 @@ export default function TransferDetailPage() {
           {/* Error */}
           {isError && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-5 flex items-start gap-3">
-              <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              <svg
+                className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
               </svg>
               <div>
-                <p className="text-sm font-semibold text-red-700">Error loading transfer</p>
+                <p className="text-sm font-semibold text-red-700">
+                  Error loading transfer
+                </p>
                 <p className="text-sm text-red-600 mt-0.5">
                   {error instanceof Error ? error.message : "An error occurred"}
                 </p>
@@ -207,29 +305,108 @@ export default function TransferDetailPage() {
           {transfer && !isLoading && (
             <div className="space-y-5">
               {/* Summary bar */}
-              <div className={`bg-white rounded-xl border ${cfg.border} shadow-sm p-5`}>
+              <div
+                className={`bg-white rounded-xl border ${cfg.border} shadow-sm p-5`}
+              >
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
                   <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">Kind</p>
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${cfg.badgeBg} ${cfg.badgeText}`}>
+                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">
+                      Kind
+                    </p>
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${cfg.badgeBg} ${cfg.badgeText}`}
+                    >
                       <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                       {transfer.kind}
                     </span>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">Quarantined</p>
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${transfer.quarantined ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${transfer.quarantined ? "bg-red-400" : "bg-green-400"}`} />
-                      {transfer.quarantined ? "Yes" : "No"}
-                    </span>
+                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">
+                      Quarantined
+                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${transfer.quarantined ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${transfer.quarantined ? "bg-red-400" : "bg-green-400"}`}
+                        />
+                        {transfer.quarantined ? "Yes" : "No"}
+                      </span>
+                      {transfer.quarantined &&
+                        transfer.recipient?.accountId && (
+                          <button
+                            onClick={() =>
+                              releaseMutation.mutate(
+                                transfer.recipient!.accountId,
+                              )
+                            }
+                            disabled={
+                              releaseMutation.isPending ||
+                              releaseMutation.isSuccess
+                            }
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-orange-500 text-white hover:bg-orange-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {releaseMutation.isPending ? (
+                              <>
+                                <svg
+                                  className="animate-spin w-3 h-3"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  />
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  />
+                                </svg>
+                                Releasing…
+                              </>
+                            ) : releaseMutation.isSuccess ? (
+                              "Released"
+                            ) : (
+                              "Release quarantined funds"
+                            )}
+                          </button>
+                        )}
+                    </div>
+                    {releaseMutation.isSuccess && (
+                      <p className="text-xs mt-1.5 text-green-600">
+                        Release intent proposed successfully.
+                      </p>
+                    )}
+                    {releaseMutation.isError && (
+                      <p className="text-xs mt-1.5 text-red-600">
+                        {releaseMutation.error instanceof Error
+                          ? releaseMutation.error.message
+                          : "An error occurred"}
+                      </p>
+                    )}
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">Value</p>
-                    <p className="text-sm font-semibold text-gray-700">{formatAmount(transfer.value)}</p>
+                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">
+                      Value
+                    </p>
+                    <p className="text-sm font-semibold text-gray-700">
+                      {formatAmount(transfer.value)}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">Registered At</p>
-                    <p className="text-sm text-gray-700">{formatDate(transfer.registeredAt)}</p>
+                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">
+                      Registered At
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      {formatDate(transfer.registeredAt)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -241,7 +418,9 @@ export default function TransferDetailPage() {
                     label="Transfer ID"
                     value={
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-xs break-all">{transfer.id}</span>
+                        <span className="font-mono text-xs break-all">
+                          {transfer.id}
+                        </span>
                         <CopyButton text={transfer.id} />
                       </div>
                     }
@@ -250,13 +429,18 @@ export default function TransferDetailPage() {
                     label="Ticker ID"
                     value={
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-xs break-all">{transfer.tickerId}</span>
+                        <span className="font-mono text-xs break-all">
+                          {transfer.tickerId}
+                        </span>
                         <CopyButton text={transfer.tickerId} />
                       </div>
                     }
                   />
                   <InfoRow label="Value" value={formatAmount(transfer.value)} />
-                  <InfoRow label="Registered At" value={formatDate(transfer.registeredAt)} />
+                  <InfoRow
+                    label="Registered At"
+                    value={formatDate(transfer.registeredAt)}
+                  />
                   {transfer.transactionId && (
                     <InfoRow
                       label="Transaction ID"
@@ -284,7 +468,9 @@ export default function TransferDetailPage() {
                         value={
                           transfer.recipient.accountId ? (
                             <div className="flex items-center gap-1.5">
-                              <span className="font-mono text-xs">{transfer.recipient.accountId}</span>
+                              <span className="font-mono text-xs">
+                                {transfer.recipient.accountId}
+                              </span>
                               <CopyButton text={transfer.recipient.accountId} />
                             </div>
                           ) : (
@@ -297,7 +483,9 @@ export default function TransferDetailPage() {
                         value={
                           transfer.recipient.domainId ? (
                             <div className="flex items-center gap-1.5">
-                              <span className="font-mono text-xs">{transfer.recipient.domainId}</span>
+                              <span className="font-mono text-xs">
+                                {transfer.recipient.domainId}
+                              </span>
                               <CopyButton text={transfer.recipient.domainId} />
                             </div>
                           ) : (
@@ -305,31 +493,49 @@ export default function TransferDetailPage() {
                           )
                         }
                       />
-                      <InfoRow label="Amount" value={transfer.recipient.amount ? formatAmount(transfer.recipient.amount) : "—"} />
+                      <InfoRow
+                        label="Amount"
+                        value={
+                          transfer.recipient.amount
+                            ? formatAmount(transfer.recipient.amount)
+                            : "—"
+                        }
+                      />
                     </>
                   ) : (
-                    <p className="text-sm text-gray-400 italic py-2">No recipient</p>
+                    <p className="text-sm text-gray-400 italic py-2">
+                      No recipient
+                    </p>
                   )}
                 </InfoCard>
 
                 {/* Senders */}
                 <InfoCard title="Senders" icon="📤">
                   {transfer.senders.length === 0 ? (
-                    <p className="text-sm text-gray-400 italic py-2">No senders</p>
+                    <p className="text-sm text-gray-400 italic py-2">
+                      No senders
+                    </p>
                   ) : (
                     transfer.senders.map((sender, idx) => (
-                      <div key={idx} className="py-3 border-b border-gray-50 last:border-0">
+                      <div
+                        key={idx}
+                        className="py-3 border-b border-gray-50 last:border-0"
+                      >
                         <div className="flex items-center gap-1.5 mb-1">
                           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-20 flex-shrink-0">
                             Account
                           </span>
                           {sender.accountId ? (
                             <div className="flex items-center gap-1">
-                              <span className="font-mono text-xs text-gray-700">{sender.accountId}</span>
+                              <span className="font-mono text-xs text-gray-700">
+                                {sender.accountId}
+                              </span>
                               <CopyButton text={sender.accountId} />
                             </div>
                           ) : (
-                            <span className="text-gray-300 italic text-xs">—</span>
+                            <span className="text-gray-300 italic text-xs">
+                              —
+                            </span>
                           )}
                         </div>
                         <div className="flex items-center gap-1.5 mb-1">
@@ -338,11 +544,15 @@ export default function TransferDetailPage() {
                           </span>
                           {sender.domainId ? (
                             <div className="flex items-center gap-1">
-                              <span className="font-mono text-xs text-gray-500">{sender.domainId}</span>
+                              <span className="font-mono text-xs text-gray-500">
+                                {sender.domainId}
+                              </span>
                               <CopyButton text={sender.domainId} />
                             </div>
                           ) : (
-                            <span className="text-gray-300 italic text-xs">—</span>
+                            <span className="text-gray-300 italic text-xs">
+                              —
+                            </span>
                           )}
                         </div>
                         <div className="flex items-center gap-1.5">

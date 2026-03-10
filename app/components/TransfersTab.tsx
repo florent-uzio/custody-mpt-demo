@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useAccounts } from "../hooks/useAccounts";
-import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
 import { useDefaultDomain } from "../contexts/DomainContext";
-import { JsonViewer } from "./JsonViewer";
 import { CopyButton } from "./CopyButton";
 
 interface TransferItem {
@@ -73,30 +70,9 @@ function formatAmount(amount: string) {
 }
 
 export function TransfersTab() {
-  const { accounts, loading: accountsLoading } = useAccounts();
   const { defaultDomainId } = useDefaultDomain();
   const [kind, setKind] = useState<string>("");
   const [quarantinedFilter, setQuarantinedFilter] = useState<string>("true");
-
-  // Release transfers state
-  const [selectedTransferIds, setSelectedTransferIds] = useState<string[]>([]);
-  const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
-  const [releaseLoading, setReleaseLoading] = useState(false);
-  const [releaseResponse, setReleaseResponse] = useState<{
-    request: unknown;
-    response: unknown;
-  } | null>(null);
-  const [releaseError, setReleaseError] = useState<string | null>(null);
-  const [showRequestModal, setShowRequestModal] = useState(false);
-
-  useEffect(() => {
-    if (accounts.length > 0) {
-      const accountExists = accounts.some((account) => account.id === accountId);
-      if (!accountExists) {
-        setAccountId(accounts[0].id);
-      }
-    }
-  }, [accounts, accountId]);
 
   const quarantinedParam =
     quarantinedFilter === "true" ? true : quarantinedFilter === "false" ? false : undefined;
@@ -125,47 +101,6 @@ export function TransfersTab() {
     });
 
   const items = data?.items ?? [];
-  const quarantinedTransfers = items.filter((item) => item.quarantined);
-
-  const handleTransferSelect = (transferId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedTransferIds((prev) => [...prev, transferId]);
-    } else {
-      setSelectedTransferIds((prev) => prev.filter((id) => id !== transferId));
-    }
-  };
-
-  const handleReleaseTransfers = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setReleaseLoading(true);
-    setReleaseError(null);
-    setReleaseResponse(null);
-
-    try {
-      const res = await fetch("/api/intents/release-transfers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accountId,
-          transferIds: selectedTransferIds,
-          domainId: defaultDomainId,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to release transfers");
-      }
-
-      const result = await res.json();
-      setReleaseResponse(result);
-      setShowRequestModal(true);
-    } catch (err) {
-      setReleaseError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setReleaseLoading(false);
-    }
-  };
 
   return (
     <div className="space-y-5">
@@ -353,135 +288,6 @@ export function TransfersTab() {
         </div>
       )}
 
-      {/* Release Quarantined Transfers Section */}
-      {data && quarantinedTransfers.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-2">
-          <h3 className="text-base font-semibold text-gray-900 mb-1">
-            Release Quarantined Transfers
-          </h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Select quarantined transfers to release and create a release intent.
-          </p>
-          <form onSubmit={handleReleaseTransfers} className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Account ID
-              </label>
-              <select
-                value={accountId}
-                onChange={(e) => setAccountId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
-                required
-                disabled={accountsLoading}
-              >
-                {accountsLoading ? (
-                  <option>Loading accounts...</option>
-                ) : (
-                  accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.alias} ({account.id})
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Select Quarantined Transfers ({selectedTransferIds.length} selected)
-              </label>
-              <div className="border border-gray-200 rounded-lg p-3 max-h-56 overflow-y-auto space-y-1">
-                {quarantinedTransfers.map((transfer) => (
-                  <label
-                    key={transfer.id}
-                    className="flex items-start p-2 hover:bg-gray-50 rounded cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedTransferIds.includes(transfer.id)}
-                      onChange={(e) => handleTransferSelect(transfer.id, e.target.checked)}
-                      className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <div className="ml-3 flex-1">
-                      <p className="text-xs font-mono text-gray-800">{transfer.id}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {transfer.kind} · {formatAmount(transfer.value)}
-                      </p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={releaseLoading || selectedTransferIds.length === 0}
-              className="w-full px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition-colors"
-            >
-              {releaseLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Releasing...
-                </span>
-              ) : (
-                `Release ${selectedTransferIds.length} Transfer${selectedTransferIds.length !== 1 ? "s" : ""}`
-              )}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {releaseError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-2">
-          <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-          <p className="text-sm text-red-700">Error: {releaseError}</p>
-        </div>
-      )}
-
-      {/* Request Modal */}
-      {showRequestModal && releaseResponse && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowRequestModal(false)}
-        >
-          <div
-            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Release Intent Request</h2>
-              <button
-                onClick={() => setShowRequestModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-6 overflow-auto flex-1">
-              <JsonViewer data={releaseResponse.request} title="Request" />
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-              <button
-                onClick={() => setShowRequestModal(false)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {releaseResponse && (
-        <JsonViewer data={releaseResponse.response} title="Release Intent Response" />
-      )}
     </div>
   );
 }
