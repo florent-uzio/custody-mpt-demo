@@ -12,21 +12,21 @@ export async function POST(request: NextRequest) {
     if (!domainId) {
       return NextResponse.json(
         { error: "domainId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!issuanceId) {
       return NextResponse.json(
         { error: "issuanceId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!accountId) {
       return NextResponse.json(
         { error: "accountId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -56,7 +56,10 @@ export async function POST(request: NextRequest) {
             maximumFee: "10000000",
             memos: [],
             operation: {
-              issuanceId: issuanceId,
+              tokenIdentifier: {
+                type: "MPTokenIssuanceId",
+                issuanceId,
+              },
               flags: [],
               type: "MPTokenAuthorize",
             },
@@ -86,7 +89,7 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error ? error.message : "Failed to propose intent",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

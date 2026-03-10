@@ -22,14 +22,14 @@ export async function POST(request: NextRequest) {
     if (!accountId) {
       return NextResponse.json(
         { error: "accountId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!domainId) {
       return NextResponse.json(
         { error: "domainId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -61,7 +61,8 @@ export async function POST(request: NextRequest) {
               // Asset scale determines decimal places (0-255)
               ...(assetScale !== undefined && { assetScale }),
               // Transfer fee in basis points (0-50000 = 0.000%-50.000%)
-              ...(transferFee !== undefined && transferFee > 0 && { transferFee }),
+              ...(transferFee !== undefined &&
+                transferFee > 0 && { transferFee }),
               // Maximum amount that can ever be issued
               ...(maximumAmount && { maximumAmount: String(maximumAmount) }),
               // Combined flags value
@@ -100,8 +101,7 @@ export async function POST(request: NextRequest) {
             ? error.message
             : "Failed to create MPT issuance",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-
