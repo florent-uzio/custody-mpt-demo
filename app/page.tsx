@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { RequestsTab } from "./components/RequestsTab";
 import { IntentsTab } from "./components/IntentsTab";
 import { BalancesTab } from "./components/BalancesTab";
@@ -18,27 +17,8 @@ import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
 import { DomainsTab } from "./components/DomainsTab";
 import { AccountsTab } from "./components/AccountsTab";
 import { AccountCreateTab } from "./components/AccountCreateTab";
-import { useDefaultDomain } from "./contexts/DomainContext";
-import { CopyButton } from "./components/CopyButton";
-
-type Tab =
-  | "domains"
-  | "accounts"
-  | "account-create"
-  | "user-invitations"
-  | "requests"
-  | "intents"
-  | "transfers"
-  | "transactions"
-  | "tickers"
-  | "balances"
-  | "mpt-create"
-  | "mpt-authorize"
-  | "mpt-payment"
-  | "mpt-set"
-  | "mpt-destroy"
-  | "submitted-intents"
-  | "intents-list";
+import { AppSidebar, TABS } from "./components/AppSidebar";
+import type { Tab } from "./components/AppSidebar";
 
 const NOTES_STORAGE_KEY = "mpt_demo_notes";
 
@@ -46,14 +26,17 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("domains");
   const [notes, setNotes] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { defaultDomainId, setDefaultDomainId } = useDefaultDomain();
 
   useEffect(() => {
-    // Load notes from localStorage
     if (typeof window !== "undefined") {
       const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
-      if (savedNotes) {
-        setNotes(savedNotes);
+      if (savedNotes) setNotes(savedNotes);
+
+      // Restore tab from URL ?tab= param (e.g. navigating back from intents pages)
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab") as Tab;
+      if (tab && TABS.some((t) => t.id === tab) && tab !== "intents-list") {
+        setActiveTab(tab);
       }
     }
   }, []);
@@ -61,196 +44,22 @@ export default function Home() {
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newNotes = e.target.value;
     setNotes(newNotes);
-    // Save to localStorage
     if (typeof window !== "undefined") {
       localStorage.setItem(NOTES_STORAGE_KEY, newNotes);
     }
   };
 
-  const tabs: { id: Tab; label: string; icon: string; category?: string }[] = [
-    { id: "domains", label: "Domains", icon: "🌐", category: "General" },
-    { id: "accounts", label: "Accounts", icon: "👤", category: "General" },
-    {
-      id: "account-create",
-      label: "Create Account",
-      icon: "➕",
-      category: "General",
-    },
-    {
-      id: "user-invitations",
-      label: "User Invitations",
-      icon: "✉️",
-      category: "Users",
-    },
-    { id: "requests", label: "Requests", icon: "📋", category: "Operations" },
-    { id: "intents", label: "Get Intent", icon: "🎯", category: "Operations" },
-    { id: "transfers", label: "Transfers", icon: "💸", category: "Operations" },
-    {
-      id: "transactions",
-      label: "Transactions",
-      icon: "📝",
-      category: "Operations",
-    },
-    {
-      id: "submitted-intents",
-      label: "Submitted Intents",
-      icon: "📜",
-      category: "Operations",
-    },
-    {
-      id: "intents-list",
-      label: "Intents List",
-      icon: "🗂️",
-      category: "Operations",
-    },
-    { id: "tickers", label: "Tickers", icon: "📊", category: "Data" },
-    { id: "balances", label: "Balances", icon: "💰", category: "Data" },
-    {
-      id: "mpt-create",
-      label: "MPT Create",
-      icon: "🪙",
-      category: "XRPL",
-    },
-    {
-      id: "mpt-authorize",
-      label: "MPT Authorize",
-      icon: "✅",
-      category: "XRPL",
-    },
-    { id: "mpt-payment", label: "MPT Payment", icon: "💳", category: "XRPL" },
-    {
-      id: "mpt-set",
-      label: "MPT Set",
-      icon: "⚙️",
-      category: "XRPL",
-    },
-    {
-      id: "mpt-destroy",
-      label: "MPT Destroy",
-      icon: "🗑️",
-      category: "XRPL",
-    },
-  ];
-
-  const groupedTabs = tabs.reduce((acc, tab) => {
-    const category = tab.category || "Other";
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(tab);
-    return acc;
-  }, {} as Record<string, typeof tabs>);
+  const activeTabMeta = TABS.find((t) => t.id === activeTab);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="flex h-screen overflow-hidden">
-        {/* Mobile Overlay */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* Sidebar */}
-        <aside
-          className={`
-            fixed lg:static inset-y-0 left-0 z-50
-            bg-white border-r border-gray-200 shadow-sm transition-all duration-300 ease-in-out
-            ${
-              sidebarOpen
-                ? "translate-x-0 w-64"
-                : "-translate-x-full lg:translate-x-0 lg:w-0"
-            }
-            overflow-hidden
-          `}
-        >
-          <div className="h-full flex flex-col">
-            {/* Sidebar Header */}
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-gray-900">
-                Ripple Custody
-              </h2>
-              <p className="text-xs text-gray-500 mt-1">Operations Dashboard</p>
-            </div>
-
-            {/* Default Domain ID Section */}
-            <div className="p-4 border-b border-gray-200">
-              <label
-                htmlFor="defaultDomainId"
-                className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
-              >
-                Default Domain ID
-              </label>
-              <div className="flex items-center gap-1">
-                <input
-                  type="text"
-                  id="defaultDomainId"
-                  value={defaultDomainId}
-                  onChange={(e) => setDefaultDomainId(e.target.value)}
-                  className="flex-1 min-w-0 px-3 py-2 text-xs font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                  placeholder="Enter domain UUID"
-                />
-                {defaultDomainId && <CopyButton text={defaultDomainId} />}
-              </div>
-              <p className="mt-1.5 text-xs text-gray-400">
-                Used as default for API calls
-              </p>
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto p-4 space-y-6">
-              {Object.entries(groupedTabs).map(([category, categoryTabs]) => (
-                <div key={category}>
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
-                    {category}
-                  </h3>
-                  <div className="space-y-1">
-                    {categoryTabs.map((tab) =>
-                      tab.id === "intents-list" ? (
-                        <Link
-                          key={tab.id}
-                          href={`/intents${defaultDomainId ? `?domainId=${defaultDomainId}` : ""}`}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                        >
-                          <span className="text-lg flex-shrink-0">{tab.icon}</span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      ) : (
-                        <button
-                          key={tab.id}
-                          onClick={() => {
-                            setActiveTab(tab.id);
-                            // Close sidebar on mobile after selection
-                            if (
-                              typeof window !== "undefined" &&
-                              window.innerWidth < 1024
-                            ) {
-                              setSidebarOpen(false);
-                            }
-                          }}
-                          className={`
-                            w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
-                            ${
-                              activeTab === tab.id
-                                ? "bg-blue-50 text-blue-700 border border-blue-200"
-                                : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                            }
-                          `}
-                        >
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </button>
-                      )
-                    )}
-                  </div>
-                </div>
-              ))}
-            </nav>
-          </div>
-        </aside>
+        <AppSidebar
+          open={sidebarOpen}
+          onOpenChange={setSidebarOpen}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -287,11 +96,10 @@ export default function Home() {
               </button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {tabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
+                  {activeTabMeta?.label || "Dashboard"}
                 </h1>
                 <p className="text-sm text-gray-600">
-                  {tabs.find((t) => t.id === activeTab)?.category || "General"}{" "}
-                  Operations
+                  {activeTabMeta?.category || "General"} Operations
                 </p>
               </div>
             </div>
