@@ -2,14 +2,10 @@
 
 import { useState } from "react";
 import { CopyButton } from "./CopyButton";
+import { useKeypairGenerate } from "../hooks/useKeypairGenerate";
+import type { KeypairResult } from "../hooks/useKeypairGenerate";
 
-type Algorithm = "ed25519" | "secp256k1" | "secp256r1";
-
-interface Keypair {
-  algorithm: Algorithm;
-  privateKey: string;
-  publicKey: string;
-}
+type Algorithm = KeypairResult["algorithm"];
 
 const ALGORITHMS: { id: Algorithm; label: string; description: string }[] = [
   { id: "ed25519", label: "Ed25519", description: "Fast, secure — default for XRPL" },
@@ -19,35 +15,7 @@ const ALGORITHMS: { id: Algorithm; label: string; description: string }[] = [
 
 export function KeypairTab() {
   const [algorithm, setAlgorithm] = useState<Algorithm>("ed25519");
-  const [keypair, setKeypair] = useState<Keypair | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleGenerate = async () => {
-    setLoading(true);
-    setError(null);
-    setKeypair(null);
-
-    try {
-      const res = await fetch("/api/keypair/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ algorithm }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to generate keypair");
-      }
-
-      const result = await res.json();
-      setKeypair(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { mutate, isPending, data: keypair, error } = useKeypairGenerate();
 
   return (
     <div className="space-y-6">
@@ -85,7 +53,6 @@ export function KeypairTab() {
 
       {/* Generator Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
-        {/* Algorithm Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
             Algorithm
@@ -117,11 +84,11 @@ export function KeypairTab() {
 
         <button
           type="button"
-          onClick={handleGenerate}
-          disabled={loading}
+          onClick={() => mutate(algorithm)}
+          disabled={isPending}
           className="w-full px-4 py-3 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 disabled:bg-amber-300 disabled:cursor-not-allowed transition-colors shadow-sm"
         >
-          {loading ? (
+          {isPending ? (
             <span className="flex items-center justify-center">
               <svg
                 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -165,7 +132,9 @@ export function KeypairTab() {
                 clipRule="evenodd"
               />
             </svg>
-            <p className="text-sm text-red-800 font-medium">Error: {error}</p>
+            <p className="text-sm text-red-800 font-medium">
+              Error: {error instanceof Error ? error.message : "An error occurred"}
+            </p>
           </div>
         </div>
       )}
