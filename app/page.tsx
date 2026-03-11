@@ -16,6 +16,7 @@ import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
 import { DomainsTab } from "./components/DomainsTab";
 import { AccountsTab } from "./components/AccountsTab";
 import { AccountCreateTab } from "./components/AccountCreateTab";
+import { KeypairTab } from "./components/KeypairTab";
 import { AppSidebar, TABS } from "./components/AppSidebar";
 import type { Tab } from "./components/AppSidebar";
 
@@ -149,6 +150,7 @@ export default function Home() {
                 {activeTab === "mpt-authorize" && <MPTAuthorizeTab />}
                 {activeTab === "mpt-set" && <MPTSetTab />}
                 {activeTab === "mpt-destroy" && <MPTDestroyTab />}
+                {activeTab === "keypair" && <KeypairTab />}
               </div>
             </div>
           </main>

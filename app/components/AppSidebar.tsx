@@ -23,7 +23,8 @@ export type Tab =
   | "submitted-intents"
   | "intents-list"
   | "users-list"
-  | "users-me";
+  | "users-me"
+  | "keypair";
 
 export const TABS: {
   id: Tab;
@@ -84,6 +85,7 @@ export const TABS: {
   { id: "mpt-authorize", label: "MPT Authorize", icon: "✅", category: "XRPL" },
   { id: "mpt-set", label: "MPT Set", icon: "⚙️", category: "XRPL" },
   { id: "mpt-destroy", label: "MPT Destroy", icon: "🗑️", category: "XRPL" },
+  { id: "keypair", label: "Keypair Generator", icon: "🔑", category: "Tools" },
 ];
 
 interface AppSidebarProps {
