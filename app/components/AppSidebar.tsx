@@ -17,27 +17,57 @@ export type Tab =
   | "balances"
   | "mpt-create"
   | "mpt-authorize"
-  | "mpt-payment"
+  | "payment"
   | "mpt-set"
   | "mpt-destroy"
   | "submitted-intents"
   | "intents-list";
 
-export const TABS: { id: Tab; label: string; icon: string; category: string }[] = [
+export const TABS: {
+  id: Tab;
+  label: string;
+  icon: string;
+  category: string;
+}[] = [
   { id: "domains", label: "Domains", icon: "🌐", category: "General" },
   { id: "accounts", label: "Accounts", icon: "👤", category: "General" },
-  { id: "account-create", label: "Create Account", icon: "➕", category: "General" },
-  { id: "user-invitations", label: "User Invitations", icon: "✉️", category: "Users" },
+  {
+    id: "account-create",
+    label: "Create Account",
+    icon: "➕",
+    category: "General",
+  },
+  {
+    id: "user-invitations",
+    label: "User Invitations",
+    icon: "✉️",
+    category: "Users",
+  },
   { id: "requests", label: "Requests", icon: "📋", category: "Operations" },
   { id: "transfers", label: "Transfers", icon: "💸", category: "Operations" },
-  { id: "transactions", label: "Transactions", icon: "📝", category: "Operations" },
-  { id: "submitted-intents", label: "Submitted Intents", icon: "📜", category: "Operations" },
-  { id: "intents-list", label: "Intents List", icon: "🗂️", category: "Operations" },
+  {
+    id: "transactions",
+    label: "Transactions",
+    icon: "📝",
+    category: "Operations",
+  },
+  {
+    id: "submitted-intents",
+    label: "Submitted Intents",
+    icon: "📜",
+    category: "Operations",
+  },
+  {
+    id: "intents-list",
+    label: "Intents List",
+    icon: "🗂️",
+    category: "Operations",
+  },
   { id: "tickers", label: "Tickers", icon: "📊", category: "Data" },
   { id: "balances", label: "Balances", icon: "💰", category: "Data" },
+  { id: "payment", label: "Payment", icon: "💳", category: "XRPL" },
   { id: "mpt-create", label: "MPT Create", icon: "🪙", category: "XRPL" },
   { id: "mpt-authorize", label: "MPT Authorize", icon: "✅", category: "XRPL" },
-  { id: "mpt-payment", label: "MPT Payment", icon: "💳", category: "XRPL" },
   { id: "mpt-set", label: "MPT Set", icon: "⚙️", category: "XRPL" },
   { id: "mpt-destroy", label: "MPT Destroy", icon: "🗑️", category: "XRPL" },
 ];
@@ -132,7 +162,9 @@ export function AppSidebar({
               />
               {defaultDomainId && <CopyButton text={defaultDomainId} />}
             </div>
-            <p className="mt-1.5 text-xs text-gray-400">Used as default for API calls</p>
+            <p className="mt-1.5 text-xs text-gray-400">
+              Used as default for API calls
+            </p>
           </div>
 
           {/* Navigation */}
@@ -154,7 +186,9 @@ export function AppSidebar({
                     if (tab.id === "intents-list") {
                       return (
                         <Link key={tab.id} href="/intents" className={cls}>
-                          <span className="text-lg flex-shrink-0">{tab.icon}</span>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
                           <span className="truncate">{tab.label}</span>
                         </Link>
                       );
@@ -162,8 +196,14 @@ export function AppSidebar({
 
                     if (isNavMode) {
                       return (
-                        <Link key={tab.id} href={`/?tab=${tab.id}`} className={cls}>
-                          <span className="text-lg flex-shrink-0">{tab.icon}</span>
+                        <Link
+                          key={tab.id}
+                          href={`/?tab=${tab.id}`}
+                          className={cls}
+                        >
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
                           <span className="truncate">{tab.label}</span>
                         </Link>
                       );
@@ -175,7 +215,9 @@ export function AppSidebar({
                         onClick={() => handleTabClick(tab)}
                         className={cls}
                       >
-                        <span className="text-lg flex-shrink-0">{tab.icon}</span>
+                        <span className="text-lg flex-shrink-0">
+                          {tab.icon}
+                        </span>
                         <span className="truncate">{tab.label}</span>
                       </button>
                     );

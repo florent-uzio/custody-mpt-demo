@@ -5,7 +5,7 @@ import { RequestsTab } from "./components/RequestsTab";
 import { BalancesTab } from "./components/BalancesTab";
 import { TransfersTab } from "./components/TransfersTab";
 import { TickersTab } from "./components/TickersTab";
-import { MPTPaymentTab } from "./components/MPTPaymentTab";
+import { PaymentTab } from "./components/PaymentTab";
 import { MPTAuthorizeTab } from "./components/MPTAuthorizeTab";
 import { MPTCreateTab } from "./components/MPTCreateTab";
 import { MPTSetTab } from "./components/MPTSetTab";
@@ -144,9 +144,9 @@ export default function Home() {
                 {activeTab === "submitted-intents" && <SubmittedIntentsTab />}
                 {activeTab === "tickers" && <TickersTab />}
                 {activeTab === "balances" && <BalancesTab />}
+                {activeTab === "payment" && <PaymentTab />}
                 {activeTab === "mpt-create" && <MPTCreateTab />}
                 {activeTab === "mpt-authorize" && <MPTAuthorizeTab />}
-                {activeTab === "mpt-payment" && <MPTPaymentTab />}
                 {activeTab === "mpt-set" && <MPTSetTab />}
                 {activeTab === "mpt-destroy" && <MPTDestroyTab />}
               </div>

@@ -4,58 +4,111 @@ import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import type { Core_ProposeIntentBody } from "custody";
 
+type PaymentType = "XRP" | "IOU" | "MPT";
+type DestinationType = "Address" | "Account" | "Endpoint";
+
+function buildDestination(
+  destinationType: DestinationType,
+  body: Record<string, unknown>,
+) {
+  if (destinationType === "Account") {
+    return { accountId: body.destinationAccountId as string, type: "Account" };
+  }
+  if (destinationType === "Endpoint") {
+    return {
+      endpointId: body.destinationEndpointId as string,
+      type: "Endpoint",
+    };
+  }
+  return { address: body.destinationAddress as string, type: "Address" };
+}
+
+function buildAmount(
+  paymentType: PaymentType,
+  amount: string,
+  body: Record<string, unknown>,
+): unknown {
+  if (paymentType === "IOU") {
+    return {
+      value: amount,
+      currency: body.currency as string,
+      issuer: body.issuer as string,
+    };
+  }
+  if (paymentType === "MPT") {
+    return {
+      value: amount,
+      mpt_issuance_id: body.issuanceId as string,
+    };
+  }
+  // XRP: drops as string
+  return amount;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
       accountId,
-      destinationAddress,
+      paymentType = "XRP",
+      destinationType = "Address",
       domainId,
       amount,
-      issuanceId,
       description,
     } = body;
 
     if (!domainId) {
       return NextResponse.json(
         { error: "domainId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
-
     if (!accountId) {
       return NextResponse.json(
         { error: "accountId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
-
-    if (!destinationAddress) {
-      return NextResponse.json(
-        { error: "destinationAddress is required" },
-        { status: 400 }
-      );
-    }
-
     if (!amount) {
       return NextResponse.json(
         { error: "amount is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
-
-    if (!issuanceId) {
+    if (destinationType === "Address" && !body.destinationAddress) {
       return NextResponse.json(
-        { error: "issuanceId is required" },
-        { status: 400 }
+        { error: "destinationAddress is required" },
+        { status: 400 },
+      );
+    }
+    if (destinationType === "Account" && !body.destinationAccountId) {
+      return NextResponse.json(
+        { error: "destinationAccountId is required" },
+        { status: 400 },
+      );
+    }
+    if (destinationType === "Endpoint" && !body.destinationEndpointId) {
+      return NextResponse.json(
+        { error: "destinationEndpointId is required" },
+        { status: 400 },
+      );
+    }
+    if (paymentType === "IOU" && (!body.currency || !body.issuer)) {
+      return NextResponse.json(
+        { error: "currency and issuer are required for IOU payments" },
+        { status: 400 },
+      );
+    }
+    if (paymentType === "MPT" && !body.issuanceId) {
+      return NextResponse.json(
+        { error: "issuanceId is required for MPT payments" },
+        { status: 400 },
       );
     }
 
-    // Get current user info from the SDK
     const currentUser = await getCurrentUser(domainId);
 
-    // Build the MPT Payment intent request
-    const mptPaymentRequest: Core_ProposeIntentBody = {
+    const paymentRequest: Core_ProposeIntentBody = {
       request: {
         author: {
           id: currentUser.userId,
@@ -67,7 +120,7 @@ export async function POST(request: NextRequest) {
         payload: {
           id: uuidv4(),
           ledgerId: "xrpl-testnet-august-2024",
-          accountId: accountId,
+          accountId,
           parameters: {
             type: "XRPL",
             feeStrategy: {
@@ -77,25 +130,26 @@ export async function POST(request: NextRequest) {
             maximumFee: "10000000",
             memos: [],
             operation: {
-              destination: {
-                address: destinationAddress,
-                type: "Address",
-              },
-              amount: amount,
-              currency: {
-                issuanceId: issuanceId,
-                type: "MultiPurposeToken",
-              },
+              // @ts-expect-error works fine
+              destination: buildDestination(
+                destinationType as DestinationType,
+                body,
+              ),
+              amount: buildAmount(
+                paymentType as PaymentType,
+                amount,
+                body,
+              ) as string,
               type: "Payment",
             },
           },
-          description: description || "MPT Payment",
+          description: description || "Payment",
           customProperties: {
             property1: "flo",
           },
           type: "v0_CreateTransactionOrder",
         },
-        description: description || "MPT Payment",
+        description: description || "Payment",
         customProperties: {
           property1: "flo",
         },
@@ -104,10 +158,10 @@ export async function POST(request: NextRequest) {
     };
 
     const custody = getCustodySDK();
-    const result = await custody.intents.propose(mptPaymentRequest);
+    const result = await custody.intents.propose(paymentRequest);
 
     return NextResponse.json({
-      request: mptPaymentRequest,
+      request: paymentRequest,
       response: result,
     });
   } catch (error) {
@@ -119,7 +173,7 @@ export async function POST(request: NextRequest) {
             ? error.message
             : "Failed to propose payment intent",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
