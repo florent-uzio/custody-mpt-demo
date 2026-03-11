@@ -21,7 +21,8 @@ export type Tab =
   | "mpt-set"
   | "mpt-destroy"
   | "submitted-intents"
-  | "intents-list";
+  | "intents-list"
+  | "users-list";
 
 export const TABS: {
   id: Tab;
@@ -63,6 +64,12 @@ export const TABS: {
     icon: "🗂️",
     category: "Operations",
   },
+  {
+    id: "users-list",
+    label: "Users",
+    icon: "👥",
+    category: "Users",
+  },
   { id: "tickers", label: "Tickers", icon: "📊", category: "Data" },
   { id: "balances", label: "Balances", icon: "💰", category: "Data" },
   { id: "payment", label: "Payment", icon: "💳", category: "XRPL" },
@@ -90,7 +97,8 @@ export function AppSidebar({
   const isNavMode =
     pathname.startsWith("/intents") ||
     pathname.startsWith("/transactions") ||
-    pathname.startsWith("/transfers");
+    pathname.startsWith("/transfers") ||
+    pathname.startsWith("/users");
 
   const groupedTabs = TABS.reduce(
     (acc, tab) => {
@@ -105,12 +113,13 @@ export function AppSidebar({
     if (tab.id === "intents-list") return pathname.startsWith("/intents");
     if (tab.id === "transactions") return pathname.startsWith("/transactions");
     if (tab.id === "transfers") return pathname.startsWith("/transfers");
+    if (tab.id === "users-list") return pathname.startsWith("/users");
     if (isNavMode) return false;
     return activeTab === tab.id;
   };
 
   const handleTabClick = (tab: (typeof TABS)[0]) => {
-    if (tab.id === "intents-list") return;
+    if (tab.id === "intents-list" || tab.id === "users-list") return;
     if (onTabChange) onTabChange(tab.id);
     if (typeof window !== "undefined" && window.innerWidth < 1024) {
       onOpenChange(false);
@@ -186,6 +195,17 @@ export function AppSidebar({
                     if (tab.id === "intents-list") {
                       return (
                         <Link key={tab.id} href="/intents" className={cls}>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
+                          <span className="truncate">{tab.label}</span>
+                        </Link>
+                      );
+                    }
+
+                    if (tab.id === "users-list") {
+                      return (
+                        <Link key={tab.id} href="/users" className={cls}>
                           <span className="text-lg flex-shrink-0">
                             {tab.icon}
                           </span>
