@@ -17,6 +17,16 @@
 - **Rule**: Hooks live in `app/hooks/` — one file per resource/operation (e.g. `useKeypairGenerate.ts`)
 - **Rule**: Components only call `mutate`/`isPending`/`data`/`error` from the hook — no raw fetch in components
 
+## SDK Usage
+
+### Always use the custody SDK types — never invent your own
+- **Rule**: Import and use types directly from `custody` (e.g. `Core_TransactionDetails`, `Core_LedgerTransactionStatus`, `Core_ApiTransactionProcessingDetails`). Never define local interfaces that mirror SDK shapes.
+- **Rule**: Check the actual SDK type definitions before writing UI logic. Field names and shapes often differ from intuition (e.g. `orderReference` has only `id` + `domainId`, not `requestId`/`intentId`).
+- **Rule**: SDK processing statuses are: `Broadcasting`, `Completed`, `Failed`, `Interrupted`, `Pending`, `Prepared`, `Preparing`, `Reserved` — not `Submitted`/`Processing`.
+- **Rule**: SDK ledger statuses are: `Detected`, `Confirmed`, `Expired`, `Replaced` — not `Success`/`Failed`.
+- **Rule**: `Core_LedgerTransactionData.ledgerData` is a discriminated union (`Core_OnLedgerData`). Always narrow by `type` discriminator (e.g. `type === "Xrpl"`) before accessing variant-specific fields like `tokenData`.
+- **Rule**: When in doubt, run `npx tsc --noEmit` to surface type mismatches immediately.
+
 ## Task Management
 
 ### Always write to tasks/ directory

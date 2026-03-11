@@ -6,46 +6,20 @@ import Link from "next/link";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useSidebarContext } from "../../contexts/SidebarContext";
+import { Core_TransactionDetails } from "custody";
 
-interface TransactionDetail {
-  id: string;
-  ledgerId: string;
-  orderReference?: {
-    id?: string;
-    requestId?: string;
-    intentId?: string;
-  };
-  relatedAccounts: Array<{
-    id: string;
-    domainId: string;
-    sender?: boolean;
-  }>;
-  processing?: {
-    status?: string;
-    [key: string]: unknown;
-  };
-  registeredAt: string;
-  ledgerTransactionData?: {
-    ledgerStatus?: string;
-    statusLastUpdatedAt?: string;
-    failure?: string;
-    ledgerTransactionId?: string;
-    blockTime?: string;
-    ledgerData?: {
-      tokenData?: {
-        issuanceId?: string;
-        [key: string]: unknown;
-      };
-      [key: string]: unknown;
-    };
-    [key: string]: unknown;
-  };
-}
-
-type ProcessingStatus = "Completed" | "Failed" | "Submitted" | "Processing";
+type ProcessingStatus =
+  | "Broadcasting"
+  | "Completed"
+  | "Failed"
+  | "Interrupted"
+  | "Pending"
+  | "Prepared"
+  | "Preparing"
+  | "Reserved";
 
 const STATUS_CONFIG: Record<
-  string,
+  ProcessingStatus,
   {
     headerBg: string;
     badgeBg: string;
@@ -68,19 +42,47 @@ const STATUS_CONFIG: Record<
     dot: "bg-red-400",
     border: "border-red-200",
   },
-  Submitted: {
+  Interrupted: {
+    headerBg: "from-orange-500 to-red-400",
+    badgeBg: "bg-orange-100",
+    badgeText: "text-orange-800",
+    dot: "bg-orange-400",
+    border: "border-orange-200",
+  },
+  Broadcasting: {
     headerBg: "from-blue-500 to-blue-600",
     badgeBg: "bg-blue-100",
     badgeText: "text-blue-800",
     dot: "bg-blue-400",
     border: "border-blue-200",
   },
-  Processing: {
+  Pending: {
     headerBg: "from-yellow-400 to-orange-400",
     badgeBg: "bg-yellow-100",
     badgeText: "text-yellow-800",
     dot: "bg-yellow-400",
     border: "border-yellow-200",
+  },
+  Prepared: {
+    headerBg: "from-indigo-400 to-indigo-600",
+    badgeBg: "bg-indigo-100",
+    badgeText: "text-indigo-800",
+    dot: "bg-indigo-400",
+    border: "border-indigo-200",
+  },
+  Preparing: {
+    headerBg: "from-violet-400 to-purple-500",
+    badgeBg: "bg-violet-100",
+    badgeText: "text-violet-800",
+    dot: "bg-violet-400",
+    border: "border-violet-200",
+  },
+  Reserved: {
+    headerBg: "from-gray-400 to-gray-500",
+    badgeBg: "bg-gray-100",
+    badgeText: "text-gray-700",
+    dot: "bg-gray-400",
+    border: "border-gray-200",
   },
 };
 
@@ -96,8 +98,18 @@ const LEDGER_STATUS_STYLES: Record<
   string,
   { bg: string; text: string; dot: string }
 > = {
-  Success: { bg: "bg-green-100", text: "text-green-800", dot: "bg-green-400" },
-  Failed: { bg: "bg-red-100", text: "text-red-800", dot: "bg-red-400" },
+  Confirmed: {
+    bg: "bg-green-100",
+    text: "text-green-800",
+    dot: "bg-green-400",
+  },
+  Detected: { bg: "bg-blue-100", text: "text-blue-800", dot: "bg-blue-400" },
+  Expired: {
+    bg: "bg-orange-100",
+    text: "text-orange-800",
+    dot: "bg-orange-400",
+  },
+  Replaced: { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-400" },
 };
 
 function LedgerStatusBadge({ status }: { status: string }) {
@@ -184,7 +196,7 @@ export default function TransactionDetailPage() {
         const err = await res.json();
         throw new Error(err.error || "Failed to fetch transaction");
       }
-      return res.json() as Promise<TransactionDetail>;
+      return res.json() as Promise<Core_TransactionDetails>;
     },
     enabled: !!transactionId && !!domainId,
     staleTime: 60_000,
@@ -457,45 +469,28 @@ export default function TransactionDetailPage() {
                 {/* Order Reference */}
                 {tx.orderReference && (
                   <InfoCard title="Order Reference" icon="🔗">
-                    {tx.orderReference.id && (
-                      <InfoRow
-                        label="Order ID"
-                        value={
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-xs">
-                              {tx.orderReference.id}
-                            </span>
-                            <CopyButton text={tx.orderReference.id} />
-                          </div>
-                        }
-                      />
-                    )}
-                    {tx.orderReference.requestId && (
-                      <InfoRow
-                        label="Request ID"
-                        value={
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-xs">
-                              {tx.orderReference.requestId}
-                            </span>
-                            <CopyButton text={tx.orderReference.requestId} />
-                          </div>
-                        }
-                      />
-                    )}
-                    {tx.orderReference.intentId && (
-                      <InfoRow
-                        label="Intent ID"
-                        value={
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-xs">
-                              {tx.orderReference.intentId}
-                            </span>
-                            <CopyButton text={tx.orderReference.intentId} />
-                          </div>
-                        }
-                      />
-                    )}
+                    <InfoRow
+                      label="Order ID"
+                      value={
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-xs">
+                            {tx.orderReference.id}
+                          </span>
+                          <CopyButton text={tx.orderReference.id} />
+                        </div>
+                      }
+                    />
+                    <InfoRow
+                      label="Domain ID"
+                      value={
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-xs">
+                            {tx.orderReference.domainId}
+                          </span>
+                          <CopyButton text={tx.orderReference.domainId} />
+                        </div>
+                      }
+                    />
                   </InfoCard>
                 )}
 
@@ -592,28 +587,29 @@ export default function TransactionDetailPage() {
                         }
                       />
                     )}
-                    {tx.ledgerTransactionData.ledgerData?.tokenData
-                      ?.issuanceId && (
-                      <InfoRow
-                        label="Issuance ID"
-                        value={
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-xs break-all">
-                              {
-                                tx.ledgerTransactionData.ledgerData.tokenData
-                                  .issuanceId
-                              }
-                            </span>
-                            <CopyButton
-                              text={
-                                tx.ledgerTransactionData.ledgerData.tokenData
-                                  .issuanceId
-                              }
-                            />
-                          </div>
-                        }
-                      />
-                    )}
+                    {tx.ledgerTransactionData.ledgerData?.type === "Xrpl" &&
+                      tx.ledgerTransactionData.ledgerData.tokenData
+                        ?.issuanceId && (
+                        <InfoRow
+                          label="Issuance ID"
+                          value={
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-xs break-all">
+                                {
+                                  tx.ledgerTransactionData.ledgerData.tokenData
+                                    .issuanceId
+                                }
+                              </span>
+                              <CopyButton
+                                text={
+                                  tx.ledgerTransactionData.ledgerData.tokenData
+                                    .issuanceId
+                                }
+                              />
+                            </div>
+                          }
+                        />
+                      )}
                   </InfoCard>
                 )}
               </div>
