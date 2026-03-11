@@ -561,7 +561,7 @@ export default function TransactionDetailPage() {
                     )}
                     {tx.ledgerTransactionData.ledgerTransactionId && (
                       <InfoRow
-                        label="Tx ID"
+                        label="Tx Hash"
                         value={
                           <div className="flex items-center gap-1.5">
                             <span className="font-mono text-xs break-all">
