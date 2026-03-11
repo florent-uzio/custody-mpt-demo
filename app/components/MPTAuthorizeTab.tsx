@@ -60,14 +60,37 @@ export function MPTAuthorizeTab() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Propose MPT Authorize Intent
-        </h2>
-        <p className="text-sm text-gray-600 mb-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-500 rounded-xl shadow-lg p-6 text-white">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 bg-white/20 rounded-lg">
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold">Propose MPT Authorize Intent</h2>
+        </div>
+        <p className="text-emerald-100 text-sm">
           Create an intent to authorize a Multi-Purpose Token (MPT) for your
           account. This allows the account to hold the specified MPT.
         </p>
+        <div className="mt-4 flex items-center gap-2 text-xs">
+          <span className="px-2 py-1 bg-white/20 rounded-full">MPTokenAuthorize</span>
+          <span className="text-emerald-200">Grants MPT holding permission to an account</span>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
