@@ -86,7 +86,9 @@ export function MPTCreateTab() {
   >([]);
 
   // Metadata mode state
-  const [metadataMode, setMetadataMode] = useState<"structured" | "raw">("structured");
+  const [metadataMode, setMetadataMode] = useState<"structured" | "raw">(
+    "structured",
+  );
   const [rawMetadata, setRawMetadata] = useState<string>("");
   const [rawMetadataError, setRawMetadataError] = useState<string | null>(null);
 
@@ -141,18 +143,28 @@ export function MPTCreateTab() {
   };
 
   // Parse and validate raw JSON metadata
-  const parseRawMetadata = (): { metadata: Record<string, unknown> | null; error: string | null } => {
+  const parseRawMetadata = (): {
+    metadata: Record<string, unknown> | null;
+    error: string | null;
+  } => {
     if (!rawMetadata.trim()) {
       return { metadata: null, error: null };
     }
     try {
       const parsed = JSON.parse(rawMetadata);
-      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      if (
+        typeof parsed !== "object" ||
+        parsed === null ||
+        Array.isArray(parsed)
+      ) {
         return { metadata: null, error: "Metadata must be a JSON object" };
       }
       return { metadata: parsed, error: null };
     } catch (e) {
-      return { metadata: null, error: e instanceof Error ? e.message : "Invalid JSON" };
+      return {
+        metadata: null,
+        error: e instanceof Error ? e.message : "Invalid JSON",
+      };
     }
   };
 
@@ -166,7 +178,8 @@ export function MPTCreateTab() {
   };
 
   const structuredMetadata = buildMetadata();
-  const { metadata: parsedRawMetadata, error: rawParseError } = parseRawMetadata();
+  const { metadata: parsedRawMetadata, error: rawParseError } =
+    parseRawMetadata();
   const finalMetadata = getFinalMetadata();
   const metadataHex = metadataToHex(finalMetadata);
 
@@ -174,7 +187,7 @@ export function MPTCreateTab() {
     setSelectedFlags((prev) =>
       prev.includes(flagValue)
         ? prev.filter((f) => f !== flagValue)
-        : [...prev, flagValue]
+        : [...prev, flagValue],
     );
   };
 
@@ -189,7 +202,7 @@ export function MPTCreateTab() {
   const updateUrl = (
     index: number,
     field: keyof MetadataUrl,
-    value: string
+    value: string,
   ) => {
     const newUrls = [...urls];
     newUrls[index][field] = value;
@@ -207,7 +220,7 @@ export function MPTCreateTab() {
   const updateAdditionalInfo = (
     index: number,
     field: "key" | "value",
-    value: string
+    value: string,
   ) => {
     const newInfo = [...additionalInfo];
     newInfo[index][field] = value;
@@ -324,7 +337,9 @@ export function MPTCreateTab() {
               {accountsLoading ? (
                 <option>Loading accounts...</option>
               ) : accounts.length === 0 ? (
-                <option value="">No accounts found - set Default Domain ID</option>
+                <option value="">
+                  No accounts found - set Default Domain ID
+                </option>
               ) : (
                 accounts.map((account) => (
                   <option key={account.id} value={account.id}>
@@ -362,7 +377,7 @@ export function MPTCreateTab() {
                 value={assetScale}
                 onChange={(e) =>
                   setAssetScale(
-                    Math.max(0, Math.min(255, parseInt(e.target.value) || 0))
+                    Math.max(0, Math.min(255, parseInt(e.target.value) || 0)),
                   )
                 }
                 min={0}
@@ -389,7 +404,10 @@ export function MPTCreateTab() {
                   value={transferFee}
                   onChange={(e) =>
                     setTransferFee(
-                      Math.max(0, Math.min(50000, parseInt(e.target.value) || 0))
+                      Math.max(
+                        0,
+                        Math.min(50000, parseInt(e.target.value) || 0),
+                      ),
                     )
                   }
                   min={0}
@@ -437,7 +455,8 @@ export function MPTCreateTab() {
             </span>
             Token Flags
             <span className="ml-auto text-sm font-normal text-gray-500">
-              Combined: {combinedFlags} (0x{combinedFlags.toString(16).toUpperCase().padStart(8, '0')})
+              Combined: {combinedFlags} (0x
+              {combinedFlags.toString(16).toUpperCase().padStart(8, "0")})
             </span>
           </h3>
 
@@ -466,7 +485,9 @@ export function MPTCreateTab() {
                       ({flag.value})
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">{flag.description}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {flag.description}
+                  </p>
                 </div>
               </label>
             ))}
@@ -544,7 +565,11 @@ export function MPTCreateTab() {
                 />
                 {rawParseError && (
                   <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <svg
+                      className="w-4 h-4"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
                       <path
                         fillRule="evenodd"
                         d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
@@ -555,7 +580,8 @@ export function MPTCreateTab() {
                   </p>
                 )}
                 <p className="mt-2 text-xs text-gray-500">
-                  Enter valid JSON following the XLS-89 schema. The metadata will be hex-encoded before submission.
+                  Enter valid JSON following the XLS-89 schema. The metadata
+                  will be hex-encoded before submission.
                 </p>
               </div>
 
@@ -563,10 +589,17 @@ export function MPTCreateTab() {
               {structuredMetadata && (
                 <button
                   type="button"
-                  onClick={() => setRawMetadata(JSON.stringify(structuredMetadata, null, 2))}
+                  onClick={() =>
+                    setRawMetadata(JSON.stringify(structuredMetadata, null, 2))
+                  }
                   className="text-sm text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -582,298 +615,302 @@ export function MPTCreateTab() {
 
           {/* Structured Form Mode */}
           {metadataMode === "structured" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ticker Symbol (t)
-                </label>
-                <input
-                  type="text"
-                  value={ticker}
-                  onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                  placeholder="TBILL"
-                  maxLength={10}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors uppercase"
-                />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ticker Symbol (t)
+                  </label>
+                  <input
+                    type="text"
+                    value={ticker}
+                    onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                    placeholder="TBILL"
+                    maxLength={10}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors uppercase"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Token Name (n)
+                  </label>
+                  <input
+                    type="text"
+                    value={tokenName}
+                    onChange={(e) => setTokenName(e.target.value)}
+                    placeholder="T-Bill Yield Token"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Token Name (n)
+                  Description (d)
                 </label>
-                <input
-                  type="text"
-                  value={tokenName}
-                  onChange={(e) => setTokenName(e.target.value)}
-                  placeholder="T-Bill Yield Token"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description (d)
-              </label>
-              <textarea
-                value={tokenDescription}
-                onChange={(e) => setTokenDescription(e.target.value)}
-                placeholder="A yield-bearing stablecoin backed by short-term U.S. Treasuries..."
-                rows={2}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors resize-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Issuer Name (in)
-                </label>
-                <input
-                  type="text"
-                  value={issuerName}
-                  onChange={(e) => setIssuerName(e.target.value)}
-                  placeholder="Example Yield Co."
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
+                <textarea
+                  value={tokenDescription}
+                  onChange={(e) => setTokenDescription(e.target.value)}
+                  placeholder="A yield-bearing stablecoin backed by short-term U.S. Treasuries..."
+                  rows={2}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors resize-none"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Icon URL (i)
-                </label>
-                <input
-                  type="url"
-                  value={iconUrl}
-                  onChange={(e) => setIconUrl(e.target.value)}
-                  placeholder="https://example.org/token-icon.png"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
-                />
-              </div>
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Issuer Name (in)
+                  </label>
+                  <input
+                    type="text"
+                    value={issuerName}
+                    onChange={(e) => setIssuerName(e.target.value)}
+                    placeholder="Example Yield Co."
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
+                  />
+                </div>
 
-            {/* Advanced Metadata Toggle */}
-            <button
-              type="button"
-              onClick={() => setShowAdvancedMetadata(!showAdvancedMetadata)}
-              className="flex items-center gap-2 text-sm text-violet-600 hover:text-violet-700 font-medium"
-            >
-              <svg
-                className={`w-4 h-4 transition-transform ${
-                  showAdvancedMetadata ? "rotate-90" : ""
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Icon URL (i)
+                  </label>
+                  <input
+                    type="url"
+                    value={iconUrl}
+                    onChange={(e) => setIconUrl(e.target.value)}
+                    placeholder="https://example.org/token-icon.png"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Advanced Metadata Toggle */}
+              <button
+                type="button"
+                onClick={() => setShowAdvancedMetadata(!showAdvancedMetadata)}
+                className="flex items-center gap-2 text-sm text-violet-600 hover:text-violet-700 font-medium"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-              Advanced Metadata Options
-            </button>
+                <svg
+                  className={`w-4 h-4 transition-transform ${
+                    showAdvancedMetadata ? "rotate-90" : ""
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+                Advanced Metadata Options
+              </button>
 
-            {showAdvancedMetadata && (
-              <div className="space-y-4 pt-4 border-t border-gray-200">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {showAdvancedMetadata && (
+                <div className="space-y-4 pt-4 border-t border-gray-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Access Control (ac)
+                      </label>
+                      <select
+                        value={accessControl}
+                        onChange={(e) => setAccessControl(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors bg-white"
+                      >
+                        <option value="">Select...</option>
+                        <option value="public">Public</option>
+                        <option value="rwa">RWA (Real World Asset)</option>
+                        <option value="kyc">KYC Required</option>
+                        <option value="accredited">Accredited Investors</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Asset Class (as)
+                      </label>
+                      <select
+                        value={assetClass}
+                        onChange={(e) => setAssetClass(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors bg-white"
+                      >
+                        <option value="">Select...</option>
+                        <option value="treasury">Treasury</option>
+                        <option value="stablecoin">Stablecoin</option>
+                        <option value="security">Security</option>
+                        <option value="commodity">Commodity</option>
+                        <option value="utility">Utility</option>
+                        <option value="governance">Governance</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* URLs Section */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Access Control (ac)
-                    </label>
-                    <select
-                      value={accessControl}
-                      onChange={(e) => setAccessControl(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors bg-white"
-                    >
-                      <option value="">Select...</option>
-                      <option value="public">Public</option>
-                      <option value="rwa">RWA (Real World Asset)</option>
-                      <option value="kyc">KYC Required</option>
-                      <option value="accredited">Accredited Investors</option>
-                    </select>
-                  </div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        URLs (us)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addUrl}
+                        className="text-xs text-violet-600 hover:text-violet-700 font-medium"
+                      >
+                        + Add URL
+                      </button>
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Asset Class (as)
-                    </label>
-                    <select
-                      value={assetClass}
-                      onChange={(e) => setAssetClass(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors bg-white"
-                    >
-                      <option value="">Select...</option>
-                      <option value="treasury">Treasury</option>
-                      <option value="stablecoin">Stablecoin</option>
-                      <option value="security">Security</option>
-                      <option value="commodity">Commodity</option>
-                      <option value="utility">Utility</option>
-                      <option value="governance">Governance</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* URLs Section */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      URLs (us)
-                    </label>
-                    <button
-                      type="button"
-                      onClick={addUrl}
-                      className="text-xs text-violet-600 hover:text-violet-700 font-medium"
-                    >
-                      + Add URL
-                    </button>
-                  </div>
-
-                  {urls.length === 0 ? (
-                    <p className="text-sm text-gray-500 italic">
-                      No URLs added. Click "Add URL" to include website links,
-                      documentation, etc.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {urls.map((url, index) => (
-                        <div
-                          key={index}
-                          className="flex gap-2 items-start p-3 bg-gray-50 rounded-lg"
-                        >
-                          <div className="flex-1 grid grid-cols-3 gap-2">
-                            <input
-                              type="url"
-                              value={url.u}
-                              onChange={(e) =>
-                                updateUrl(index, "u", e.target.value)
-                              }
-                              placeholder="URL"
-                              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
-                            />
-                            <input
-                              type="text"
-                              value={url.c}
-                              onChange={(e) =>
-                                updateUrl(index, "c", e.target.value)
-                              }
-                              placeholder="Category (e.g., website)"
-                              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
-                            />
-                            <input
-                              type="text"
-                              value={url.t}
-                              onChange={(e) =>
-                                updateUrl(index, "t", e.target.value)
-                              }
-                              placeholder="Title"
-                              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
-                            />
+                    {urls.length === 0 ? (
+                      <p className="text-sm text-gray-500 italic">
+                        No URLs added. Click "Add URL" to include website links,
+                        documentation, etc.
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {urls.map((url, index) => (
+                          <div
+                            key={index}
+                            className="flex gap-2 items-start p-3 bg-gray-50 rounded-lg"
+                          >
+                            <div className="flex-1 grid grid-cols-3 gap-2">
+                              <input
+                                type="url"
+                                value={url.u}
+                                onChange={(e) =>
+                                  updateUrl(index, "u", e.target.value)
+                                }
+                                placeholder="URL"
+                                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
+                              />
+                              <input
+                                type="text"
+                                value={url.c}
+                                onChange={(e) =>
+                                  updateUrl(index, "c", e.target.value)
+                                }
+                                placeholder="Category (e.g., website)"
+                                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
+                              />
+                              <input
+                                type="text"
+                                value={url.t}
+                                onChange={(e) =>
+                                  updateUrl(index, "t", e.target.value)
+                                }
+                                placeholder="Title"
+                                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeUrl(index)}
+                              className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => removeUrl(index)}
-                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Additional Info Section */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Additional Info (ai)
-                    </label>
-                    <button
-                      type="button"
-                      onClick={addAdditionalInfo}
-                      className="text-xs text-violet-600 hover:text-violet-700 font-medium"
-                    >
-                      + Add Field
-                    </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {additionalInfo.length === 0 ? (
-                    <p className="text-sm text-gray-500 italic">
-                      No additional info. Add custom key-value pairs like
-                      interest_rate, maturity_date, etc.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {additionalInfo.map((info, index) => (
-                        <div
-                          key={index}
-                          className="flex gap-2 items-center p-3 bg-gray-50 rounded-lg"
-                        >
-                          <input
-                            type="text"
-                            value={info.key}
-                            onChange={(e) =>
-                              updateAdditionalInfo(index, "key", e.target.value)
-                            }
-                            placeholder="Key (e.g., interest_rate)"
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
-                          />
-                          <input
-                            type="text"
-                            value={info.value}
-                            onChange={(e) =>
-                              updateAdditionalInfo(
-                                index,
-                                "value",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Value (e.g., 5.00%)"
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeAdditionalInfo(index)}
-                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
+                  {/* Additional Info Section */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Additional Info (ai)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addAdditionalInfo}
+                        className="text-xs text-violet-600 hover:text-violet-700 font-medium"
+                      >
+                        + Add Field
+                      </button>
                     </div>
-                  )}
+
+                    {additionalInfo.length === 0 ? (
+                      <p className="text-sm text-gray-500 italic">
+                        No additional info. Add custom key-value pairs like
+                        interest_rate, maturity_date, etc.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {additionalInfo.map((info, index) => (
+                          <div
+                            key={index}
+                            className="flex gap-2 items-center p-3 bg-gray-50 rounded-lg"
+                          >
+                            <input
+                              type="text"
+                              value={info.key}
+                              onChange={(e) =>
+                                updateAdditionalInfo(
+                                  index,
+                                  "key",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Key (e.g., interest_rate)"
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
+                            />
+                            <input
+                              type="text"
+                              value={info.value}
+                              onChange={(e) =>
+                                updateAdditionalInfo(
+                                  index,
+                                  "value",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Value (e.g., 5.00%)"
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeAdditionalInfo(index)}
+                              className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
           )}
 
           {/* Metadata Preview */}
@@ -881,11 +918,10 @@ export function MPTCreateTab() {
             <div className="mt-6 p-4 bg-gray-900 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-gray-400 font-medium">
-                  Metadata Preview (JSON) — {metadataMode === "raw" ? "Raw Input" : "Structured Form"}
+                  Metadata Preview (JSON) —{" "}
+                  {metadataMode === "raw" ? "Raw Input" : "Structured Form"}
                 </span>
-                <CopyButton
-                  text={JSON.stringify(finalMetadata, null, 2)}
-                />
+                <CopyButton text={JSON.stringify(finalMetadata, null, 2)} />
               </div>
               <pre className="text-xs text-green-400 overflow-x-auto">
                 {JSON.stringify(finalMetadata, null, 2)}
@@ -1002,4 +1038,3 @@ export function MPTCreateTab() {
     </div>
   );
 }
-
