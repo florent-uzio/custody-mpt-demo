@@ -65,10 +65,12 @@ export async function POST(request: NextRequest) {
                 transferFee > 0 && { transferFee }),
               // Maximum amount that can ever be issued
               ...(maximumAmount && { maximumAmount: String(maximumAmount) }),
-              // Combined flags value
-              ...(flags !== undefined && flags > 0 && { flags }),
-              // XLS-89 compliant metadata (hex encoded JSON)
-              ...(metadata && { metadata }),
+              // Array of flag string names (Core_Xrpl_MPTokenIssuanceCreateFlag[])
+              ...(flags?.length > 0 && { flags }),
+              // XLS-89 compliant metadata wrapped for SDK
+              ...(metadata && {
+                metadata,
+              }),
             },
           },
           description: "MPT Issuance Create",
