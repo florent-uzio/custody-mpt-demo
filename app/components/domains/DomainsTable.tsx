@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Core_TrustedDomain, GetDomainsQueryParams } from "custody";
 import { CopyButton } from "../CopyButton";
 import { useDefaultDomain } from "../../contexts/DomainContext";
@@ -127,11 +128,13 @@ export function DomainsTable({
             {domains.map(({ data }) => (
               <tr key={data.id} className="hover:bg-blue-50/40 transition-colors group">
                 <td className="px-4 py-3">
-                  {data.alias ? (
-                    <span className="font-medium text-gray-900">{data.alias}</span>
-                  ) : (
-                    <span className="text-gray-300 italic text-xs">—</span>
-                  )}
+                  <Link href={`/domains/${data.id}`} className="hover:underline">
+                    {data.alias ? (
+                      <span className="font-medium text-blue-600">{data.alias}</span>
+                    ) : (
+                      <span className="text-gray-300 italic text-xs">—</span>
+                    )}
+                  </Link>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-1.5">
