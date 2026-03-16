@@ -21,6 +21,55 @@ const PROCESSING_CONFIG: Record<string, { bg: string; text: string; dot: string 
   Failed: { bg: "bg-red-100", text: "text-red-800", dot: "bg-red-400" },
 };
 
+const SUFFIXES = ["", "K", "M", "B", "T"] as const;
+const MAX_SUFFIX_DIGITS = SUFFIXES.length * 3; // 15 digits → up to trillions
+
+/** Add thousand separators to a digit string without losing precision. */
+function addSeparators(digits: string): string {
+  const parts: string[] = [];
+  for (let i = digits.length; i > 0; i -= 3) {
+    parts.unshift(digits.slice(Math.max(0, i - 3), i));
+  }
+  return parts.join(",");
+}
+
+function formatAmount(raw: string): { short: string; full: string } {
+  const negative = raw.startsWith("-");
+  const digits = negative ? raw.slice(1) : raw;
+  const sign = negative ? "-" : "";
+  const full = sign + addSeparators(digits);
+
+  if (digits.length <= 6) return { short: full, full };
+
+  // For very large numbers (beyond trillions), use scientific notation
+  if (digits.length > MAX_SUFFIX_DIGITS) {
+    const exponent = digits.length - 1;
+    const intPart = digits[0];
+    const fracPart = digits.slice(1, 3).replace(/0+$/, "");
+    const short = `${sign}${intPart}${fracPart ? `.${fracPart}` : ""} × 10^${exponent}`;
+    return { short, full };
+  }
+
+  const tier = Math.floor((digits.length - 1) / 3);
+  const splitIdx = digits.length - tier * 3;
+  const whole = digits.slice(0, splitIdx);
+  const fracStr = digits.slice(splitIdx, splitIdx + 2);
+  const trimmed = fracStr.replace(/0+$/, "");
+  const short = `${sign}${addSeparators(whole)}${trimmed ? `.${trimmed}` : ""}${SUFFIXES[tier]}`;
+
+  return { short, full };
+}
+
+function AmountDisplay({ raw, className }: { raw: string; className?: string }) {
+  const { short, full } = formatAmount(raw);
+  const isCompact = short !== full;
+  return (
+    <span className={className} title={isCompact ? full : undefined}>
+      {short}
+    </span>
+  );
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
     year: "numeric",
@@ -306,29 +355,46 @@ export default function AccountDetailPage() {
                 </InfoCard>
 
                 {/* Balances */}
-                <InfoCard title="Balances" icon="💰">
+                <InfoCard title={`Balances${balances.length > 0 ? ` (${balances.length})` : ""}`} icon="💰">
                   {balances.length === 0 ? (
                     <p className="text-sm text-gray-400 italic py-2">No balances found</p>
                   ) : (
                     balances.map((b, idx) => {
                       const ticker = tickersMap?.get(b.tickerId);
                       return (
-                        <div key={idx} className="py-3 border-b border-gray-50 last:border-0">
-                          <div className="flex items-center justify-between">
-                            <div className="flex flex-col gap-0.5">
-                              <span className="text-sm font-medium text-gray-800">
-                                {ticker?.data.name ?? b.tickerId}
+                        <div key={idx} className="border border-gray-200 rounded-lg p-4 mb-3 last:mb-0">
+                          <div className="flex items-center gap-2 mb-3 min-w-0">
+                            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                              <span className="text-sm font-semibold text-gray-900 truncate" title={ticker?.data.name ?? b.tickerId}>
+                                {ticker?.data.name ?? (b.tickerId.length > 16 ? `${b.tickerId.slice(0, 8)}…${b.tickerId.slice(-4)}` : b.tickerId)}
                               </span>
-                              {ticker && (
-                                <span className="text-xs text-gray-400 font-mono">
-                                  {ticker.data.symbol && `${ticker.data.symbol} · `}{b.tickerId}
-                                </span>
-                              )}
+                              <span className="text-xs text-gray-400 font-mono truncate" title={b.tickerId}>
+                                {ticker?.data.symbol && `${ticker.data.symbol} · `}{b.tickerId}
+                              </span>
                             </div>
-                            <span className="text-sm font-semibold text-gray-800 tabular-nums">
-                              {parseInt(b.totalAmount).toLocaleString()}
-                            </span>
+                            <CopyButton text={b.tickerId} />
                           </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-0.5">Total</p>
+                              <AmountDisplay raw={b.totalAmount} className="text-sm font-semibold text-gray-900 tabular-nums" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-0.5">Available</p>
+                              <AmountDisplay raw={b.availableAmount} className="text-sm font-semibold text-gray-900 tabular-nums" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-0.5">Reserved</p>
+                              <AmountDisplay raw={b.reservedAmount} className="text-sm font-semibold text-orange-600 tabular-nums" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-0.5">Quarantined</p>
+                              <AmountDisplay raw={b.quarantinedAmount} className="text-sm font-semibold text-red-600 tabular-nums" />
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400 mt-3 pt-3 border-t border-gray-100">
+                            Last updated: {formatDate(b.lastUpdatedAt)}
+                          </p>
                         </div>
                       );
                     })

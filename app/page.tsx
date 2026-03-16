@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { RequestsTab } from "./components/RequestsTab";
-import { BalancesTab } from "./components/BalancesTab";
 import { TransfersTab } from "./components/TransfersTab";
 import { TickersTab } from "./components/TickersTab";
 import { PaymentTab } from "./components/PaymentTab";
@@ -144,7 +143,6 @@ export default function Home() {
                 {activeTab === "transactions" && <TransactionsTab />}
                 {activeTab === "submitted-intents" && <SubmittedIntentsTab />}
                 {activeTab === "tickers" && <TickersTab />}
-                {activeTab === "balances" && <BalancesTab />}
                 {activeTab === "payment" && <PaymentTab />}
                 {activeTab === "mpt-create" && <MPTCreateTab />}
                 {activeTab === "mpt-authorize" && <MPTAuthorizeTab />}

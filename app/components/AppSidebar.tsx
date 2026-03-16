@@ -14,7 +14,6 @@ export type Tab =
   | "transfers"
   | "transactions"
   | "tickers"
-  | "balances"
   | "mpt-create"
   | "mpt-authorize"
   | "payment"
@@ -79,7 +78,6 @@ export const TABS: {
     category: "Users",
   },
   { id: "tickers", label: "Tickers", icon: "📊", category: "Data" },
-  { id: "balances", label: "Balances", icon: "💰", category: "Data" },
   { id: "payment", label: "Payment", icon: "💳", category: "XRPL" },
   { id: "mpt-create", label: "MPT Create", icon: "🪙", category: "XRPL" },
   { id: "mpt-authorize", label: "MPT Authorize", icon: "✅", category: "XRPL" },
