@@ -7,6 +7,7 @@ import { Core_ApiAccount, Core_AddressesCollection, Core_BalancesCollection } fr
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useSidebarContext } from "../../contexts/SidebarContext";
+import { useTickers } from "../../hooks/useTickers";
 
 const LOCK_CONFIG: Record<string, { bg: string; text: string; dot: string }> = {
   Unlocked: { bg: "bg-green-100", text: "text-green-800", dot: "bg-green-400" },
@@ -137,6 +138,9 @@ export default function AccountDetailPage() {
 
   const addresses = addressesData?.items ?? [];
   const balances = balancesData?.items ?? [];
+
+  const tickerIds = balances.map((b) => b.tickerId);
+  const { data: tickersMap } = useTickers(tickerIds);
 
   const lockStatus = account?.data.lock;
   const processingStatus = account?.additionalDetails?.processing?.status;
@@ -306,14 +310,28 @@ export default function AccountDetailPage() {
                   {balances.length === 0 ? (
                     <p className="text-sm text-gray-400 italic py-2">No balances found</p>
                   ) : (
-                    balances.map((b, idx) => (
-                      <div key={idx} className="py-3 border-b border-gray-50 last:border-0 flex items-center justify-between">
-                        <span className="text-xs font-mono text-gray-500">{b.tickerId}</span>
-                        <span className="text-sm font-semibold text-gray-800">
-                          {parseInt(b.totalAmount).toLocaleString()}
-                        </span>
-                      </div>
-                    ))
+                    balances.map((b, idx) => {
+                      const ticker = tickersMap?.get(b.tickerId);
+                      return (
+                        <div key={idx} className="py-3 border-b border-gray-50 last:border-0">
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-sm font-medium text-gray-800">
+                                {ticker?.data.name ?? b.tickerId}
+                              </span>
+                              {ticker && (
+                                <span className="text-xs text-gray-400 font-mono">
+                                  {ticker.data.symbol && `${ticker.data.symbol} · `}{b.tickerId}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-sm font-semibold text-gray-800 tabular-nums">
+                              {parseInt(b.totalAmount).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
                   )}
                 </InfoCard>
 
