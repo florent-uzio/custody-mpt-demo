@@ -102,6 +102,7 @@ export function AppSidebar({
   const { defaultDomainId, setDefaultDomainId } = useDefaultDomain();
   const pathname = usePathname();
   const isNavMode =
+    pathname.startsWith("/accounts") ||
     pathname.startsWith("/intents") ||
     pathname.startsWith("/transactions") ||
     pathname.startsWith("/transfers") ||
@@ -117,6 +118,7 @@ export function AppSidebar({
   );
 
   const isActive = (tab: (typeof TABS)[0]) => {
+    if (tab.id === "accounts") return pathname.startsWith("/accounts");
     if (tab.id === "intents-list") return pathname.startsWith("/intents");
     if (tab.id === "transactions") return pathname.startsWith("/transactions");
     if (tab.id === "transfers") return pathname.startsWith("/transfers");
