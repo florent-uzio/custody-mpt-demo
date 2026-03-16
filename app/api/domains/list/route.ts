@@ -14,7 +14,7 @@ export async function POST() {
         error:
           error instanceof Error ? error.message : "Failed to list domains",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
