@@ -46,6 +46,32 @@ export interface CurrentUserInfo {
  * @returns CurrentUserInfo with userId, domainId, and publicKey
  * @throws Error if user has no domains or domain not found
  */
+/**
+ * Get the ledger ID for a given account by fetching account details.
+ * Falls back to the first activated ledger if data.ledgerId is not set.
+ */
+export async function getAccountLedgerId(
+  domainId: string,
+  accountId: string,
+): Promise<string> {
+  const custody = getCustodySDK();
+  const account = await custody.accounts.get({ domainId, accountId });
+
+  const ledgerId =
+    account?.data?.ledgerId ??
+    account?.additionalDetails?.ledgers?.find(
+      (l: { status: string; ledgerId: string }) => l.status === "Activated",
+    )?.ledgerId;
+
+  if (!ledgerId) {
+    throw new Error(
+      `No ledger ID found for account ${accountId} in domain ${domainId}`,
+    );
+  }
+
+  return ledgerId;
+}
+
 export async function getCurrentUser(
   targetDomainId?: string
 ): Promise<CurrentUserInfo> {

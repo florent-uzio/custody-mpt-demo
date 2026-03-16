@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCustodySDK } from "@/app/lib/custody";
+import { getCustodySDK, getAccountLedgerId } from "@/app/lib/custody";
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import type { Core_ProposeIntentBody } from "custody";
@@ -33,6 +33,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const ledgerId = await getAccountLedgerId(domainId, accountId);
+
     // Build the MPT Issuance Create intent request
     // Following the XRPL MPTokenIssuanceCreate transaction format
     const mptCreateRequest: Core_ProposeIntentBody = {
@@ -46,7 +48,7 @@ export async function POST(request: NextRequest) {
         id: uuidv4(),
         payload: {
           id: uuidv4(),
-          ledgerId: "xrpl-testnet-august-2024",
+          ledgerId,
           accountId: accountId,
           parameters: {
             type: "XRPL",
