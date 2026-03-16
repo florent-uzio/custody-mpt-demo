@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useDefaultDomain } from "../contexts/DomainContext";
@@ -69,6 +69,35 @@ function formatAmount(amount: string) {
   return parseInt(amount).toLocaleString();
 }
 
+const MAX_VALUE_CHARS = 14;
+
+function TruncatedValue({ amount }: { amount: string }) {
+  const formatted = formatAmount(amount);
+  const isTruncated = formatted.length > MAX_VALUE_CHARS;
+  const display = isTruncated ? formatted.slice(0, MAX_VALUE_CHARS) + "…" : formatted;
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  if (!isTruncated) return <span>{formatted}</span>;
+
+  return (
+    <span className="relative inline-block" ref={ref}>
+      <span
+        className="cursor-default underline decoration-dotted decoration-gray-400"
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+      >
+        {display}
+      </span>
+      {visible && (
+        <span className="absolute bottom-full left-0 mb-1.5 z-50 whitespace-nowrap bg-gray-900 text-white text-xs font-mono px-2.5 py-1.5 rounded-lg shadow-lg pointer-events-none">
+          {formatted}
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function TransfersTab() {
   const { defaultDomainId } = useDefaultDomain();
   const [kind, setKind] = useState<string>("");
@@ -100,7 +129,9 @@ export function TransfersTab() {
       staleTime: 60_000,
     });
 
-  const items = data?.items ?? [];
+  const items = (data?.items ?? []).slice().sort(
+    (a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime()
+  );
 
   return (
     <div className="space-y-5">
@@ -252,7 +283,7 @@ export function TransfersTab() {
                       </span>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell text-sm text-gray-700 font-medium">
-                      {formatAmount(item.value)}
+                      <TruncatedValue amount={item.value} />
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell text-xs text-gray-500 whitespace-nowrap">
                       {formatDate(item.registeredAt)}
