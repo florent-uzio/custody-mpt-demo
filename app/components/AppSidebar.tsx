@@ -23,7 +23,8 @@ export type Tab =
   | "intents-list"
   | "users-list"
   | "users-me"
-  | "keypair";
+  | "keypair"
+  | "config";
 
 export const TABS: {
   id: Tab;
@@ -31,6 +32,7 @@ export const TABS: {
   icon: string;
   category: string;
 }[] = [
+  { id: "config", label: "Configuration", icon: "⚙️", category: "Settings" },
   { id: "domains", label: "Domains", icon: "🌐", category: "General" },
   { id: "accounts", label: "Accounts", icon: "👤", category: "General" },
   {
@@ -129,7 +131,12 @@ export function AppSidebar({
   };
 
   const handleTabClick = (tab: (typeof TABS)[0]) => {
-    if (tab.id === "intents-list" || tab.id === "users-list" || tab.id === "users-me") return;
+    if (
+      tab.id === "intents-list" ||
+      tab.id === "users-list" ||
+      tab.id === "users-me"
+    )
+      return;
     if (onTabChange) onTabChange(tab.id);
     if (typeof window !== "undefined" && window.innerWidth < 1024) {
       onOpenChange(false);
@@ -216,7 +223,9 @@ export function AppSidebar({
                     if (tab.id === "users-list") {
                       return (
                         <Link key={tab.id} href="/users" className={cls}>
-                          <span className="text-lg flex-shrink-0">{tab.icon}</span>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
                           <span className="truncate">{tab.label}</span>
                         </Link>
                       );
@@ -225,7 +234,9 @@ export function AppSidebar({
                     if (tab.id === "users-me") {
                       return (
                         <Link key={tab.id} href="/users/me" className={cls}>
-                          <span className="text-lg flex-shrink-0">{tab.icon}</span>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
                           <span className="truncate">{tab.label}</span>
                         </Link>
                       );

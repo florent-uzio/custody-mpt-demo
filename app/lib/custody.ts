@@ -1,13 +1,18 @@
 import { RippleCustody, type Core_MeReference } from "custody";
+import { getConfigValue } from "./config";
 
 let custodyInstance: RippleCustody | null = null;
 
+export function resetCustodySDK(): void {
+  custodyInstance = null;
+}
+
 export function getCustodySDK(): RippleCustody {
   if (!custodyInstance) {
-    const authUrl = process.env.AUTH_URL;
-    const apiUrl = process.env.API_URL;
-    const privateKey = process.env.PRIVATE_KEY || "";
-    const publicKey = process.env.PUBLIC_KEY || "";
+    const authUrl = getConfigValue("AUTH_URL");
+    const apiUrl = getConfigValue("API_URL");
+    const privateKey = getConfigValue("PRIVATE_KEY");
+    const publicKey = getConfigValue("PUBLIC_KEY");
 
     if (!authUrl || !apiUrl) {
       throw new Error(
