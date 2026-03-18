@@ -1,44 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { RippleCustody } from "custody";
+import { getCustodySDK, getAccountLedgerId } from "@/app/lib/custody";
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import type { Core_ProposeIntentBody } from "custody";
 
-const DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
 const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
-
-// Initialize RippleCustody SDK (server-side only)
-function getCustodySDK() {
-  const authUrl = process.env.AUTH_URL;
-  const apiUrl = process.env.API_URL;
-  const privateKey = process.env.PRIVATE_KEY || "";
-  const publicKey = process.env.PUBLIC_KEY || "";
-
-  if (!authUrl || !apiUrl) {
-    throw new Error(
-      "Missing required environment variables: AUTH_URL and API_URL"
-    );
-  }
-
-  return new RippleCustody({
-    authUrl,
-    apiUrl,
-    privateKey,
-    publicKey,
-  });
-}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { issuanceId, accountId } = body;
-
-    if (!issuanceId) {
-      return NextResponse.json(
-        { error: "issuanceId is required" },
-        { status: 400 }
-      );
-    }
+    const { accountId, domainId, issuanceId } = body;
 
     if (!accountId) {
       return NextResponse.json(
@@ -47,19 +18,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build the MPT Authorize intent request
-    const mptAuthorizeRequest: Core_ProposeIntentBody = {
+    if (!domainId) {
+      return NextResponse.json(
+        { error: "domainId is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!issuanceId) {
+      return NextResponse.json(
+        { error: "issuanceId is required" },
+        { status: 400 }
+      );
+    }
+
+    const ledgerId = await getAccountLedgerId(domainId, accountId);
+
+    // Build the MPT Issuance Destroy intent request
+    // Following the XRPL MPTokenIssuanceDestroy transaction format
+    const mptDestroyRequest: Core_ProposeIntentBody = {
       request: {
         author: {
           id: CURRENT_USER_ID,
-          domainId: DOMAIN_ID,
+          domainId,
         },
         expiryAt: dayjs().add(1, "day").toISOString(),
-        targetDomainId: DOMAIN_ID,
+        targetDomainId: domainId,
         id: uuidv4(),
         payload: {
           id: uuidv4(),
-          ledgerId: "xrpl-testnet-august-2024",
+          ledgerId,
           accountId: accountId,
           parameters: {
             type: "XRPL",
@@ -70,37 +58,39 @@ export async function POST(request: NextRequest) {
             maximumFee: "10000000",
             memos: [],
             operation: {
+              type: "MPTokenIssuanceDestroy",
               issuanceId: issuanceId,
-              flags: [],
-              type: "MPTokenAuthorize",
             },
           },
-          description: "Test MPT Authorize",
+          description: "MPT Issuance Destroy",
           customProperties: {
-            property1: "flo",
+            property1: "mpt-destroy",
           },
           type: "v0_CreateTransactionOrder",
         },
-        description: "Transfer order creation intent",
+        description: "Destroy MPT Issuance",
         customProperties: {
-          property1: "flo",
+          property1: "mpt-issuance-destroy",
         },
         type: "Propose",
       },
     };
 
     const custody = getCustodySDK();
-    const result = await custody.intents.propose(mptAuthorizeRequest);
+    const result = await custody.intents.propose(mptDestroyRequest);
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      request: mptDestroyRequest,
+      response: result,
+    });
   } catch (error) {
-    console.error("Error proposing intent:", error);
+    console.error("Error destroying MPT issuance:", error);
     return NextResponse.json(
       {
         error:
           error instanceof Error
             ? error.message
-            : "Failed to propose intent",
+            : "Failed to destroy MPT issuance",
       },
       { status: 500 }
     );

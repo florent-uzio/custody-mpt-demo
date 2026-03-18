@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
+import { useDefaultDomain } from "../contexts/DomainContext";
 
 export function RequestsTab() {
   const [requestId, setRequestId] = useState("");
-  const [domainId, setDomainId] = useState(
-    "5cd224fe-193e-8bce-c94c-c6c05245e2d1"
-  );
+  const { defaultDomainId } = useDefaultDomain();
+  const [domainId, setDomainId] = useState(defaultDomainId);
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);

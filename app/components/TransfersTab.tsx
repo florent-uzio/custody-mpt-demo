@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { JsonViewer } from "./JsonViewer";
-import { useAccounts } from "../hooks/useAccounts";
-import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
-
-const DEFAULT_DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
+import { useState, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { useDefaultDomain } from "../contexts/DomainContext";
+import { CopyButton } from "./CopyButton";
 
 interface TransferItem {
   id: string;
@@ -35,362 +34,269 @@ interface TransfersResponse {
   nextStartingAfter?: string;
 }
 
-export function TransfersTab() {
-  const { accounts, loading: accountsLoading } = useAccounts();
-  const [domainId, setDomainId] = useState(DEFAULT_DOMAIN_ID);
-  const [kind, setKind] = useState<string>("Transfer");
-  const [quarantined, setQuarantined] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState<TransfersResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+const KIND_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
+  Transfer: { bg: "bg-blue-50",   text: "text-blue-700",   dot: "bg-blue-500" },
+  Fee:      { bg: "bg-yellow-50", text: "text-yellow-700", dot: "bg-yellow-500" },
+  Recovery: { bg: "bg-purple-50", text: "text-purple-700", dot: "bg-purple-500" },
+};
 
-  // Release transfers state
-  const [selectedTransferIds, setSelectedTransferIds] = useState<string[]>([]);
-  const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
-  const [releaseLoading, setReleaseLoading] = useState(false);
-  const [releaseResponse, setReleaseResponse] = useState<{
-    request: unknown;
-    response: unknown;
-  } | null>(null);
-  const [releaseError, setReleaseError] = useState<string | null>(null);
-  const [showRequestModal, setShowRequestModal] = useState(false);
+function KindBadge({ kind }: { kind: string }) {
+  const s = KIND_STYLES[kind] ?? { bg: "bg-gray-100", text: "text-gray-600", dot: "bg-gray-400" };
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${s.bg} ${s.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+      {kind}
+    </span>
+  );
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setResponse(null);
+function truncateId(id: string) {
+  if (id.length <= 16) return id;
+  return `${id.slice(0, 8)}…${id.slice(-4)}`;
+}
 
-    try {
-      const res = await fetch("/api/transactions/transfers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          domainId,
-          kind: kind || undefined,
-          quarantined,
-        }),
-      });
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to get transfers");
-      }
+function formatAmount(amount: string) {
+  return parseInt(amount).toLocaleString();
+}
 
-      const result = await res.json();
-      setResponse(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
+const MAX_VALUE_CHARS = 14;
 
-  const formatAmount = (amount: string) => {
-    return parseInt(amount).toLocaleString();
-  };
+function TruncatedValue({ amount }: { amount: string }) {
+  const formatted = formatAmount(amount);
+  const isTruncated = formatted.length > MAX_VALUE_CHARS;
+  const display = isTruncated ? formatted.slice(0, MAX_VALUE_CHARS) + "…" : formatted;
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
-
-  const handleTransferSelect = (transferId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedTransferIds([...selectedTransferIds, transferId]);
-    } else {
-      setSelectedTransferIds(
-        selectedTransferIds.filter((id) => id !== transferId)
-      );
-    }
-  };
-
-  const handleReleaseTransfers = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setReleaseLoading(true);
-    setReleaseError(null);
-    setReleaseResponse(null);
-
-    try {
-      const res = await fetch("/api/intents/release-transfers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          accountId,
-          transferIds: selectedTransferIds,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to release transfers");
-      }
-
-      const result = await res.json();
-      setReleaseResponse(result);
-      setShowRequestModal(true);
-    } catch (err) {
-      setReleaseError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setReleaseLoading(false);
-    }
-  };
-
-  const quarantinedTransfers =
-    response?.items.filter((item) => item.quarantined) || [];
+  if (!isTruncated) return <span>{formatted}</span>;
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Transfers
-        </h2>
-        <p className="text-sm text-gray-600 mb-6">
-          View transfer transactions for a specific domain.
-        </p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="domainId"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Domain ID
-            </label>
-            <input
-              type="text"
-              id="domainId"
-              value={domainId}
-              onChange={(e) => setDomainId(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              placeholder="Enter domain ID"
-              required
-            />
-          </div>
+    <span className="relative inline-block" ref={ref}>
+      <span
+        className="cursor-default underline decoration-dotted decoration-gray-400"
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+      >
+        {display}
+      </span>
+      {visible && (
+        <span className="absolute bottom-full left-0 mb-1.5 z-50 whitespace-nowrap bg-gray-900 text-white text-xs font-mono px-2.5 py-1.5 rounded-lg shadow-lg pointer-events-none">
+          {formatted}
+        </span>
+      )}
+    </span>
+  );
+}
 
-          <div>
-            <label
-              htmlFor="kind"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Kind (Optional)
-            </label>
-            <select
-              id="kind"
-              value={kind}
-              onChange={(e) => setKind(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-            >
-              <option value="">All</option>
-              <option value="Transfer">Transfer</option>
-              <option value="Fee">Fee</option>
-              <option value="Recovery">Recovery</option>
-            </select>
-          </div>
+export function TransfersTab() {
+  const { defaultDomainId } = useDefaultDomain();
+  const [kind, setKind] = useState<string>("");
+  const [quarantinedFilter, setQuarantinedFilter] = useState<string>("true");
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="quarantined"
-              checked={quarantined}
-              onChange={(e) => setQuarantined(e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="quarantined"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Quarantined
-            </label>
-          </div>
+  const quarantinedParam =
+    quarantinedFilter === "true" ? true : quarantinedFilter === "false" ? false : undefined;
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors shadow-sm"
+  const { data, isLoading, isError, error, isFetching, refetch } =
+    useQuery<TransfersResponse>({
+      queryKey: ["transfers", defaultDomainId, kind, quarantinedFilter],
+      queryFn: async () => {
+        const res = await fetch("/api/transactions/transfers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            domainId: defaultDomainId,
+            kind: kind || undefined,
+            quarantined: quarantinedParam,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "Failed to get transfers");
+        }
+        return res.json();
+      },
+      enabled: !!defaultDomainId,
+      staleTime: 60_000,
+    });
+
+  const items = (data?.items ?? []).slice().sort(
+    (a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime()
+  );
+
+  return (
+    <div className="space-y-5">
+      {/* Header + filters */}
+      <div className="flex items-start justify-between gap-4">
+        <h2 className="text-xl font-semibold text-gray-900">Transfers</h2>
+        <button
+          onClick={() => refetch()}
+          disabled={isFetching || !defaultDomainId}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-40"
+          title="Refresh"
+        >
+          <svg
+            className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Loading...
-              </span>
-            ) : (
-              "Get Transfers"
-            )}
-          </button>
-        </form>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
+          </svg>
+          {data && (
+            <span className="text-xs text-gray-400">{data.count} total</span>
+          )}
+        </button>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <svg
-              className="w-5 h-5 text-red-600 mr-2"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <p className="text-sm text-red-800 font-medium">Error: {error}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">
+            Kind
+          </label>
+          <select
+            value={kind}
+            onChange={(e) => setKind(e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
+          >
+            <option value="">All kinds</option>
+            <option value="Transfer">Transfer</option>
+            <option value="Fee">Fee</option>
+            <option value="Recovery">Recovery</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">
+            Quarantined
+          </label>
+          <select
+            value={quarantinedFilter}
+            onChange={(e) => setQuarantinedFilter(e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
+          >
+            <option value="">Any</option>
+            <option value="true">Quarantined</option>
+            <option value="false">Not quarantined</option>
+          </select>
+        </div>
+      </div>
+
+      {/* No domain banner */}
+      {!defaultDomainId && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-700">
+          Set a <strong>Default Domain ID</strong> in the sidebar to load transfers.
+        </div>
+      )}
+
+      {/* Error */}
+      {isError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-2">
+          <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+          <p className="text-sm text-red-700">
+            {error instanceof Error ? error.message : "Failed to load transfers"}
+          </p>
+        </div>
+      )}
+
+      {/* Loading skeleton */}
+      {isLoading && (
+        <div className="rounded-lg border border-gray-200 overflow-hidden">
+          <div className="divide-y divide-gray-50">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="px-4 py-3.5 flex items-center gap-4 animate-pulse">
+                <div className="h-6 w-20 bg-gray-100 rounded-full" />
+                <div className="h-4 w-36 bg-gray-100 rounded" />
+                <div className="h-5 w-16 bg-gray-100 rounded hidden sm:block" />
+                <div className="h-4 w-32 bg-gray-100 rounded hidden lg:block ml-auto" />
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {response && response.items && response.items.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-x-auto">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Transfers ({response.count}{" "}
-            {response.count === 1 ? "item" : "items"})
-          </h3>
+      {/* Table */}
+      {!isLoading && items.length > 0 && (
+        <div className="rounded-lg border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ID
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Transaction ID
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ticker ID
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Kind
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Value
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Transfer ID
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                     Quarantined
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Senders
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                    Value
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Recipient
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                     Registered At
                   </th>
+                  <th className="w-8" />
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {response.items.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="text-sm font-mono text-gray-900 break-all max-w-xs">
-                        {item.id}
-                      </p>
+              <tbody className="divide-y divide-gray-50">
+                {items.map((item) => (
+                  <tr key={item.id} className="hover:bg-blue-50/40 transition-colors group">
+                    <td className="px-4 py-3">
+                      <KindBadge kind={item.kind} />
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {item.transactionId ? (
-                        <p className="text-sm font-mono text-gray-900 break-all max-w-xs">
-                          {item.transactionId}
-                        </p>
-                      ) : (
-                        <span className="text-sm text-gray-400">-</span>
-                      )}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-xs text-gray-700">
+                          {truncateId(item.id)}
+                        </span>
+                        <CopyButton text={item.id} />
+                      </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="text-sm font-mono text-gray-900 break-all max-w-xs">
-                        {item.tickerId}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+                    <td className="px-4 py-3 hidden sm:table-cell">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          item.kind === "Transfer"
-                            ? "bg-blue-100 text-blue-800"
-                            : item.kind === "Fee"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-purple-100 text-purple-800"
-                        }`}
-                      >
-                        {item.kind}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="text-sm font-semibold text-gray-900">
-                        {formatAmount(item.value)}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
                           item.quarantined
-                            ? "bg-red-100 text-red-800"
-                            : "bg-green-100 text-green-800"
+                            ? "bg-red-50 text-red-700"
+                            : "bg-green-50 text-green-700"
                         }`}
                       >
+                        <span className={`w-1.5 h-1.5 rounded-full ${item.quarantined ? "bg-red-500" : "bg-green-500"}`} />
                         {item.quarantined ? "Yes" : "No"}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm text-gray-900 space-y-1">
-                        {item.senders.map((sender, idx) => (
-                          <div key={idx} className="font-mono text-xs">
-                            <p className="text-gray-600">
-                              {sender.accountId
-                                ? `${sender.accountId.substring(0, 8)}...`
-                                : "-"}
-                            </p>
-                            <p className="text-gray-500">
-                              {sender.amount
-                                ? formatAmount(sender.amount)
-                                : "-"}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
+                    <td className="px-4 py-3 hidden md:table-cell text-sm text-gray-700 font-medium">
+                      <TruncatedValue amount={item.value} />
                     </td>
-                    <td className="px-4 py-3">
-                      {item.recipient ? (
-                        <div className="text-sm text-gray-900">
-                          <p className="font-mono text-xs text-gray-600">
-                            {item.recipient.accountId
-                              ? `${item.recipient.accountId.substring(0, 8)}...`
-                              : "-"}
-                          </p>
-                          <p className="text-gray-500">
-                            {item.recipient.amount
-                              ? formatAmount(item.recipient.amount)
-                              : "-"}
-                          </p>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-400">-</span>
-                      )}
+                    <td className="px-4 py-3 hidden lg:table-cell text-xs text-gray-500 whitespace-nowrap">
+                      {formatDate(item.registeredAt)}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="text-sm text-gray-500">
-                        {formatDate(item.registeredAt)}
-                      </p>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/transfers/${item.id}?domainId=${defaultDomainId}`}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-300 group-hover:text-blue-500 group-hover:bg-blue-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
                     </td>
                   </tr>
                 ))}
@@ -400,213 +306,19 @@ export function TransfersTab() {
         </div>
       )}
 
-      {response && response.items && response.items.length === 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-sm text-yellow-800">
-            No transfers found for the specified criteria.
-          </p>
-        </div>
-      )}
-
-      {response && (
-        <div>
-          <JsonViewer data={response} title="Full Transfers Response" />
-        </div>
-      )}
-
-      {/* Release Quarantined Transfers Section */}
-      {response && quarantinedTransfers.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Release Quarantined Transfers
-          </h2>
-          <p className="text-sm text-gray-600 mb-6">
-            Select quarantined transfers to release and create a release intent.
-          </p>
-          <form onSubmit={handleReleaseTransfers} className="space-y-4">
-            <div>
-              <label
-                htmlFor="accountId"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Account ID
-              </label>
-              <select
-                id="accountId"
-                value={accountId}
-                onChange={(e) => setAccountId(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
-                required
-                disabled={accountsLoading}
-              >
-                {accountsLoading ? (
-                  <option>Loading accounts...</option>
-                ) : (
-                  accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.alias} ({account.id})
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Quarantined Transfers ({selectedTransferIds.length}{" "}
-                selected)
-              </label>
-              <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto">
-                {quarantinedTransfers.length === 0 ? (
-                  <p className="text-sm text-gray-500">
-                    No quarantined transfers found.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {quarantinedTransfers.map((transfer) => (
-                      <label
-                        key={transfer.id}
-                        className="flex items-start p-2 hover:bg-gray-50 rounded cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedTransferIds.includes(transfer.id)}
-                          onChange={(e) =>
-                            handleTransferSelect(transfer.id, e.target.checked)
-                          }
-                          className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <div className="ml-3 flex-1">
-                          <p className="text-sm font-mono text-gray-900">
-                            {transfer.id}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Ticker: {transfer.tickerId.substring(0, 16)}... | Value:{" "}
-                            {formatAmount(transfer.value)} | Kind: {transfer.kind}
-                          </p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={releaseLoading || selectedTransferIds.length === 0}
-              className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition-colors shadow-sm"
-            >
-              {releaseLoading ? (
-                <span className="flex items-center justify-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Releasing...
-                </span>
-              ) : (
-                `Release ${selectedTransferIds.length} Transfer${selectedTransferIds.length !== 1 ? "s" : ""}`
-              )}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {releaseError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <svg
-              className="w-5 h-5 text-red-600 mr-2"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
+      {/* Empty state */}
+      {!isLoading && data && items.length === 0 && (
+        <div className="rounded-lg border border-gray-200 p-12 flex flex-col items-center text-center">
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
-            <p className="text-sm text-red-800 font-medium">
-              Error: {releaseError}
-            </p>
           </div>
+          <p className="text-gray-600 font-medium text-sm">No transfers found</p>
+          <p className="text-gray-400 text-xs mt-1">Try adjusting the filters above</p>
         </div>
       )}
 
-      {/* Request Modal */}
-      {showRequestModal && releaseResponse && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowRequestModal(false)}
-        >
-          <div
-            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Release Intent Request
-              </h2>
-              <button
-                onClick={() => setShowRequestModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="p-6 overflow-auto flex-1">
-              <JsonViewer data={releaseResponse.request} title="Request" />
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
-              <button
-                onClick={() => setShowRequestModal(false)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {releaseResponse && (
-        <div>
-          <JsonViewer
-            data={releaseResponse.response}
-            title="Release Intent Response"
-          />
-        </div>
-      )}
     </div>
   );
 }
-
