@@ -1,23 +1,15 @@
-# Refactor: transaction detail page decomposition
-
-## Goal
-Split 625-line monolithic `page.tsx` into focused sub-components and a dedicated hook,
-following lessons.md component architecture rules.
+# TrustSet Page Implementation
 
 ## Plan
+- [x] 1. Create types file `app/components/TrustSet.types.ts`
+- [x] 2. Create API route `app/api/trustset/route.ts` (Pattern A, hex currency conversion)
+- [x] 3. Create hook `app/hooks/useTrustSet.ts`
+- [x] 4. Create sub-components in `app/components/trustset/`
+- [x] 5. Create main `app/components/TrustSetTab.tsx`
+- [x] 6. Register tab in `AppSidebar.tsx` (XRPL category, "TrustSet" label)
+- [x] 7. Add tab rendering in `page.tsx`
+- [x] 8. Add "TrustSet" to intent storage type union
+- [x] 9. Verify build passes — zero TrustSet errors (4 pre-existing errors unrelated)
 
-- [x] Create `app/hooks/useTransaction.ts` — extract raw `useQuery` fetch logic
-- [x] Create `app/components/transaction/config.ts` — ProcessingStatus type, STATUS_CONFIG, LEDGER_STATUS_STYLES, FALLBACK_CONFIG, getStatusConfig, formatDate
-- [x] Create `app/components/transaction/InfoCard.tsx` — InfoRow + InfoCard
-- [x] Create `app/components/transaction/LedgerStatusBadge.tsx`
-- [x] Create `app/components/transaction/TransactionHeader.tsx` — gradient header w/ sidebar toggle
-- [x] Create `app/components/transaction/SummaryBar.tsx` — 4-column summary strip
-- [x] Create `app/components/transaction/ProcessingCard.tsx`
-- [x] Create `app/components/transaction/LedgerDataCard.tsx`
-- [x] Create `app/components/transaction/OrderReferenceCard.tsx`
-- [x] Create `app/components/transaction/RelatedAccountsCard.tsx`
-- [x] Create `app/components/transaction/LedgerTransactionCard.tsx`
-- [x] Refactor `app/transactions/[id]/page.tsx` — composition only (~50 lines)
-- [x] Verify: `npx tsc --noEmit` — zero errors in this file
 ## Review
-All items complete. page.tsx reduced from 625 lines → 100 lines. 11 focused components created.
+All items complete. Implementation follows Pattern A (manual intent building) consistent with existing MPT routes.

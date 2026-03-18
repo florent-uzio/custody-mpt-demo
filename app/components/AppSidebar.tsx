@@ -19,6 +19,7 @@ export type Tab =
   | "payment"
   | "mpt-set"
   | "mpt-destroy"
+  | "trustset"
   | "submitted-intents"
   | "intents-list"
   | "users-list"
@@ -85,6 +86,7 @@ export const TABS: {
   { id: "mpt-authorize", label: "MPT Authorize", icon: "✅", category: "XRPL" },
   { id: "mpt-set", label: "MPT Set", icon: "⚙️", category: "XRPL" },
   { id: "mpt-destroy", label: "MPT Destroy", icon: "🗑️", category: "XRPL" },
+  { id: "trustset", label: "TrustSet", icon: "🔗", category: "XRPL" },
   { id: "keypair", label: "Keypair Generator", icon: "🔑", category: "Tools" },
 ];
 
