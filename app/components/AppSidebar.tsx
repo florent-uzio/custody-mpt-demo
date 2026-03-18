@@ -106,6 +106,7 @@ export function AppSidebar({
   const isNavMode =
     pathname.startsWith("/accounts") ||
     pathname.startsWith("/intents") ||
+    pathname.startsWith("/requests") ||
     pathname.startsWith("/transactions") ||
     pathname.startsWith("/transfers") ||
     pathname.startsWith("/users");
@@ -120,10 +121,14 @@ export function AppSidebar({
   );
 
   const isActive = (tab: (typeof TABS)[0]) => {
-    if (tab.id === "accounts") return pathname.startsWith("/accounts");
+    if (tab.id === "accounts")
+      return pathname.startsWith("/accounts") || activeTab === tab.id;
     if (tab.id === "intents-list") return pathname.startsWith("/intents");
-    if (tab.id === "transactions") return pathname.startsWith("/transactions");
-    if (tab.id === "transfers") return pathname.startsWith("/transfers");
+    if (tab.id === "requests") return pathname.startsWith("/requests");
+    if (tab.id === "transactions")
+      return pathname.startsWith("/transactions") || activeTab === tab.id;
+    if (tab.id === "transfers")
+      return pathname.startsWith("/transfers") || activeTab === tab.id;
     if (tab.id === "users-list") return pathname === "/users";
     if (tab.id === "users-me") return pathname.startsWith("/users/me");
     if (isNavMode) return false;
@@ -133,6 +138,7 @@ export function AppSidebar({
   const handleTabClick = (tab: (typeof TABS)[0]) => {
     if (
       tab.id === "intents-list" ||
+      tab.id === "requests" ||
       tab.id === "users-list" ||
       tab.id === "users-me"
     )
@@ -212,6 +218,17 @@ export function AppSidebar({
                     if (tab.id === "intents-list") {
                       return (
                         <Link key={tab.id} href="/intents" className={cls}>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
+                          <span className="truncate">{tab.label}</span>
+                        </Link>
+                      );
+                    }
+
+                    if (tab.id === "requests") {
+                      return (
+                        <Link key={tab.id} href="/requests" className={cls}>
                           <span className="text-lg flex-shrink-0">
                             {tab.icon}
                           </span>
