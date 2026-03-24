@@ -4,12 +4,11 @@ import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { saveSubmittedIntent } from "../utils/intentStorage";
-import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
 import { useDefaultDomain } from "../contexts/DomainContext";
 
 export function MPTPaymentTab() {
   const { accounts, loading: accountsLoading } = useAccounts();
-  const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
+  const [accountId, setAccountId] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [issuanceId, setIssuanceId] = useState("");
@@ -101,11 +100,16 @@ export function MPTPaymentTab() {
               {accountsLoading ? (
                 <option>Loading accounts...</option>
               ) : (
-                accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.alias} ({account.id})
+                <>
+                  <option value="" disabled>
+                    Select an account
                   </option>
-                ))
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.alias} ({account.id})
+                    </option>
+                  ))}
+                </>
               )}
             </select>
           </div>

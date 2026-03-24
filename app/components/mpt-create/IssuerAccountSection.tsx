@@ -42,11 +42,16 @@ export function IssuerAccountSection({
           ) : accounts.length === 0 ? (
             <option value="">No accounts found - set Default Domain ID</option>
           ) : (
-            accounts.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.alias} ({account.id})
+            <>
+              <option value="" disabled>
+                Select an account
               </option>
-            ))
+              {accounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.alias} ({account.id})
+                </option>
+              ))}
+            </>
           )}
         </select>
         <p className="mt-2 text-xs text-gray-500">

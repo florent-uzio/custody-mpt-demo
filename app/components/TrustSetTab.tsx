@@ -4,7 +4,6 @@ import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { useTrustSet } from "../hooks/useTrustSet";
-import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { AccountSection } from "./trustset/AccountSection";
 import { LimitAmountSection } from "./trustset/LimitAmountSection";
@@ -19,7 +18,7 @@ export function TrustSetTab() {
   const { accounts, loading: accountsLoading } = useAccounts();
   const { mutate, isPending, data: response, error } = useTrustSet();
 
-  const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
+  const [accountId, setAccountId] = useState("");
   const [currency, setCurrency] = useState("");
   const [issuer, setIssuer] = useState("");
   const [value, setValue] = useState("");

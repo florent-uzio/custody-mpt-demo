@@ -4,14 +4,13 @@ import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { saveSubmittedIntent } from "../utils/intentStorage";
-import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
 import { useDefaultDomain } from "../contexts/DomainContext";
 
 export function MPTAuthorizeTab() {
   const { defaultDomainId } = useDefaultDomain();
   const { accounts, loading: accountsLoading } = useAccounts();
   const [issuanceId, setIssuanceId] = useState("");
-  const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
+  const [accountId, setAccountId] = useState("");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
@@ -132,11 +131,16 @@ export function MPTAuthorizeTab() {
               {accountsLoading ? (
                 <option>Loading accounts...</option>
               ) : (
-                accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.alias} ({account.id})
+                <>
+                  <option value="" disabled>
+                    Select an account
                   </option>
-                ))
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.alias} ({account.id})
+                    </option>
+                  ))}
+                </>
               )}
             </select>
           </div>

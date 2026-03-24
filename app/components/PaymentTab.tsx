@@ -4,7 +4,6 @@ import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { saveSubmittedIntent } from "../utils/intentStorage";
-import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
 import { useDefaultDomain } from "../contexts/DomainContext";
 
 type PaymentType = "XRP" | "IOU" | "MPT";
@@ -12,7 +11,7 @@ type DestinationType = "Address" | "Account" | "Endpoint";
 
 export function PaymentTab() {
   const { accounts, loading: accountsLoading } = useAccounts();
-  const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
+  const [accountId, setAccountId] = useState("");
   const [paymentType, setPaymentType] = useState<PaymentType>("XRP");
 
   // Destination
@@ -145,11 +144,16 @@ export function PaymentTab() {
               {accountsLoading ? (
                 <option>Loading accounts...</option>
               ) : (
-                accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.alias} ({account.id})
+                <>
+                  <option value="" disabled>
+                    Select an account
                   </option>
-                ))
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.alias} ({account.id})
+                    </option>
+                  ))}
+                </>
               )}
             </select>
           </div>
