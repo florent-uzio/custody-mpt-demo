@@ -4,7 +4,6 @@ import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { useMPTokenCreate } from "../hooks/useMPTokenCreate";
-import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { IssuerAccountSection } from "./mpt-create/IssuerAccountSection";
 import { TokenPropertiesSection } from "./mpt-create/TokenPropertiesSection";
@@ -18,7 +17,7 @@ export function MPTCreateTab() {
   const { accounts, loading: accountsLoading } = useAccounts();
   const { mutate, isPending, data: response, error } = useMPTokenCreate();
 
-  const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
+  const [accountId, setAccountId] = useState("");
   const [assetScale, setAssetScale] = useState(2);
   const [transferFee, setTransferFee] = useState(0);
   const [maximumAmount, setMaximumAmount] = useState("");

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { saveSubmittedIntent } from "../utils/intentStorage";
-import { DEFAULT_ACCOUNT_ID } from "../config/defaults";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { CopyButton } from "./CopyButton";
 
@@ -33,7 +32,7 @@ export function MPTSetTab() {
   const { accounts, loading: accountsLoading } = useAccounts();
 
   // Form state
-  const [accountId, setAccountId] = useState(DEFAULT_ACCOUNT_ID);
+  const [accountId, setAccountId] = useState("");
   const [issuanceId, setIssuanceId] = useState("");
   const [holderAddress, setHolderAddress] = useState("");
   const [applyToAll, setApplyToAll] = useState(true);
@@ -171,11 +170,16 @@ export function MPTSetTab() {
               ) : accounts.length === 0 ? (
                 <option value="">No accounts found - set Default Domain ID</option>
               ) : (
-                accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.alias} ({account.id})
+                <>
+                  <option value="" disabled>
+                    Select an account
                   </option>
-                ))
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.alias} ({account.id})
+                    </option>
+                  ))}
+                </>
               )}
             </select>
             <p className="mt-2 text-xs text-gray-500">

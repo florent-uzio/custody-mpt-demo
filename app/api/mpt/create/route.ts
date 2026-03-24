@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCustodySDK, getAccountLedgerId } from "@/app/lib/custody";
+import {
+  getCustodySDK,
+  getAccountLedgerId,
+  getCurrentUser,
+} from "@/app/lib/custody";
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import type { Core_ProposeIntentBody } from "custody";
@@ -33,6 +37,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const currentUser = await getCurrentUser(domainId);
     const ledgerId = await getAccountLedgerId(domainId, accountId);
 
     // Build the MPT Issuance Create intent request
@@ -40,7 +45,7 @@ export async function POST(request: NextRequest) {
     const mptCreateRequest: Core_ProposeIntentBody = {
       request: {
         author: {
-          id: CURRENT_USER_ID,
+          id: currentUser.userId,
           domainId,
         },
         expiryAt: dayjs().add(1, "day").toISOString(),
