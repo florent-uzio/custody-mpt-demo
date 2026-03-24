@@ -7,7 +7,8 @@ export interface SubmittedIntent {
     | "MPTIssuanceDestroy"
     | "CreateUser"
     | "CreateAccount"
-    | "Payment";
+    | "Payment"
+    | "TrustSet";
   requestId: string;
   submittedAt: string;
   intentId?: string; // Will be fetched later from Request API
