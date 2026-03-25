@@ -57,12 +57,12 @@ export async function POST(request: NextRequest) {
             maximumFee: "10000000",
             memos: [],
             operation: {
+              type: "MPTokenAuthorize",
               tokenIdentifier: {
                 type: "MPTokenIssuanceId",
                 issuanceId,
               },
               flags: [],
-              type: "MPTokenAuthorize",
             },
           },
           description: "Test MPT Authorize",

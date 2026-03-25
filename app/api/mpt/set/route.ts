@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const sdkFlags: ("tfMPTLock" | "tfMPTUnlock")[] = flags === 1 ? ["tfMPTLock"] : ["tfMPTUnlock"];
     const ledgerId = await getAccountLedgerId(domainId, accountId);
 
     // Build the MPT Issuance Set intent request
@@ -66,8 +67,11 @@ export async function POST(request: NextRequest) {
             memos: [],
             operation: {
               type: "MPTokenIssuanceSet",
-              issuanceId: issuanceId,
-              flags: flags,
+              tokenIdentifier: {
+                type: "MPTokenIssuanceId",
+                issuanceId,
+              },
+              flags: sdkFlags,
               // Holder is optional - if provided, applies to specific holder
               // If omitted, applies to all holders
               ...(holder && { holder }),

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCustodySDK } from "@/app/lib/custody";
-import { GetTickersQueryParams } from "custody/dist/services/tickers";
+import type { GetTickersQueryParams } from "custody";
 
 export async function POST(request: NextRequest) {
   try {

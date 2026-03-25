@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const custody = getCustodySDK();
 
     const queryParams: {
-      kind?: string;
+      kind?: "Transfer" | "Fee" | "Recovery";
       quarantined?: boolean;
     } = {};
 

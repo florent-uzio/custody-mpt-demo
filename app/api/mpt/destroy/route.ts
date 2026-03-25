@@ -59,7 +59,10 @@ export async function POST(request: NextRequest) {
             memos: [],
             operation: {
               type: "MPTokenIssuanceDestroy",
-              issuanceId: issuanceId,
+              tokenIdentifier: {
+                type: "MPTokenIssuanceId",
+                issuanceId,
+              },
             },
           },
           description: "MPT Issuance Destroy",
