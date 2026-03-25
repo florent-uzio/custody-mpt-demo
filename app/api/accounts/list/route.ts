@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCustodySDK } from "@/app/lib/custody";
-import { GetAccountsQueryParams } from "custody/dist/services/accounts";
+import type { GetAccountsQueryParams } from "custody";
 
 export async function POST(request: NextRequest) {
   try {
