@@ -141,6 +141,7 @@ export function AppSidebar({
     if (
       tab.id === "intents-list" ||
       tab.id === "requests" ||
+      tab.id === "transactions" ||
       tab.id === "users-list" ||
       tab.id === "users-me"
     )
@@ -231,6 +232,17 @@ export function AppSidebar({
                     if (tab.id === "requests") {
                       return (
                         <Link key={tab.id} href="/requests" className={cls}>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
+                          <span className="truncate">{tab.label}</span>
+                        </Link>
+                      );
+                    }
+
+                    if (tab.id === "transactions") {
+                      return (
+                        <Link key={tab.id} href="/transactions" className={cls}>
                           <span className="text-lg flex-shrink-0">
                             {tab.icon}
                           </span>
