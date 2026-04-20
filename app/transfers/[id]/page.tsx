@@ -210,7 +210,7 @@ export default function TransferDetailPage() {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Link
-                    href="/?tab=transfers"
+                    href="/transfers"
                     className="text-white/60 hover:text-white text-xs font-medium transition-colors"
                   >
                     Transfers
