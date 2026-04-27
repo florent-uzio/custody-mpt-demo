@@ -22,6 +22,7 @@ export type Tab =
   | "trustset"
   | "submitted-intents"
   | "intents-list"
+  | "policies"
   | "users-list"
   | "users-me"
   | "keypair"
@@ -69,6 +70,12 @@ export const TABS: {
     category: "Operations",
   },
   {
+    id: "policies",
+    label: "Policies",
+    icon: "🛡️",
+    category: "Operations",
+  },
+  {
     id: "users-list",
     label: "Users",
     icon: "👥",
@@ -108,6 +115,7 @@ export function AppSidebar({
   const isNavMode =
     pathname.startsWith("/accounts") ||
     pathname.startsWith("/intents") ||
+    pathname.startsWith("/policies") ||
     pathname.startsWith("/requests") ||
     pathname.startsWith("/transactions") ||
     pathname.startsWith("/transfers") ||
@@ -126,6 +134,7 @@ export function AppSidebar({
     if (tab.id === "accounts")
       return pathname.startsWith("/accounts") || activeTab === tab.id;
     if (tab.id === "intents-list") return pathname.startsWith("/intents");
+    if (tab.id === "policies") return pathname.startsWith("/policies");
     if (tab.id === "requests") return pathname.startsWith("/requests");
     if (tab.id === "transactions")
       return pathname.startsWith("/transactions") || activeTab === tab.id;
@@ -140,6 +149,7 @@ export function AppSidebar({
   const handleTabClick = (tab: (typeof TABS)[0]) => {
     if (
       tab.id === "intents-list" ||
+      tab.id === "policies" ||
       tab.id === "requests" ||
       tab.id === "transactions" ||
       tab.id === "transfers" ||
@@ -222,6 +232,17 @@ export function AppSidebar({
                     if (tab.id === "intents-list") {
                       return (
                         <Link key={tab.id} href="/intents" className={cls}>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
+                          <span className="truncate">{tab.label}</span>
+                        </Link>
+                      );
+                    }
+
+                    if (tab.id === "policies") {
+                      return (
+                        <Link key={tab.id} href="/policies" className={cls}>
                           <span className="text-lg flex-shrink-0">
                             {tab.icon}
                           </span>
