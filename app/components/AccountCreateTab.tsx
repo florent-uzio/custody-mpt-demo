@@ -5,6 +5,7 @@ import { JsonViewer } from "./JsonViewer";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { saveSubmittedIntent } from "../utils/intentStorage";
 import { CopyButton } from "./CopyButton";
+import { createAccount } from "../_actions/accounts";
 
 interface Vault {
   data: {
@@ -150,32 +151,22 @@ export function AccountCreateTab() {
     setResponse(null);
 
     try {
-      const res = await fetch("/api/accounts/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          domainId: defaultDomainId,
-          alias,
-          vaultId,
-          keyStrategy,
-          ledgerIds: selectedLedgers.length > 0 ? selectedLedgers : undefined,
-          lock,
-          description: description || undefined,
-        }),
+      const result = await createAccount({
+        domainId: defaultDomainId!,
+        alias,
+        vaultId,
+        keyStrategy,
+        ledgerIds: selectedLedgers.length > 0 ? selectedLedgers : undefined,
+        lock,
+        description: description || undefined,
       });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to create account");
-      }
-
-      const result = await res.json();
       setResponse(result);
 
-      // Save to localStorage if we have a requestId
-      const responseData = result?.response || result;
+      const responseData = (result?.response ?? result) as Record<string, unknown> | undefined;
       const requestId =
-        responseData?.id || responseData?.requestId || responseData?.data?.id;
+        (responseData?.id as string | undefined) ||
+        (responseData?.requestId as string | undefined) ||
+        ((responseData?.data as Record<string, unknown> | undefined)?.id as string | undefined);
       if (requestId) {
         saveSubmittedIntent({
           type: "CreateAccount",

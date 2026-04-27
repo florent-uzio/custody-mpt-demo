@@ -3,7 +3,11 @@
 import { useParams, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Core_ApiAccount, Core_AddressesCollection, Core_BalancesCollection } from "custody";
+import {
+  getAccount,
+  getAccountAddresses,
+  getAccountBalances,
+} from "../../_actions/accounts";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useSidebarContext } from "../../contexts/SidebarContext";
@@ -137,50 +141,23 @@ export default function AccountDetailPage() {
   const domainId = searchParams.get("domainId") ?? "";
   const { sidebarOpen, setSidebarOpen } = useSidebarContext();
 
-  const { data: account, isLoading, isError, error } = useQuery<Core_ApiAccount>({
+  const { data: account, isLoading, isError, error } = useQuery({
     queryKey: ["account", accountId, domainId],
-    queryFn: async () => {
-      const res = await fetch("/api/accounts/get", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId, domainId }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to fetch account");
-      }
-      return res.json();
-    },
+    queryFn: () => getAccount(domainId, accountId),
     enabled: !!accountId && !!domainId,
     staleTime: 60_000,
   });
 
-  const { data: addressesData } = useQuery<Core_AddressesCollection>({
+  const { data: addressesData } = useQuery({
     queryKey: ["account-addresses", accountId, domainId],
-    queryFn: async () => {
-      const res = await fetch("/api/accounts/addresses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId, domainId }),
-      });
-      if (!res.ok) throw new Error("Failed to fetch addresses");
-      return res.json();
-    },
+    queryFn: () => getAccountAddresses(domainId, accountId),
     enabled: !!accountId && !!domainId,
     staleTime: 60_000,
   });
 
-  const { data: balancesData } = useQuery<Core_BalancesCollection>({
+  const { data: balancesData } = useQuery({
     queryKey: ["account-balances", accountId, domainId],
-    queryFn: async () => {
-      const res = await fetch("/api/accounts/balances", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId, domainId }),
-      });
-      if (!res.ok) throw new Error("Failed to fetch balances");
-      return res.json();
-    },
+    queryFn: () => getAccountBalances(domainId, accountId),
     enabled: !!accountId && !!domainId,
     staleTime: 60_000,
   });

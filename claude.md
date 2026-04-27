@@ -53,3 +53,22 @@
 
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
+
+## Délégation de tâches
+
+Créez des sous-agents pour isoler le contexte, paralléliser les travaux indépendants, ou déléguer les tâches mécaniques volumineuses. Ne créez pas de sous-agents lorsque le parent a besoin du raisonnement, lorsque la synthèse nécessite de maintenir les éléments ensemble, ou lorsque le surcoût de création domine.
+
+Choisissez le modèle le moins cher qui peut accomplir la sous-tâche efficacement :
+
+- Haiku : travaux mécaniques volumineux, sans jugement
+- Sonnet : recherche ciblée, exploration de code, synthèse dans le cadre défini
+- Opus : sous-tâches nécessitant une véritable planification ou des arbitrages
+
+Les sous-agents suivent les mêmes règles de manière récursive, avec deux limites :
+
+- Haiku ne crée pas de sous-agents supplémentaires. S'il en a besoin, la tâche était mal dimensionnée pour Haiku — retournez au parent.
+- Profondeur maximale de création est 2 (parent → sous-agent → un niveau supplémentaire).
+
+N'escaladez pas les niveaux sans raison concrète. Si un sous-agent réalise qu'il a besoin d'un niveau supérieur au sien, retournez au parent plutôt que de créer vers le haut.
+
+Le parent possède la sortie finale et la synthèse inter-créations. Les instructions de l'utilisateur priment
