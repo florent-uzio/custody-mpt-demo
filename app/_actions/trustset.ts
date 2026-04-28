@@ -1,11 +1,13 @@
 "use server";
 
-import dayjs from "dayjs";
-import { v4 as uuidv4 } from "uuid";
 import { convertStringToHex } from "xrpl";
 import type { Core_ProposeIntentBody } from "custody";
 
 import { getAccountLedgerId, getCustodySDK } from "@/app/lib/custody";
+import {
+  buildProposeIntent,
+  buildTransactionOrderPayload,
+} from "@/app/lib/intent-builder";
 
 const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
 
@@ -49,49 +51,36 @@ export async function trustSet(input: TrustSetInput): Promise<TrustSetResult> {
   if (value === undefined || value === "") throw new Error("value is required");
 
   const ledgerId = await getAccountLedgerId(domainId, accountId);
-
-  const request: Core_ProposeIntentBody = {
-    request: {
-      author: { id: CURRENT_USER_ID, domainId },
-      expiryAt: dayjs().add(1, "day").toISOString(),
-      targetDomainId: domainId,
-      id: uuidv4(),
-      payload: {
-        id: uuidv4(),
-        ledgerId,
-        accountId,
-        parameters: {
-          type: "XRPL",
-          feeStrategy: { priority: "Low", type: "Priority" },
-          maximumFee: "10000000",
-          memos: [],
-          operation: {
-            type: "TrustSet",
-            flags: (flags || []) as never,
-            limitAmount: {
-              currency: {
-                type: "Currency",
-                code: toCurrencyHex(currency),
-                issuer,
-              },
-              value: String(value),
-            },
-            ...(enableRippling !== undefined && { enableRippling }),
-          },
-        },
-        description: "TrustSet",
-        customProperties: customProperties || {
-          description: "Create a Trustline",
-        },
-        type: "v0_CreateTransactionOrder",
-      },
-      description: "Create TrustSet",
-      customProperties: customProperties || {
-        description: "Create a Trustline",
-      },
-      type: "Propose",
-    },
+  const trustlineProperties = customProperties || {
+    description: "Create a Trustline",
   };
+
+  const request = buildProposeIntent({
+    author: { id: CURRENT_USER_ID, domainId },
+    targetDomainId: domainId,
+    payload: buildTransactionOrderPayload({
+      ledgerId,
+      accountId,
+      feePriority: "Low",
+      operation: {
+        type: "TrustSet",
+        flags: (flags || []) as never,
+        limitAmount: {
+          currency: {
+            type: "Currency",
+            code: toCurrencyHex(currency),
+            issuer,
+          },
+          value: String(value),
+        },
+        ...(enableRippling !== undefined && { enableRippling }),
+      },
+      description: "TrustSet",
+      customProperties: trustlineProperties,
+    }),
+    description: "Create TrustSet",
+    customProperties: trustlineProperties,
+  });
 
   const sdk = getCustodySDK();
   const response = await sdk.intents.propose(request);

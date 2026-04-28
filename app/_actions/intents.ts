@@ -1,7 +1,5 @@
 "use server";
 
-import dayjs from "dayjs";
-import { v4 as uuidv4 } from "uuid";
 import type {
   Core_IntentResponse,
   Core_ProposeIntentBody,
@@ -14,6 +12,10 @@ import {
   getCurrentUser,
   getCustodySDK,
 } from "@/app/lib/custody";
+import {
+  buildProposeIntent,
+  buildTransactionOrderPayload,
+} from "@/app/lib/intent-builder";
 import type { IntentsCollection } from "@/app/intents/intents.types";
 
 export type PaymentType = "XRP" | "IOU" | "MPT";
@@ -154,37 +156,24 @@ export async function proposePayment(
   const currentUser = await getCurrentUser(domainId);
   const ledgerId = await getAccountLedgerId(domainId, accountId);
 
-  const request: Core_ProposeIntentBody = {
-    request: {
-      author: { id: currentUser.userId, domainId: currentUser.domainId },
-      expiryAt: dayjs().add(1, "day").toISOString(),
-      targetDomainId: currentUser.domainId,
-      id: uuidv4(),
-      payload: {
-        id: uuidv4(),
-        ledgerId,
-        accountId,
-        parameters: {
-          type: "XRPL",
-          feeStrategy: { priority: "Medium", type: "Priority" },
-          maximumFee: "10000000",
-          memos: [],
-          operation: {
-            // @ts-expect-error preserved from original route
-            destination: buildPaymentDestination(destinationType, input),
-            amount: buildPaymentAmount(paymentType, amount, input) as string,
-            type: "Payment",
-          },
-        },
-        description: description || "Payment",
-        customProperties: { property1: "flo" },
-        type: "v0_CreateTransactionOrder",
+  const request = buildProposeIntent({
+    author: { id: currentUser.userId, domainId: currentUser.domainId },
+    targetDomainId: currentUser.domainId,
+    payload: buildTransactionOrderPayload({
+      ledgerId,
+      accountId,
+      operation: {
+        // @ts-expect-error preserved from original route
+        destination: buildPaymentDestination(destinationType, input),
+        amount: buildPaymentAmount(paymentType, amount, input) as string,
+        type: "Payment",
       },
       description: description || "Payment",
       customProperties: { property1: "flo" },
-      type: "Propose",
-    },
-  };
+    }),
+    description: description || "Payment",
+    customProperties: { property1: "flo" },
+  });
 
   const sdk = getCustodySDK();
   const response = await sdk.intents.propose(request);
@@ -202,24 +191,18 @@ export async function proposeReleaseTransfers(
 
   const currentUser = await getCurrentUser(domainId);
 
-  const request: Core_ProposeIntentBody = {
-    request: {
-      author: { id: currentUser.userId, domainId: currentUser.domainId },
-      expiryAt: dayjs().add(1, "day").toISOString(),
-      targetDomainId: currentUser.domainId,
-      id: uuidv4(),
-      payload: {
-        accountId,
-        transferIds,
-        type: "v0_ReleaseQuarantinedTransfers",
-      },
-      description: `Release ${transferIds.length} quarantined transfer${
-        transferIds.length > 1 ? "s" : ""
-      }`,
-      customProperties: {},
-      type: "Propose",
+  const request = buildProposeIntent({
+    author: { id: currentUser.userId, domainId: currentUser.domainId },
+    targetDomainId: currentUser.domainId,
+    payload: {
+      accountId,
+      transferIds,
+      type: "v0_ReleaseQuarantinedTransfers",
     },
-  };
+    description: `Release ${transferIds.length} quarantined transfer${
+      transferIds.length > 1 ? "s" : ""
+    }`,
+  });
 
   const sdk = getCustodySDK();
   const response = await sdk.intents.propose(request);

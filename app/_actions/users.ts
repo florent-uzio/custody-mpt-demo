@@ -1,6 +1,5 @@
 "use server";
 
-import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import type {
   Core_MeReference,
@@ -11,6 +10,7 @@ import type {
 } from "custody";
 
 import { getCurrentUser, getCustodySDK } from "@/app/lib/custody";
+import { buildProposeIntent } from "@/app/lib/intent-builder";
 
 export type UserFilters = {
   limit?: number;
@@ -86,34 +86,28 @@ export async function createUser(
 
   const currentUser = await getCurrentUser(domainId);
 
-  const request: Core_ProposeIntentBody = {
-    request: {
-      author: { id: currentUser.userId, domainId: currentUser.domainId },
-      expiryAt: dayjs().add(1, "day").toISOString(),
-      targetDomainId: domainId,
+  const request = buildProposeIntent({
+    author: { id: currentUser.userId, domainId: currentUser.domainId },
+    targetDomainId: domainId,
+    payload: {
       id: uuidv4(),
-      payload: {
-        id: uuidv4(),
-        alias,
-        publicKey,
-        roles,
-        lock: lock || "Unlocked",
-        ...(description && { description }),
-        customProperties: {},
-        ...(loginIds &&
-          loginIds.length > 0 && {
-            loginIds: loginIds.map((login) => ({
-              id: login.id,
-              providerId: login.providerId,
-            })),
-          }),
-        type: "v0_CreateUser",
-      },
-      description: description || `Create user: ${alias}`,
+      alias,
+      publicKey,
+      roles,
+      lock: lock || "Unlocked",
+      ...(description && { description }),
       customProperties: {},
-      type: "Propose",
+      ...(loginIds &&
+        loginIds.length > 0 && {
+          loginIds: loginIds.map((login) => ({
+            id: login.id,
+            providerId: login.providerId,
+          })),
+        }),
+      type: "v0_CreateUser",
     },
-  };
+    description: description || `Create user: ${alias}`,
+  });
 
   const sdk = getCustodySDK();
   const response = await sdk.intents.propose(request);

@@ -1,6 +1,5 @@
 "use server";
 
-import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import type {
   Core_AccountsCollection,
@@ -12,6 +11,7 @@ import type {
 } from "custody";
 
 import { getCurrentUser, getCustodySDK } from "@/app/lib/custody";
+import { buildProposeIntent } from "@/app/lib/intent-builder";
 
 export type AccountFilters = {
   limit?: number;
@@ -125,27 +125,21 @@ export async function createAccount(
 
   const currentUser = await getCurrentUser(domainId);
 
-  const request: Core_ProposeIntentBody = {
-    request: {
-      author: { id: currentUser.userId, domainId: currentUser.domainId },
-      expiryAt: dayjs().add(1, "day").toISOString(),
-      targetDomainId: domainId,
+  const request = buildProposeIntent({
+    author: { id: currentUser.userId, domainId: currentUser.domainId },
+    targetDomainId: domainId,
+    payload: {
       id: uuidv4(),
-      payload: {
-        id: uuidv4(),
-        alias,
-        providerDetails: { vaultId, keyStrategy, type: "Vault" },
-        lock: lock || "Unlocked",
-        ...(description && { description }),
-        ...(ledgerIds && ledgerIds.length > 0 && { ledgerIds }),
-        customProperties: {},
-        type: "v0_CreateAccount",
-      },
-      description: description || `Create account: ${alias}`,
+      alias,
+      providerDetails: { vaultId, keyStrategy, type: "Vault" },
+      lock: lock || "Unlocked",
+      ...(description && { description }),
+      ...(ledgerIds && ledgerIds.length > 0 && { ledgerIds }),
       customProperties: {},
-      type: "Propose",
+      type: "v0_CreateAccount",
     },
-  };
+    description: description || `Create account: ${alias}`,
+  });
 
   const sdk = getCustodySDK();
   const response = await sdk.intents.propose(request);
