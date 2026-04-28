@@ -6,6 +6,7 @@ import { useDefaultDomain } from "../contexts/DomainContext";
 import { saveSubmittedIntent } from "../utils/intentStorage";
 import { CopyButton } from "./CopyButton";
 import { createAccount } from "../_actions/accounts";
+import { listVaults } from "../_actions/vaults";
 
 interface Vault {
   data: {
@@ -103,18 +104,12 @@ export function AccountCreateTab() {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch vaults on mount
   useEffect(() => {
     async function fetchVaults() {
       try {
         setVaultsLoading(true);
         setVaultsError(null);
-        const res = await fetch("/api/vaults/list", { method: "POST" });
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || "Failed to fetch vaults");
-        }
-        const data: VaultsResponse = await res.json();
+        const data = (await listVaults()) as unknown as VaultsResponse;
         setVaults(data.items || []);
       } catch (err) {
         setVaultsError(

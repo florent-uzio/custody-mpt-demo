@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { CopyButton } from "./CopyButton";
+import { listTransfers } from "../_actions/transactions";
 
 interface TransferItem {
   id: string;
@@ -109,22 +110,11 @@ export function TransfersTab() {
   const { data, isLoading, isError, error, isFetching, refetch } =
     useQuery<TransfersResponse>({
       queryKey: ["transfers", defaultDomainId, kind, quarantinedFilter],
-      queryFn: async () => {
-        const res = await fetch("/api/transactions/transfers", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            domainId: defaultDomainId,
-            kind: kind || undefined,
-            quarantined: quarantinedParam,
-          }),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || "Failed to get transfers");
-        }
-        return res.json();
-      },
+      queryFn: () =>
+        listTransfers(defaultDomainId!, {
+          kind: (kind || undefined) as "Transfer" | "Fee" | "Recovery" | undefined,
+          quarantined: quarantinedParam,
+        }) as unknown as Promise<TransfersResponse>,
       enabled: !!defaultDomainId,
       staleTime: 60_000,
     });

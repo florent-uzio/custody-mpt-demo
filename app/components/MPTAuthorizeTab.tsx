@@ -5,6 +5,7 @@ import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { saveSubmittedIntent } from "../utils/intentStorage";
 import { useDefaultDomain } from "../contexts/DomainContext";
+import { mptAuthorize } from "../_actions/mpt";
 
 export function MPTAuthorizeTab() {
   const { defaultDomainId } = useDefaultDomain();
@@ -22,28 +23,18 @@ export function MPTAuthorizeTab() {
     setResponse(null);
 
     try {
-      const res = await fetch("/api/mpt/authorize", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          domainId: defaultDomainId,
-          issuanceId,
-          accountId,
-        }),
+      const result = await mptAuthorize({
+        domainId: defaultDomainId!,
+        issuanceId,
+        accountId,
       });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to propose intent");
-      }
-
-      const result = await res.json();
       setResponse(result);
 
-      // Save to localStorage if we have a requestId
-      const requestId = result?.id || result?.requestId || result?.data?.id;
+      const flat = (result?.response ?? result) as Record<string, unknown> | undefined;
+      const requestId =
+        (flat?.id as string | undefined) ||
+        (flat?.requestId as string | undefined) ||
+        ((flat?.data as Record<string, unknown> | undefined)?.id as string | undefined);
       if (requestId) {
         saveSubmittedIntent({
           type: "MPTAuthorize",

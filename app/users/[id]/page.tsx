@@ -8,6 +8,7 @@ import { JsonViewer } from "../../components/JsonViewer";
 import { useSidebarContext } from "../../contexts/SidebarContext";
 import { LockBadge } from "../components/LockBadge";
 import { LOCK_STYLES, type TrustedUser } from "../users.types";
+import { getUser } from "../../_actions/users";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -62,18 +63,7 @@ export default function UserDetailPage() {
 
   const { data: user, isLoading, isError, error } = useQuery({
     queryKey: ["user", userId, domainId],
-    queryFn: async () => {
-      const res = await fetch("/api/users/get", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, domainId }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to fetch user");
-      }
-      return res.json() as Promise<TrustedUser>;
-    },
+    queryFn: () => getUser(domainId, userId) as Promise<TrustedUser>,
     enabled: !!userId && !!domainId,
     staleTime: 60_000,
   });

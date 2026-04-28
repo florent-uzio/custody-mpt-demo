@@ -6,6 +6,8 @@ import Link from "next/link";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useSidebarContext } from "../../contexts/SidebarContext";
+import { getTransfer } from "../../_actions/transfers";
+import { proposeReleaseTransfers } from "../../_actions/intents";
 
 interface TransferDetail {
   id: string;
@@ -125,22 +127,12 @@ export default function TransferDetailPage() {
   const { sidebarOpen, setSidebarOpen } = useSidebarContext();
 
   const releaseMutation = useMutation({
-    mutationFn: async (accountId: string) => {
-      const res = await fetch("/api/intents/release-transfers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accountId,
-          transferIds: [transferId],
-          domainId,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to release transfer");
-      }
-      return res.json();
-    },
+    mutationFn: (accountId: string) =>
+      proposeReleaseTransfers({
+        accountId,
+        transferIds: [transferId],
+        domainId,
+      }),
   });
 
   const {
@@ -150,18 +142,7 @@ export default function TransferDetailPage() {
     error,
   } = useQuery({
     queryKey: ["transfer", transferId, domainId],
-    queryFn: async () => {
-      const res = await fetch("/api/transfers/get", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transferId, domainId }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to fetch transfer");
-      }
-      return res.json() as Promise<TransferDetail>;
-    },
+    queryFn: () => getTransfer(domainId, transferId) as unknown as Promise<TransferDetail>,
     enabled: !!transferId && !!domainId,
     staleTime: 60_000,
   });

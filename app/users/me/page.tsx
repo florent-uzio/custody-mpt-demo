@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useSidebarContext } from "../../contexts/SidebarContext";
+import { getMe } from "../../_actions/users";
 
 interface MeDomainReference {
   id: string;
@@ -23,12 +24,8 @@ interface MeReference {
 }
 
 async function fetchMe(): Promise<MeReference> {
-  const res = await fetch("/api/users/me");
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || "Failed to fetch me");
-  }
-  return res.json();
+  const result = await getMe();
+  return result as unknown as MeReference;
 }
 
 export default function MePage() {

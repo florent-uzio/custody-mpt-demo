@@ -6,6 +6,7 @@ import { useAccounts } from "../hooks/useAccounts";
 import { saveSubmittedIntent } from "../utils/intentStorage";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { CopyButton } from "./CopyButton";
+import { mptSet } from "../_actions/mpt";
 
 const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
 
@@ -59,32 +60,20 @@ export function MPTSetTab() {
     }
 
     try {
-      const res = await fetch("/api/mpt/set", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          accountId,
-          domainId: defaultDomainId,
-          issuanceId,
-          holder: applyToAll ? undefined : holderAddress,
-          flags: selectedFlag,
-        }),
+      const result = await mptSet({
+        accountId,
+        domainId: defaultDomainId!,
+        issuanceId,
+        holder: applyToAll ? undefined : holderAddress,
+        flags: selectedFlag as 1 | 2,
       });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to set MPT issuance");
-      }
-
-      const result = await res.json();
       setResponse(result);
 
-      // Save to localStorage if we have a requestId
-      const responseData = result?.response || result;
+      const responseData = (result?.response ?? result) as Record<string, unknown> | undefined;
       const requestId =
-        responseData?.id || responseData?.requestId || responseData?.data?.id;
+        (responseData?.id as string | undefined) ||
+        (responseData?.requestId as string | undefined) ||
+        ((responseData?.data as Record<string, unknown> | undefined)?.id as string | undefined);
       if (requestId) {
         saveSubmittedIntent({
           type: "MPTIssuanceSet",

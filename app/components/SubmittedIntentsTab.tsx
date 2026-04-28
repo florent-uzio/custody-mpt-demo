@@ -8,6 +8,7 @@ import {
   clearSubmittedIntents,
   type SubmittedIntent,
 } from "../utils/intentStorage";
+import { getRequestState } from "../_actions/requests";
 
 const DEFAULT_DOMAIN_ID = "5cd224fe-193e-8bce-c94c-c6c05245e2d1";
 
@@ -40,35 +41,20 @@ export function SubmittedIntentsTab() {
     setFetchingIntentIds((prev) => new Set(prev).add(intent.id));
 
     try {
-      const res = await fetch("/api/requests/state", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          requestId: intent.requestId,
-          domainId: DEFAULT_DOMAIN_ID,
-        }),
-      });
+      const result = (await getRequestState(DEFAULT_DOMAIN_ID, intent.requestId)) as Record<string, unknown>;
+      const intentId =
+        (result?.intentId as string | undefined) ||
+        ((result?.data as Record<string, unknown> | undefined)?.intentId as string | undefined) ||
+        ((result?.intent as Record<string, unknown> | undefined)?.id as string | undefined) ||
+        null;
 
-      if (res.ok) {
-        const result = await res.json();
-        // Extract intentId from the response
-        // The structure may vary, but typically it's in result.intentId or result.data.intentId
-        const intentId =
-          result?.intentId ||
-          result?.data?.intentId ||
-          result?.intent?.id ||
-          null;
-
-        if (intentId) {
-          updateIntentIntentId(intent.id, intentId);
-          setIntents((prev) =>
-            prev.map((i) =>
-              i.id === intent.id ? { ...i, intentId } : i
-            )
-          );
-        }
+      if (intentId) {
+        updateIntentIntentId(intent.id, intentId);
+        setIntents((prev) =>
+          prev.map((i) =>
+            i.id === intent.id ? { ...i, intentId } : i,
+          ),
+        );
       }
     } catch (err) {
       console.error(`Failed to fetch intentId for ${intent.requestId}:`, err);

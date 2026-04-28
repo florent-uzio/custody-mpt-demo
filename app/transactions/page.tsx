@@ -6,6 +6,7 @@ import { useDefaultDomain } from "../contexts/DomainContext";
 import { useSidebarContext } from "../contexts/SidebarContext";
 import { TransactionsFilters } from "./components/TransactionsFilters";
 import { TransactionsTable } from "./components/TransactionsTable";
+import { listTransactions } from "../_actions/transactions";
 
 const DEFAULT_LEDGER_ID = "xrpl-testnet-august-2024";
 
@@ -58,24 +59,13 @@ export default function TransactionsPage() {
         sortBy,
         limit,
       ],
-      queryFn: async () => {
-        const res = await fetch("/api/transactions/list", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            domainId: defaultDomainId,
-            accountId: accountId || undefined,
-            ledgerId: ledgerId || undefined,
-            sortBy: sortBy || undefined,
-            limit,
-          }),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || "Failed to get transactions");
-        }
-        return res.json();
-      },
+      queryFn: () =>
+        listTransactions(defaultDomainId!, {
+          accountId: accountId || undefined,
+          ledgerId: ledgerId || undefined,
+          sortBy: sortBy || undefined,
+          limit,
+        }) as unknown as Promise<TransactionsResponse>,
       enabled: !!defaultDomainId,
       staleTime: 60_000,
     });

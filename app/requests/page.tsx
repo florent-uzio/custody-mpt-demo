@@ -7,6 +7,10 @@ import { type Core_RequestState } from "custody";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { useSidebarContext } from "../contexts/SidebarContext";
 import { CopyButton } from "../components/CopyButton";
+import {
+  listUserRequestStates,
+  listUserRequestStatesInDomain,
+} from "../_actions/requests";
 
 type ViewMode = "domain" | "all";
 
@@ -74,27 +78,12 @@ export default function RequestsPage() {
   } = useQuery<Core_RequestState[]>({
     queryKey: ["requests", viewMode, defaultDomainId, limit, sortBy],
     queryFn: async () => {
-      const endpoint =
+      const filters = { limit, ...(sortBy ? { sortBy } : {}) };
+      const result =
         viewMode === "domain"
-          ? "/api/requests/user-states-in-domain"
-          : "/api/requests/user-states";
-
-      const body: Record<string, unknown> = { limit };
-      if (sortBy) body.sortBy = sortBy;
-      if (viewMode === "domain") {
-        body.domainId = defaultDomainId;
-      }
-
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to fetch requests");
-      }
-      return res.json();
+          ? await listUserRequestStatesInDomain(defaultDomainId!, filters)
+          : await listUserRequestStates(filters);
+      return result as unknown as Core_RequestState[];
     },
     enabled: viewMode === "all" || !!defaultDomainId,
     staleTime: 60_000,

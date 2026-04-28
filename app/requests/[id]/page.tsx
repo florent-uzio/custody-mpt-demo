@@ -7,6 +7,7 @@ import { type Core_RequestState } from "custody";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useSidebarContext } from "../../contexts/SidebarContext";
+import { getRequestState } from "../../_actions/requests";
 
 const STATUS_CONFIG: Record<
   string,
@@ -113,18 +114,7 @@ export default function RequestDetailPage() {
     error,
   } = useQuery({
     queryKey: ["request", requestId, domainId],
-    queryFn: async () => {
-      const res = await fetch("/api/requests/state", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId, domainId }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to fetch request");
-      }
-      return res.json() as Promise<Core_RequestState>;
-    },
+    queryFn: () => getRequestState(domainId, requestId),
     enabled: !!requestId && !!domainId,
     staleTime: 60_000,
   });

@@ -1,27 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
+import { mptCreate } from "../_actions/mpt";
 import { saveSubmittedIntent } from "../utils/intentStorage";
 import type { MPTCreatePayload } from "../components/MPTCreate.types";
 
-async function createMPToken(
-  payload: MPTCreatePayload,
-): Promise<{ request: unknown; response: unknown }> {
-  const res = await fetch("/api/mpt/create", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.error || "Failed to create MPT issuance");
-  }
-
-  return res.json();
-}
-
 export function useMPTokenCreate() {
   return useMutation({
-    mutationFn: createMPToken,
+    mutationFn: (payload: MPTCreatePayload) =>
+      mptCreate(payload as Parameters<typeof mptCreate>[0]),
     onSuccess: (result) => {
       const responseData =
         (result?.response as Record<string, unknown>) || result;

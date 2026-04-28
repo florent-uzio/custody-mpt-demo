@@ -1,27 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
+import { trustSet } from "../_actions/trustset";
 import { saveSubmittedIntent } from "../utils/intentStorage";
 import type { TrustSetPayload } from "../components/TrustSet.types";
 
-async function createTrustSet(
-  payload: TrustSetPayload,
-): Promise<{ request: unknown; response: unknown }> {
-  const res = await fetch("/api/trustset", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.error || "Failed to create TrustSet");
-  }
-
-  return res.json();
-}
-
 export function useTrustSet() {
   return useMutation({
-    mutationFn: createTrustSet,
+    mutationFn: (payload: TrustSetPayload) =>
+      trustSet(payload as Parameters<typeof trustSet>[0]),
     onSuccess: (result) => {
       const responseData =
         (result?.response as Record<string, unknown>) || result;

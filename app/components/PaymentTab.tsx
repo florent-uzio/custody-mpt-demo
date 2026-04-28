@@ -5,6 +5,7 @@ import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { saveSubmittedIntent } from "../utils/intentStorage";
 import { useDefaultDomain } from "../contexts/DomainContext";
+import { proposePayment } from "../_actions/intents";
 
 type PaymentType = "XRP" | "IOU" | "MPT";
 type DestinationType = "Address" | "Account" | "Endpoint";
@@ -48,37 +49,28 @@ export function PaymentTab() {
     setResponse(null);
 
     try {
-      const res = await fetch("/api/intents/payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accountId,
-          paymentType,
-          destinationType,
-          destinationAddress,
-          destinationAccountId,
-          destinationEndpointId,
-          domainId: defaultDomainId,
-          amount,
-          currency: paymentType === "IOU" ? currency : undefined,
-          issuer: paymentType === "IOU" ? issuer : undefined,
-          issuanceId: paymentType === "MPT" ? issuanceId : undefined,
-          description,
-        }),
+      const result = await proposePayment({
+        accountId,
+        paymentType,
+        destinationType,
+        destinationAddress,
+        destinationAccountId,
+        destinationEndpointId,
+        domainId: defaultDomainId!,
+        amount,
+        currency: paymentType === "IOU" ? currency : undefined,
+        issuer: paymentType === "IOU" ? issuer : undefined,
+        issuanceId: paymentType === "MPT" ? issuanceId : undefined,
+        description,
       });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to propose payment intent");
-      }
-
-      const result = await res.json();
       setResponse(result);
       setShowRequestModal(true);
 
-      const responseData = result?.response || result;
+      const responseData = (result?.response ?? result) as Record<string, unknown> | undefined;
       const requestId =
-        responseData?.id || responseData?.requestId || responseData?.data?.id;
+        (responseData?.id as string | undefined) ||
+        (responseData?.requestId as string | undefined) ||
+        ((responseData?.data as Record<string, unknown> | undefined)?.id as string | undefined);
       if (requestId) {
         saveSubmittedIntent({ type: "Payment", requestId });
       }
