@@ -2,7 +2,6 @@
 
 import type {
   Core_IntentResponse,
-  Core_ProposeIntentBody,
   Core_TrustedIntent,
   Core_GetIntentsQueryParams,
 } from "custody";
@@ -11,6 +10,8 @@ import {
   getAccountLedgerId,
   getCurrentUser,
   getCustodySDK,
+  proposeIntent,
+  type ProposeIntentResult,
 } from "@/app/lib/custody";
 import {
   buildProposeIntent,
@@ -40,11 +41,6 @@ export type ProposeReleaseTransfersInput = {
   domainId: string;
   accountId: string;
   transferIds: string[];
-};
-
-export type ProposeIntentResult = {
-  request: Core_ProposeIntentBody;
-  response: unknown;
 };
 
 export type IntentFilters = {
@@ -175,9 +171,7 @@ export async function proposePayment(
     customProperties: { property1: "flo" },
   });
 
-  const sdk = getCustodySDK();
-  const response = await sdk.intents.propose(request);
-  return { request, response };
+  return proposeIntent(request);
 }
 
 export async function proposeReleaseTransfers(
@@ -204,7 +198,5 @@ export async function proposeReleaseTransfers(
     }`,
   });
 
-  const sdk = getCustodySDK();
-  const response = await sdk.intents.propose(request);
-  return { request, response };
+  return proposeIntent(request);
 }

@@ -3,12 +3,9 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
-import { saveSubmittedIntent } from "../utils/intentStorage";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { CopyButton } from "./CopyButton";
-import { mptSet } from "../_actions/mpt";
-
-const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
+import { useSubmitMPTokenSet } from "../hooks/useSubmitMPTokenSet";
 
 // MPT Set Flags
 const MPT_SET_FLAGS = [
@@ -31,60 +28,24 @@ const MPT_SET_FLAGS = [
 export function MPTSetTab() {
   const { defaultDomainId } = useDefaultDomain();
   const { accounts, loading: accountsLoading } = useAccounts();
+  const { mutate, isPending, data: response, error } = useSubmitMPTokenSet();
 
-  // Form state
   const [accountId, setAccountId] = useState("");
   const [issuanceId, setIssuanceId] = useState("");
   const [holderAddress, setHolderAddress] = useState("");
   const [applyToAll, setApplyToAll] = useState(true);
   const [selectedFlag, setSelectedFlag] = useState<number | null>(null);
 
-  // UI state
-  const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState<{
-    request: unknown;
-    response: unknown;
-  } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setResponse(null);
-
-    if (!selectedFlag) {
-      setError("Please select either Lock or Unlock flag");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const result = await mptSet({
-        accountId,
-        domainId: defaultDomainId!,
-        issuanceId,
-        holder: applyToAll ? undefined : holderAddress,
-        flags: selectedFlag as 1 | 2,
-      });
-      setResponse(result);
-
-      const responseData = (result?.response ?? result) as Record<string, unknown> | undefined;
-      const requestId =
-        (responseData?.id as string | undefined) ||
-        (responseData?.requestId as string | undefined) ||
-        ((responseData?.data as Record<string, unknown> | undefined)?.id as string | undefined);
-      if (requestId) {
-        saveSubmittedIntent({
-          type: "MPTIssuanceSet",
-          requestId: requestId,
-        });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
+    if (!defaultDomainId || !selectedFlag) return;
+    mutate({
+      accountId,
+      domainId: defaultDomainId,
+      issuanceId,
+      holder: applyToAll ? undefined : holderAddress,
+      flags: selectedFlag as 1 | 2,
+    });
   };
 
   return (
@@ -390,10 +351,10 @@ export function MPTSetTab() {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={loading || !defaultDomainId || accounts.length === 0 || !selectedFlag || (!applyToAll && !holderAddress)}
+          disabled={isPending || !defaultDomainId || accounts.length === 0 || !selectedFlag || (!applyToAll && !holderAddress)}
           className="w-full px-6 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl font-semibold hover:from-amber-600 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
         >
-          {loading ? (
+          {isPending ? (
             <span className="flex items-center justify-center">
               <svg
                 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -446,7 +407,9 @@ export function MPTSetTab() {
                 clipRule="evenodd"
               />
             </svg>
-            <p className="text-sm text-red-800 font-medium">Error: {error}</p>
+            <p className="text-sm text-red-800 font-medium">
+              Error: {error instanceof Error ? error.message : String(error)}
+            </p>
           </div>
         </div>
       )}

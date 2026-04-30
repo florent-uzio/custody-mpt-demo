@@ -3,15 +3,17 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
-import { saveSubmittedIntent } from "../utils/intentStorage";
 import { useDefaultDomain } from "../contexts/DomainContext";
-import { proposePayment } from "../_actions/intents";
+import { useSubmitPayment } from "../hooks/useSubmitPayment";
 
 type PaymentType = "XRP" | "IOU" | "MPT";
 type DestinationType = "Address" | "Account" | "Endpoint";
 
 export function PaymentTab() {
   const { accounts, loading: accountsLoading } = useAccounts();
+  const { defaultDomainId } = useDefaultDomain();
+  const { mutate, isPending, data: response, error } = useSubmitPayment();
+
   const [accountId, setAccountId] = useState("");
   const [paymentType, setPaymentType] = useState<PaymentType>("XRP");
 
@@ -33,52 +35,28 @@ export function PaymentTab() {
   const [issuanceId, setIssuanceId] = useState("");
 
   const [description, setDescription] = useState("Payment");
-  const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState<{
-    request: unknown;
-    response: unknown;
-  } | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
-  const { defaultDomainId } = useDefaultDomain();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setResponse(null);
-
-    try {
-      const result = await proposePayment({
+    if (!defaultDomainId) return;
+    mutate(
+      {
         accountId,
         paymentType,
         destinationType,
         destinationAddress,
         destinationAccountId,
         destinationEndpointId,
-        domainId: defaultDomainId!,
+        domainId: defaultDomainId,
         amount,
         currency: paymentType === "IOU" ? currency : undefined,
         issuer: paymentType === "IOU" ? issuer : undefined,
         issuanceId: paymentType === "MPT" ? issuanceId : undefined,
         description,
-      });
-      setResponse(result);
-      setShowRequestModal(true);
-
-      const responseData = (result?.response ?? result) as Record<string, unknown> | undefined;
-      const requestId =
-        (responseData?.id as string | undefined) ||
-        (responseData?.requestId as string | undefined) ||
-        ((responseData?.data as Record<string, unknown> | undefined)?.id as string | undefined);
-      if (requestId) {
-        saveSubmittedIntent({ type: "Payment", requestId });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
+      },
+      { onSuccess: () => setShowRequestModal(true) },
+    );
   };
 
   return (
@@ -369,10 +347,10 @@ export function PaymentTab() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isPending}
             className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
-            {loading ? (
+            {isPending ? (
               <span className="flex items-center justify-center">
                 <svg
                   className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -417,7 +395,9 @@ export function PaymentTab() {
                 clipRule="evenodd"
               />
             </svg>
-            <p className="text-sm text-red-800 font-medium">Error: {error}</p>
+            <p className="text-sm text-red-800 font-medium">
+              Error: {error instanceof Error ? error.message : String(error)}
+            </p>
           </div>
         </div>
       )}

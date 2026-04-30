@@ -3,13 +3,17 @@
 import { v4 as uuidv4 } from "uuid";
 import type {
   Core_MeReference,
-  Core_ProposeIntentBody,
   Core_TrustedUser,
   Core_TrustedUsersCollection,
   GetUsersQueryParams,
 } from "custody";
 
-import { getCurrentUser, getCustodySDK } from "@/app/lib/custody";
+import {
+  getCurrentUser,
+  getCustodySDK,
+  proposeIntent,
+  type ProposeIntentResult,
+} from "@/app/lib/custody";
 import { buildProposeIntent } from "@/app/lib/intent-builder";
 
 export type UserFilters = {
@@ -68,14 +72,9 @@ export type CreateUserInput = {
   loginIds?: Array<{ id: string; providerId: string }>;
 };
 
-export type CreateUserResult = {
-  request: Core_ProposeIntentBody;
-  response: unknown;
-};
-
 export async function createUser(
   input: CreateUserInput,
-): Promise<CreateUserResult> {
+): Promise<ProposeIntentResult> {
   const { domainId, alias, publicKey, roles, lock, description, loginIds } =
     input;
   if (!domainId) throw new Error("domainId is required");
@@ -109,7 +108,5 @@ export async function createUser(
     description: description || `Create user: ${alias}`,
   });
 
-  const sdk = getCustodySDK();
-  const response = await sdk.intents.propose(request);
-  return { request, response };
+  return proposeIntent(request);
 }

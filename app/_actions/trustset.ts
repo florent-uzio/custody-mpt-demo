@@ -1,9 +1,12 @@
 "use server";
 
 import { convertStringToHex } from "xrpl";
-import type { Core_ProposeIntentBody } from "custody";
 
-import { getAccountLedgerId, getCustodySDK } from "@/app/lib/custody";
+import {
+  getAccountLedgerId,
+  proposeIntent,
+  type ProposeIntentResult,
+} from "@/app/lib/custody";
 import {
   buildProposeIntent,
   buildTransactionOrderPayload,
@@ -22,18 +25,13 @@ export type TrustSetInput = {
   customProperties?: Record<string, string>;
 };
 
-export type TrustSetResult = {
-  request: Core_ProposeIntentBody;
-  response: unknown;
-};
-
 function toCurrencyHex(currency: string): string {
   if (currency.length <= 3) return currency;
   const hex = convertStringToHex(currency);
   return hex.padEnd(40, "0");
 }
 
-export async function trustSet(input: TrustSetInput): Promise<TrustSetResult> {
+export async function trustSet(input: TrustSetInput): Promise<ProposeIntentResult> {
   const {
     domainId,
     accountId,
@@ -82,7 +80,5 @@ export async function trustSet(input: TrustSetInput): Promise<TrustSetResult> {
     customProperties: trustlineProperties,
   });
 
-  const sdk = getCustodySDK();
-  const response = await sdk.intents.propose(request);
-  return { request, response };
+  return proposeIntent(request);
 }

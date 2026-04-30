@@ -4,8 +4,7 @@ import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { CopyButton } from "./CopyButton";
-import { saveSubmittedIntent } from "../utils/intentStorage";
-import { createUser } from "../_actions/users";
+import { useSubmitCreateUser } from "../hooks/useSubmitCreateUser";
 
 const AVAILABLE_ROLES = [
   { id: "admin", label: "Admin", description: "Full administrative access" },
@@ -16,27 +15,18 @@ const AVAILABLE_ROLES = [
 
 export function UserCreateTab() {
   const { defaultDomainId } = useDefaultDomain();
+  const { mutate, isPending, data: response, error } = useSubmitCreateUser();
 
-  // Form state
   const [alias, setAlias] = useState("");
   const [publicKey, setPublicKey] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<string[]>(["user"]);
   const [lock, setLock] = useState<"Unlocked" | "Locked">("Unlocked");
   const [description, setDescription] = useState("");
 
-  // Login IDs (optional)
   const [loginIds, setLoginIds] = useState<
     { id: string; providerId: string }[]
   >([]);
   const [showLoginIds, setShowLoginIds] = useState(false);
-
-  // UI state
-  const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState<{
-    request: unknown;
-    response: unknown;
-  } | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const handleRoleToggle = (roleId: string) => {
     setSelectedRoles((prev) =>
@@ -64,47 +54,19 @@ export function UserCreateTab() {
     setLoginIds(newLoginIds);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setResponse(null);
-
-    if (selectedRoles.length === 0) {
-      setError("At least one role must be selected");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const result = await createUser({
-        domainId: defaultDomainId!,
-        alias,
-        publicKey,
-        roles: selectedRoles,
-        lock,
-        description: description || undefined,
-        loginIds:
-          loginIds.length > 0 ? loginIds.filter((l) => l.id) : undefined,
-      });
-      setResponse(result);
-
-      const responseData = (result?.response ?? result) as Record<string, unknown> | undefined;
-      const requestId =
-        (responseData?.id as string | undefined) ||
-        (responseData?.requestId as string | undefined) ||
-        ((responseData?.data as Record<string, unknown> | undefined)?.id as string | undefined);
-      if (requestId) {
-        saveSubmittedIntent({
-          type: "CreateUser",
-          requestId: requestId,
-        });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
+    if (!defaultDomainId || selectedRoles.length === 0) return;
+    mutate({
+      domainId: defaultDomainId,
+      alias,
+      publicKey,
+      roles: selectedRoles,
+      lock,
+      description: description || undefined,
+      loginIds:
+        loginIds.length > 0 ? loginIds.filter((l) => l.id) : undefined,
+    });
   };
 
   return (
@@ -496,7 +458,7 @@ export function UserCreateTab() {
         <button
           type="submit"
           disabled={
-            loading ||
+            isPending ||
             !defaultDomainId ||
             !alias ||
             !publicKey ||
@@ -504,7 +466,7 @@ export function UserCreateTab() {
           }
           className="w-full px-6 py-4 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl font-semibold hover:from-teal-600 hover:to-cyan-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
         >
-          {loading ? (
+          {isPending ? (
             <span className="flex items-center justify-center">
               <svg
                 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -563,7 +525,9 @@ export function UserCreateTab() {
                 clipRule="evenodd"
               />
             </svg>
-            <p className="text-sm text-red-800 font-medium">Error: {error}</p>
+            <p className="text-sm text-red-800 font-medium">
+              Error: {error instanceof Error ? error.message : String(error)}
+            </p>
           </div>
         </div>
       )}

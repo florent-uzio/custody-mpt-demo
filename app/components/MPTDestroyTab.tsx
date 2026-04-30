@@ -3,66 +3,23 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
-import { saveSubmittedIntent } from "../utils/intentStorage";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { CopyButton } from "./CopyButton";
-import { mptDestroy } from "../_actions/mpt";
-
-const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
+import { useSubmitMPTokenDestroy } from "../hooks/useSubmitMPTokenDestroy";
 
 export function MPTDestroyTab() {
   const { defaultDomainId } = useDefaultDomain();
   const { accounts, loading: accountsLoading } = useAccounts();
+  const { mutate, isPending, data: response, error } = useSubmitMPTokenDestroy();
 
-  // Form state
   const [accountId, setAccountId] = useState("");
   const [issuanceId, setIssuanceId] = useState("");
   const [confirmDestroy, setConfirmDestroy] = useState(false);
 
-  // UI state
-  const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState<{
-    request: unknown;
-    response: unknown;
-  } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setResponse(null);
-
-    if (!confirmDestroy) {
-      setError("Please confirm that you want to destroy this MPT issuance");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const result = await mptDestroy({
-        accountId,
-        domainId: defaultDomainId!,
-        issuanceId,
-      });
-      setResponse(result);
-
-      const responseData = (result?.response ?? result) as Record<string, unknown> | undefined;
-      const requestId =
-        (responseData?.id as string | undefined) ||
-        (responseData?.requestId as string | undefined) ||
-        ((responseData?.data as Record<string, unknown> | undefined)?.id as string | undefined);
-      if (requestId) {
-        saveSubmittedIntent({
-          type: "MPTIssuanceDestroy",
-          requestId: requestId,
-        });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
+    if (!defaultDomainId) return;
+    mutate({ accountId, domainId: defaultDomainId, issuanceId });
   };
 
   return (
@@ -309,7 +266,7 @@ export function MPTDestroyTab() {
         <button
           type="submit"
           disabled={
-            loading ||
+            isPending ||
             !defaultDomainId ||
             accounts.length === 0 ||
             !confirmDestroy ||
@@ -317,7 +274,7 @@ export function MPTDestroyTab() {
           }
           className="w-full px-6 py-4 bg-gradient-to-r from-red-600 to-rose-700 text-white rounded-xl font-semibold hover:from-red-700 hover:to-rose-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
         >
-          {loading ? (
+          {isPending ? (
             <span className="flex items-center justify-center">
               <svg
                 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -377,7 +334,9 @@ export function MPTDestroyTab() {
                 clipRule="evenodd"
               />
             </svg>
-            <p className="text-sm text-red-800 font-medium">Error: {error}</p>
+            <p className="text-sm text-red-800 font-medium">
+              Error: {error instanceof Error ? error.message : String(error)}
+            </p>
           </div>
         </div>
       )}

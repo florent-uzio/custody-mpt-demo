@@ -6,11 +6,15 @@ import type {
   Core_AddressesCollection,
   Core_ApiAccount,
   Core_BalancesCollection,
-  Core_ProposeIntentBody,
   GetAccountsQueryParams,
 } from "custody";
 
-import { getCurrentUser, getCustodySDK } from "@/app/lib/custody";
+import {
+  getCurrentUser,
+  getCustodySDK,
+  proposeIntent,
+  type ProposeIntentResult,
+} from "@/app/lib/custody";
 import { buildProposeIntent } from "@/app/lib/intent-builder";
 
 export type AccountFilters = {
@@ -39,11 +43,6 @@ export type CreateAccountInput = {
   ledgerIds?: string[];
   lock?: "Unlocked" | "Locked";
   description?: string;
-};
-
-export type CreateAccountResult = {
-  request: Core_ProposeIntentBody;
-  response: unknown;
 };
 
 type AccountQueryParams = NonNullable<GetAccountsQueryParams>;
@@ -115,7 +114,7 @@ export async function getAccountBalances(
 
 export async function createAccount(
   input: CreateAccountInput,
-): Promise<CreateAccountResult> {
+): Promise<ProposeIntentResult> {
   const { domainId, alias, vaultId, keyStrategy, ledgerIds, lock, description } =
     input;
   if (!domainId) throw new Error("domainId is required");
@@ -141,7 +140,5 @@ export async function createAccount(
     description: description || `Create account: ${alias}`,
   });
 
-  const sdk = getCustodySDK();
-  const response = await sdk.intents.propose(request);
-  return { request, response };
+  return proposeIntent(request);
 }

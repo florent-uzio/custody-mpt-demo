@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
-import { useTrustSet } from "../hooks/useTrustSet";
+import { useSubmitTrustSet } from "../hooks/useSubmitTrustSet";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { AccountSection } from "./trustset/AccountSection";
 import { LimitAmountSection } from "./trustset/LimitAmountSection";
@@ -16,7 +16,7 @@ import type { TrustSetFlag } from "./TrustSet.types";
 export function TrustSetTab() {
   const { defaultDomainId } = useDefaultDomain();
   const { accounts, loading: accountsLoading } = useAccounts();
-  const { mutate, isPending, data: response, error } = useTrustSet();
+  const { mutate, isPending, data: response, error } = useSubmitTrustSet();
 
   const [accountId, setAccountId] = useState("");
   const [currency, setCurrency] = useState("");

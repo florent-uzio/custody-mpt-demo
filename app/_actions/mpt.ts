@@ -1,11 +1,10 @@
 "use server";
 
-import type { Core_ProposeIntentBody } from "custody";
-
 import {
   getAccountLedgerId,
   getCurrentUser,
-  getCustodySDK,
+  proposeIntent,
+  type ProposeIntentResult,
 } from "@/app/lib/custody";
 import {
   buildProposeIntent,
@@ -44,12 +43,7 @@ export type MptSetInput = {
   holder?: string;
 };
 
-export type MptResult = {
-  request: Core_ProposeIntentBody;
-  response: unknown;
-};
-
-export async function mptCreate(input: MptCreateInput): Promise<MptResult> {
+export async function mptCreate(input: MptCreateInput): Promise<ProposeIntentResult> {
   const {
     domainId,
     accountId,
@@ -88,14 +82,12 @@ export async function mptCreate(input: MptCreateInput): Promise<MptResult> {
     customProperties: { property1: "mpt-issuance-create" },
   });
 
-  const sdk = getCustodySDK();
-  const response = await sdk.intents.propose(request);
-  return { request, response };
+  return proposeIntent(request);
 }
 
 export async function mptAuthorize(
   input: MptAuthorizeInput,
-): Promise<MptResult> {
+): Promise<ProposeIntentResult> {
   const { domainId, accountId, issuanceId } = input;
   if (!domainId) throw new Error("domainId is required");
   if (!issuanceId) throw new Error("issuanceId is required");
@@ -122,12 +114,10 @@ export async function mptAuthorize(
     customProperties: { property1: "flo" },
   });
 
-  const sdk = getCustodySDK();
-  const response = await sdk.intents.propose(request);
-  return { request, response };
+  return proposeIntent(request);
 }
 
-export async function mptDestroy(input: MptDestroyInput): Promise<MptResult> {
+export async function mptDestroy(input: MptDestroyInput): Promise<ProposeIntentResult> {
   const { domainId, accountId, issuanceId } = input;
   if (!accountId) throw new Error("accountId is required");
   if (!domainId) throw new Error("domainId is required");
@@ -152,12 +142,10 @@ export async function mptDestroy(input: MptDestroyInput): Promise<MptResult> {
     customProperties: { property1: "mpt-issuance-destroy" },
   });
 
-  const sdk = getCustodySDK();
-  const response = await sdk.intents.propose(request);
-  return { request, response };
+  return proposeIntent(request);
 }
 
-export async function mptSet(input: MptSetInput): Promise<MptResult> {
+export async function mptSet(input: MptSetInput): Promise<ProposeIntentResult> {
   const { domainId, accountId, issuanceId, flags, holder } = input;
   if (!accountId) throw new Error("accountId is required");
   if (!domainId) throw new Error("domainId is required");
@@ -188,7 +176,5 @@ export async function mptSet(input: MptSetInput): Promise<MptResult> {
     customProperties: { property1: "mpt-issuance-set" },
   });
 
-  const sdk = getCustodySDK();
-  const response = await sdk.intents.propose(request);
-  return { request, response };
+  return proposeIntent(request);
 }
