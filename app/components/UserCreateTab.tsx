@@ -28,6 +28,9 @@ export function UserCreateTab() {
   >([]);
   const [showLoginIds, setShowLoginIds] = useState(false);
 
+  const [customRoleInput, setCustomRoleInput] = useState("");
+  const customRoleIsValid = /^[a-z0-9-]+$/.test(customRoleInput.trim());
+
   const handleRoleToggle = (roleId: string) => {
     setSelectedRoles((prev) =>
       prev.includes(roleId)
@@ -35,6 +38,23 @@ export function UserCreateTab() {
         : [...prev, roleId]
     );
   };
+
+  const addCustomRole = (raw: string): string[] => {
+    const value = raw.toLowerCase().trim();
+    if (!value || !/^[a-z0-9-]+$/.test(value)) return selectedRoles;
+    if (selectedRoles.includes(value)) {
+      setCustomRoleInput("");
+      return selectedRoles;
+    }
+    const next = [...selectedRoles, value];
+    setSelectedRoles(next);
+    setCustomRoleInput("");
+    return next;
+  };
+
+  const customRoles = selectedRoles.filter(
+    (r) => !AVAILABLE_ROLES.some((ar) => ar.id === r)
+  );
 
   const addLoginId = () => {
     setLoginIds([...loginIds, { id: "", providerId: "harmonize" }]);
@@ -56,12 +76,15 @@ export function UserCreateTab() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!defaultDomainId || selectedRoles.length === 0) return;
+    const roles = customRoleInput.trim()
+      ? addCustomRole(customRoleInput)
+      : selectedRoles;
+    if (!defaultDomainId || roles.length === 0) return;
     mutate({
       domainId: defaultDomainId,
       alias,
       publicKey,
-      roles: selectedRoles,
+      roles,
       lock,
       description: description || undefined,
       loginIds:
@@ -236,25 +259,53 @@ export function UserCreateTab() {
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="custom-role"
-                pattern="[a-z0-9\-]+"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                value={customRoleInput}
+                onChange={(e) => setCustomRoleInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    const input = e.target as HTMLInputElement;
-                    const value = input.value.toLowerCase().trim();
-                    if (value && !selectedRoles.includes(value)) {
-                      setSelectedRoles([...selectedRoles, value]);
-                      input.value = "";
-                    }
+                    addCustomRole(customRoleInput);
                   }
                 }}
+                placeholder="eds-manager"
+                pattern="[a-z0-9\-]+"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
               />
-              <span className="text-xs text-gray-400 self-center">
-                Press Enter to add
-              </span>
+              <button
+                type="button"
+                onClick={() => addCustomRole(customRoleInput)}
+                disabled={!customRoleIsValid}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                Add
+              </button>
             </div>
+            {customRoleInput.trim() && !customRoleIsValid && (
+              <p className="mt-2 text-xs text-red-600">
+                Use lowercase letters, digits, and hyphens only.
+              </p>
+            )}
+
+            {customRoles.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {customRoles.map((role) => (
+                  <span
+                    key={role}
+                    className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 bg-teal-50 border border-teal-200 text-teal-800 rounded-full text-xs font-mono"
+                  >
+                    {role}
+                    <button
+                      type="button"
+                      onClick={() => handleRoleToggle(role)}
+                      className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-teal-200 text-teal-700"
+                      aria-label={`Remove ${role}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
