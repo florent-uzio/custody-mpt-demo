@@ -32,7 +32,8 @@ function buildUserQueryParams(filters: UserFilters): UserQueryParams {
   if (filters.limit !== undefined) q.limit = filters.limit;
   if (filters.startingAfter) q.startingAfter = filters.startingAfter;
   if (filters.sortBy) q.sortBy = filters.sortBy as UserQueryParams["sortBy"];
-  if (filters.sortOrder) q.sortOrder = filters.sortOrder as UserQueryParams["sortOrder"];
+  if (filters.sortOrder)
+    q.sortOrder = filters.sortOrder as UserQueryParams["sortOrder"];
   if (filters.alias) q.alias = filters.alias;
   if (filters.lock?.length) q.lock = filters.lock as UserQueryParams["lock"];
   return q;
