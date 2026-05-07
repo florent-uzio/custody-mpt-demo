@@ -3,6 +3,7 @@
 import { v4 as uuidv4 } from "uuid";
 import type {
   Core_MeReference,
+  Core_ProposeIntentBody,
   Core_TrustedUser,
   Core_TrustedUsersCollection,
   GetUsersQueryParams,
@@ -15,6 +16,9 @@ import {
   type ProposeIntentResult,
 } from "@/app/lib/custody";
 import { buildProposeIntent } from "@/app/lib/intent-builder";
+
+type IntentPayload = Core_ProposeIntentBody["request"]["payload"];
+type UpdateUserPayload = Extract<IntentPayload, { type: "v0_UpdateUser" }>;
 
 export type UserFilters = {
   limit?: number;
@@ -107,6 +111,53 @@ export async function createUser(
       type: "v0_CreateUser",
     },
     description: description || `Create user: ${alias}`,
+  });
+
+  return proposeIntent(request);
+}
+
+export type UpdateUserInput = Omit<UpdateUserPayload, "type" | "customProperties"> & {
+  domainId: string;
+  customProperties?: UpdateUserPayload["customProperties"];
+};
+
+export async function updateUser(
+  input: UpdateUserInput,
+): Promise<ProposeIntentResult> {
+  const {
+    domainId,
+    reference,
+    alias,
+    roles,
+    description,
+    customProperties,
+    loginIds,
+  } = input;
+  if (!domainId) throw new Error("domainId is required");
+  if (!reference?.id) throw new Error("reference.id is required");
+  if (typeof reference?.revision !== "number")
+    throw new Error("reference.revision is required");
+  if (!alias) throw new Error("alias is required");
+  if (!roles || roles.length === 0)
+    throw new Error("At least one role is required");
+
+  const currentUser = await getCurrentUser(domainId);
+
+  const payload: UpdateUserPayload = {
+    reference,
+    alias,
+    roles,
+    customProperties: customProperties ?? {},
+    ...(description !== undefined && { description }),
+    ...(loginIds && loginIds.length > 0 && { loginIds }),
+    type: "v0_UpdateUser",
+  };
+
+  const request = buildProposeIntent({
+    author: { id: currentUser.userId, domainId: currentUser.domainId },
+    targetDomainId: domainId,
+    payload,
+    description: description || `Update user: ${alias}`,
   });
 
   return proposeIntent(request);
