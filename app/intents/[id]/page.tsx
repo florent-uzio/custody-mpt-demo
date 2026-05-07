@@ -1,12 +1,12 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useSidebarContext } from "../../contexts/SidebarContext";
-import { getIntent } from "../../_actions/intents";
+import { approveIntent, getIntent } from "../../_actions/intents";
 
 type IntentStatus =
   | "Open"
@@ -125,6 +125,8 @@ export default function IntentDetailPage() {
   const domainId = searchParams.get("domainId") ?? "";
   const { sidebarOpen, setSidebarOpen } = useSidebarContext();
 
+  const queryClient = useQueryClient();
+
   const {
     data: intent,
     isLoading,
@@ -139,6 +141,18 @@ export default function IntentDetailPage() {
 
   const status = intent?.data.state.status;
   const cfg = status ? STATUS_CONFIG[status] : STATUS_CONFIG.Expired;
+
+  const approveMutation = useMutation({
+    mutationFn: () => approveIntent(domainId, intentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["intent", intentId, domainId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["intents"] });
+    },
+  });
+
+  const canApprove = status === "Open";
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -204,14 +218,25 @@ export default function IntentDetailPage() {
               </div>
             </div>
 
-            {status && (
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${cfg.badgeBg} ${cfg.badgeText} flex-shrink-0`}
-              >
-                <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                {status}
-              </span>
-            )}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {canApprove && (
+                <button
+                  onClick={() => approveMutation.mutate()}
+                  disabled={approveMutation.isPending}
+                  className="px-4 py-1.5 bg-white text-green-700 rounded-full text-xs font-bold shadow-sm hover:bg-green-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {approveMutation.isPending ? "Approving…" : "Approve"}
+                </button>
+              )}
+              {status && (
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${cfg.badgeBg} ${cfg.badgeText}`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+                  {status}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -274,6 +299,14 @@ export default function IntentDetailPage() {
           {/* Content */}
           {intent && !isLoading && (
             <div className="space-y-5">
+              {approveMutation.isError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+                  Failed to approve:{" "}
+                  {approveMutation.error instanceof Error
+                    ? approveMutation.error.message
+                    : "Unknown error"}
+                </div>
+              )}
               {/* Summary bar */}
               <div
                 className={`bg-white rounded-xl border ${cfg.border} shadow-sm p-5`}

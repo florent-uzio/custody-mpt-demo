@@ -1,6 +1,7 @@
 "use server";
 
 import type {
+  Core_ApproveIntentBody,
   Core_IntentResponse,
   Core_TrustedIntent,
   Core_GetIntentsQueryParams,
@@ -84,6 +85,34 @@ export async function getIntent(
   if (!intentId) throw new Error("intentId is required");
   const sdk = getCustodySDK();
   return sdk.intents.get({ domainId, intentId });
+}
+
+export async function approveIntent(
+  domainId: string,
+  intentId: string,
+): Promise<Core_IntentResponse> {
+  if (!domainId) throw new Error("domainId is required");
+  if (!intentId) throw new Error("intentId is required");
+
+  const sdk = getCustodySDK();
+  const currentUser = await getCurrentUser(domainId);
+
+  const trusted = (await sdk.intents.get({
+    domainId,
+    intentId,
+  })) as Core_TrustedIntent;
+
+  const body: Core_ApproveIntentBody = {
+    request: {
+      author: { id: currentUser.userId, domainId: currentUser.domainId },
+      targetDomainId: domainId,
+      intentId,
+      proposalSignature: trusted.data.details.proposalSignature,
+      type: "Approve",
+    },
+  } as Core_ApproveIntentBody;
+
+  return sdk.intents.approve(body);
 }
 
 function buildPaymentDestination(
