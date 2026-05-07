@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Core_ApiTicker } from "custody";
+import { getTicker } from "../_actions/tickers";
 
 export function useTickers(tickerIds: string[]) {
   return useQuery({
@@ -7,14 +8,12 @@ export function useTickers(tickerIds: string[]) {
     queryFn: async () => {
       const results = await Promise.all(
         tickerIds.map(async (tickerId) => {
-          const res = await fetch("/api/tickers/get", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tickerId }),
-          });
-          if (!res.ok) return null;
-          return res.json() as Promise<Core_ApiTicker>;
-        })
+          try {
+            return await getTicker(tickerId);
+          } catch {
+            return null;
+          }
+        }),
       );
 
       const map = new Map<string, Core_ApiTicker>();
@@ -31,18 +30,7 @@ export function useTickers(tickerIds: string[]) {
 export function useTicker(tickerId: string | undefined) {
   return useQuery({
     queryKey: ["ticker", tickerId],
-    queryFn: async () => {
-      const res = await fetch("/api/tickers/get", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tickerId }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to get ticker");
-      }
-      return res.json() as Promise<Core_ApiTicker>;
-    },
+    queryFn: () => getTicker(tickerId!),
     enabled: !!tickerId,
     staleTime: 5 * 60_000,
   });

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useDefaultDomain } from "../contexts/DomainContext";
+import { getIntent } from "../_actions/intents";
 
 export function IntentsTab() {
   const { defaultDomainId } = useDefaultDomain();
@@ -24,23 +25,7 @@ export function IntentsTab() {
     setResponse(null);
 
     try {
-      const res = await fetch("/api/intents/get", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          intentId,
-          domainId: defaultDomainId,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to get intent");
-      }
-
-      const result = await res.json();
+      const result = await getIntent(defaultDomainId, intentId);
       setResponse(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");

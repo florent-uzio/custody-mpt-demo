@@ -13,6 +13,7 @@ export type Tab =
   | "requests"
   | "transfers"
   | "transactions"
+  | "channels"
   | "tickers"
   | "mpt-create"
   | "mpt-authorize"
@@ -26,6 +27,7 @@ export type Tab =
   | "users-list"
   | "users-me"
   | "keypair"
+  | "jwt-token"
   | "config";
 
 export const TABS: {
@@ -55,6 +57,12 @@ export const TABS: {
     id: "transactions",
     label: "Transactions",
     icon: "📝",
+    category: "Operations",
+  },
+  {
+    id: "channels",
+    label: "Channels",
+    icon: "📡",
     category: "Operations",
   },
   {
@@ -95,6 +103,7 @@ export const TABS: {
   { id: "mpt-destroy", label: "MPT Destroy", icon: "🗑️", category: "XRPL" },
   { id: "trustset", label: "TrustSet", icon: "🔗", category: "XRPL" },
   { id: "keypair", label: "Keypair Generator", icon: "🔑", category: "Tools" },
+  { id: "jwt-token", label: "JWT Token", icon: "🎫", category: "Tools" },
 ];
 
 interface AppSidebarProps {
@@ -114,6 +123,7 @@ export function AppSidebar({
   const pathname = usePathname();
   const isNavMode =
     pathname.startsWith("/accounts") ||
+    pathname.startsWith("/channels") ||
     pathname.startsWith("/intents") ||
     pathname.startsWith("/policies") ||
     pathname.startsWith("/requests") ||
@@ -138,6 +148,7 @@ export function AppSidebar({
     if (tab.id === "requests") return pathname.startsWith("/requests");
     if (tab.id === "transactions")
       return pathname.startsWith("/transactions") || activeTab === tab.id;
+    if (tab.id === "channels") return pathname.startsWith("/channels");
     if (tab.id === "transfers")
       return pathname.startsWith("/transfers") || activeTab === tab.id;
     if (tab.id === "users-list") return pathname === "/users";
@@ -148,6 +159,7 @@ export function AppSidebar({
 
   const handleTabClick = (tab: (typeof TABS)[0]) => {
     if (
+      tab.id === "channels" ||
       tab.id === "intents-list" ||
       tab.id === "policies" ||
       tab.id === "requests" ||
@@ -265,6 +277,17 @@ export function AppSidebar({
                     if (tab.id === "transactions") {
                       return (
                         <Link key={tab.id} href="/transactions" className={cls}>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
+                          <span className="truncate">{tab.label}</span>
+                        </Link>
+                      );
+                    }
+
+                    if (tab.id === "channels") {
+                      return (
+                        <Link key={tab.id} href="/channels" className={cls}>
                           <span className="text-lg flex-shrink-0">
                             {tab.icon}
                           </span>

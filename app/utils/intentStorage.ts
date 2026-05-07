@@ -6,6 +6,7 @@ export interface SubmittedIntent {
     | "MPTIssuanceSet"
     | "MPTIssuanceDestroy"
     | "CreateUser"
+    | "UpdateUser"
     | "CreateAccount"
     | "Payment"
     | "TrustSet";

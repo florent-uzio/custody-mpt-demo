@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useDefaultDomain } from "../contexts/DomainContext";
-import { saveSubmittedIntent } from "../utils/intentStorage";
 import { CopyButton } from "./CopyButton";
+import { useSubmitCreateAccount } from "../hooks/useSubmitCreateAccount";
+import { listVaults } from "../_actions/vaults";
 
 interface Vault {
   data: {
@@ -69,6 +70,7 @@ const AVAILABLE_LEDGERS = [
 
 export function AccountCreateTab() {
   const { defaultDomainId } = useDefaultDomain();
+  const { mutate, isPending, data: response, error } = useSubmitCreateAccount();
 
   // Vaults state
   const [vaults, setVaults] = useState<Vault[]>([]);
@@ -94,26 +96,12 @@ export function AccountCreateTab() {
   // Manual vault ID input toggle
   const [showManualVaultInput, setShowManualVaultInput] = useState(false);
 
-  // UI state
-  const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState<{
-    request: unknown;
-    response: unknown;
-  } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  // Fetch vaults on mount
   useEffect(() => {
     async function fetchVaults() {
       try {
         setVaultsLoading(true);
         setVaultsError(null);
-        const res = await fetch("/api/vaults/list", { method: "POST" });
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || "Failed to fetch vaults");
-        }
-        const data: VaultsResponse = await res.json();
+        const data = (await listVaults()) as unknown as VaultsResponse;
         setVaults(data.items || []);
       } catch (err) {
         setVaultsError(
@@ -143,50 +131,18 @@ export function AccountCreateTab() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setResponse(null);
-
-    try {
-      const res = await fetch("/api/accounts/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          domainId: defaultDomainId,
-          alias,
-          vaultId,
-          keyStrategy,
-          ledgerIds: selectedLedgers.length > 0 ? selectedLedgers : undefined,
-          lock,
-          description: description || undefined,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to create account");
-      }
-
-      const result = await res.json();
-      setResponse(result);
-
-      // Save to localStorage if we have a requestId
-      const responseData = result?.response || result;
-      const requestId =
-        responseData?.id || responseData?.requestId || responseData?.data?.id;
-      if (requestId) {
-        saveSubmittedIntent({
-          type: "CreateAccount",
-          requestId: requestId,
-        });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
+    if (!defaultDomainId) return;
+    mutate({
+      domainId: defaultDomainId,
+      alias,
+      vaultId,
+      keyStrategy,
+      ledgerIds: selectedLedgers.length > 0 ? selectedLedgers : undefined,
+      lock,
+      description: description || undefined,
+    });
   };
 
   const getKeyStrategyIcon = (icon: string) => {
@@ -879,10 +835,10 @@ export function AccountCreateTab() {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={loading || !defaultDomainId || !alias || !vaultId}
+          disabled={isPending || !defaultDomainId || !alias || !vaultId}
           className="w-full px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
         >
-          {loading ? (
+          {isPending ? (
             <span className="flex items-center justify-center">
               <svg
                 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -941,7 +897,9 @@ export function AccountCreateTab() {
                 clipRule="evenodd"
               />
             </svg>
-            <p className="text-sm text-red-800 font-medium">Error: {error}</p>
+            <p className="text-sm text-red-800 font-medium">
+              Error: {error instanceof Error ? error.message : String(error)}
+            </p>
           </div>
         </div>
       )}

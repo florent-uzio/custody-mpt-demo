@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { listAccounts } from "../_actions/accounts";
 import { useDefaultDomain } from "../contexts/DomainContext";
 
 export interface Account {
@@ -7,32 +8,19 @@ export interface Account {
   domainId: string;
 }
 
-async function fetchAccounts(domainId: string): Promise<Account[]> {
-  const res = await fetch("/api/accounts/list", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ domainId }),
-  });
-
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.error || "Failed to fetch accounts");
-  }
-
-  const result = await res.json();
-  return result.items.map((item: { data: { id: string; alias?: string; domainId: string } }) => ({
-    id: item.data.id,
-    alias: item.data.alias || item.data.id,
-    domainId: item.data.domainId,
-  }));
-}
-
 export function useAccounts() {
   const { defaultDomainId } = useDefaultDomain();
 
   const { data: accounts = [], isLoading: loading, error } = useQuery({
     queryKey: ["accounts", defaultDomainId],
-    queryFn: () => fetchAccounts(defaultDomainId!),
+    queryFn: async (): Promise<Account[]> => {
+      const result = await listAccounts(defaultDomainId!);
+      return result.items.map((item) => ({
+        id: item.data.id,
+        alias: item.data.alias || item.data.id,
+        domainId: item.data.domainId,
+      }));
+    },
     enabled: !!defaultDomainId,
   });
 

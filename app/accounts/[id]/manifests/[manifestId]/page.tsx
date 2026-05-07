@@ -7,6 +7,7 @@ import type { Core_ApiManifest } from "custody";
 import { CopyButton } from "../../../../components/CopyButton";
 import { JsonViewer } from "../../../../components/JsonViewer";
 import { useSidebarContext } from "../../../../contexts/SidebarContext";
+import { getManifest } from "../../../../_actions/manifests";
 import { PROCESSING_STYLES } from "../manifests.types";
 import type { ManifestProcessingStatus } from "../manifests.types";
 
@@ -137,18 +138,7 @@ export default function ManifestDetailPage() {
     refetch,
   } = useQuery({
     queryKey: ["manifest", domainId, accountId, manifestId],
-    queryFn: async () => {
-      const res = await fetch("/api/manifests/get", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ domainId, accountId, manifestId }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to fetch manifest");
-      }
-      return res.json() as Promise<Core_ApiManifest>;
-    },
+    queryFn: () => getManifest(domainId, accountId, manifestId),
     enabled: !!domainId && !!accountId && !!manifestId,
     staleTime: 60_000,
   });

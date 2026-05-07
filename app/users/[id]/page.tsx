@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -8,6 +9,8 @@ import { JsonViewer } from "../../components/JsonViewer";
 import { useSidebarContext } from "../../contexts/SidebarContext";
 import { LockBadge } from "../components/LockBadge";
 import { LOCK_STYLES, type TrustedUser } from "../users.types";
+import { getUser } from "../../_actions/users";
+import { UserEditForm } from "./UserEditForm";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -59,21 +62,11 @@ export default function UserDetailPage() {
   const userId = params.id as string;
   const domainId = searchParams.get("domainId") ?? "";
   const { sidebarOpen, setSidebarOpen } = useSidebarContext();
+  const [isEditing, setIsEditing] = useState(false);
 
   const { data: user, isLoading, isError, error } = useQuery({
     queryKey: ["user", userId, domainId],
-    queryFn: async () => {
-      const res = await fetch("/api/users/get", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, domainId }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to fetch user");
-      }
-      return res.json() as Promise<TrustedUser>;
-    },
+    queryFn: () => getUser(domainId, userId) as Promise<TrustedUser>,
     enabled: !!userId && !!domainId,
     staleTime: 60_000,
   });
@@ -143,14 +136,37 @@ export default function UserDetailPage() {
               </div>
             </div>
 
-            {lock && (
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${cfg.bg} ${cfg.text} flex-shrink-0`}
-              >
-                <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                {lock}
-              </span>
-            )}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {user && !isEditing && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/20 hover:bg-white/30 text-white transition-colors"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  Edit
+                </button>
+              )}
+              {lock && (
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${cfg.bg} ${cfg.text}`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+                  {lock}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -208,7 +224,14 @@ export default function UserDetailPage() {
             </div>
           )}
 
-          {user && !isLoading && (
+          {user && !isLoading && isEditing && (
+            <UserEditForm
+              user={user}
+              onCancel={() => setIsEditing(false)}
+            />
+          )}
+
+          {user && !isLoading && !isEditing && (
             <div className="space-y-5">
               {/* Summary bar */}
               <div className={`bg-white rounded-xl border ${cfg.border} shadow-sm p-5`}>

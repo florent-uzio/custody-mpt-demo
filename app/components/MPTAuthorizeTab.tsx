@@ -3,58 +3,20 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
-import { saveSubmittedIntent } from "../utils/intentStorage";
 import { useDefaultDomain } from "../contexts/DomainContext";
+import { useSubmitMPTokenAuthorize } from "../hooks/useSubmitMPTokenAuthorize";
 
 export function MPTAuthorizeTab() {
   const { defaultDomainId } = useDefaultDomain();
   const { accounts, loading: accountsLoading } = useAccounts();
+  const { mutate, isPending, data: response, error } = useSubmitMPTokenAuthorize();
   const [issuanceId, setIssuanceId] = useState("");
   const [accountId, setAccountId] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState<unknown>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setResponse(null);
-
-    try {
-      const res = await fetch("/api/mpt/authorize", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          domainId: defaultDomainId,
-          issuanceId,
-          accountId,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to propose intent");
-      }
-
-      const result = await res.json();
-      setResponse(result);
-
-      // Save to localStorage if we have a requestId
-      const requestId = result?.id || result?.requestId || result?.data?.id;
-      if (requestId) {
-        saveSubmittedIntent({
-          type: "MPTAuthorize",
-          requestId: requestId,
-        });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
+    if (!defaultDomainId) return;
+    mutate({ domainId: defaultDomainId, issuanceId, accountId });
   };
 
   return (
@@ -171,10 +133,10 @@ export function MPTAuthorizeTab() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isPending}
             className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
-            {loading ? (
+            {isPending ? (
               <span className="flex items-center justify-center">
                 <svg
                   className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -219,12 +181,14 @@ export function MPTAuthorizeTab() {
                 clipRule="evenodd"
               />
             </svg>
-            <p className="text-sm text-red-800 font-medium">Error: {error}</p>
+            <p className="text-sm text-red-800 font-medium">
+              Error: {error instanceof Error ? error.message : String(error)}
+            </p>
           </div>
         </div>
       )}
 
-      {response !== null && (
+      {response && (
         <div>
           <JsonViewer data={response} title="MPT Authorize Intent Response" />
         </div>

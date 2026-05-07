@@ -11,6 +11,7 @@ import type {
   Core_PolicyScope,
   Core_Policy,
 } from "custody";
+import { listPolicies } from "../_actions/policies";
 
 type Core_LockStatus = Core_Policy["lock"];
 
@@ -25,23 +26,12 @@ export default function PoliciesPage() {
   const { data, isLoading, isError, error, isFetching, refetch } =
     useQuery<Core_TrustedPoliciesCollection>({
       queryKey: ["policies", defaultDomainId, scope, lock, sortBy],
-      queryFn: async () => {
-        const res = await fetch("/api/policies/list", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            domainId: defaultDomainId,
-            scope: scope || undefined,
-            lock: lock ? [lock] : undefined,
-            sortBy: sortBy || undefined,
-          }),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || "Failed to get policies");
-        }
-        return res.json();
-      },
+      queryFn: () =>
+        listPolicies(defaultDomainId!, {
+          scope: scope || undefined,
+          lock: lock ? [lock] : undefined,
+          sortBy: sortBy || undefined,
+        }),
       enabled: !!defaultDomainId,
       staleTime: 60_000,
     });

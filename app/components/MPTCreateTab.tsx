@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
-import { useMPTokenCreate } from "../hooks/useMPTokenCreate";
+import { useSubmitMPTokenCreate } from "../hooks/useSubmitMPTokenCreate";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { IssuerAccountSection } from "./mpt-create/IssuerAccountSection";
 import { TokenPropertiesSection } from "./mpt-create/TokenPropertiesSection";
@@ -15,7 +15,7 @@ import type { MPTFlag } from "./MPTCreate.types";
 export function MPTCreateTab() {
   const { defaultDomainId } = useDefaultDomain();
   const { accounts, loading: accountsLoading } = useAccounts();
-  const { mutate, isPending, data: response, error } = useMPTokenCreate();
+  const { mutate, isPending, data: response, error } = useSubmitMPTokenCreate();
 
   const [accountId, setAccountId] = useState("");
   const [assetScale, setAssetScale] = useState(2);

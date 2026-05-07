@@ -16,6 +16,7 @@ import { DomainsTab } from "./components/DomainsTab";
 import { AccountsTab } from "./components/AccountsTab";
 import { AccountCreateTab } from "./components/AccountCreateTab";
 import { KeypairTab } from "./components/KeypairTab";
+import { JwtTokenTab } from "./components/JwtTokenTab";
 import { TrustSetTab } from "./components/TrustSetTab";
 import { ConfigTab } from "./components/ConfigTab";
 import { AppSidebar, TABS } from "./components/AppSidebar";
@@ -152,6 +153,7 @@ export default function Home() {
                 {activeTab === "mpt-destroy" && <MPTDestroyTab />}
                 {activeTab === "trustset" && <TrustSetTab />}
                 {activeTab === "keypair" && <KeypairTab />}
+                {activeTab === "jwt-token" && <JwtTokenTab />}
                 {activeTab === "config" && <ConfigTab />}
               </div>
             </div>

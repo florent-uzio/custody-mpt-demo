@@ -6,6 +6,7 @@ import { useDefaultDomain } from "../contexts/DomainContext";
 import { useSidebarContext } from "../contexts/SidebarContext";
 import { TransfersFilters } from "./components/TransfersFilters";
 import { TransfersTable } from "./components/TransfersTable";
+import { listTransfers } from "../_actions/transactions";
 
 export default function TransfersPage() {
   const { defaultDomainId } = useDefaultDomain();
@@ -38,22 +39,25 @@ export default function TransfersPage() {
     nextStartingAfter?: string;
   }>({
     queryKey: ["transfers", defaultDomainId, kind, quarantinedFilter],
-    queryFn: async () => {
-      const res = await fetch("/api/transactions/transfers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          domainId: defaultDomainId,
-          kind: kind || undefined,
-          quarantined: quarantinedParam,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to get transfers");
-      }
-      return res.json();
-    },
+    queryFn: () =>
+      listTransfers(defaultDomainId!, {
+        kind: (kind || undefined) as "Transfer" | "Fee" | "Recovery" | undefined,
+        quarantined: quarantinedParam,
+      }) as unknown as Promise<{
+        items: Array<{
+          id: string;
+          tickerId: string;
+          quarantined: boolean;
+          senders: Array<{ accountId: string; domainId: string; amount: string }>;
+          recipient?: { accountId: string; domainId: string; amount: string };
+          value: string;
+          kind: "Transfer" | "Fee" | "Recovery";
+          registeredAt: string;
+          metadata: unknown;
+        }>;
+        count: number;
+        nextStartingAfter?: string;
+      }>,
     enabled: !!defaultDomainId,
     staleTime: 60_000,
   });

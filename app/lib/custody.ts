@@ -1,5 +1,23 @@
-import { RippleCustody, type Core_MeReference } from "custody";
+import {
+  RippleCustody,
+  type Core_IntentResponse,
+  type Core_MeReference,
+  type Core_ProposeIntentBody,
+} from "custody";
 import { getConfigValue } from "./config";
+
+export type ProposeIntentResult = {
+  request: Core_ProposeIntentBody;
+  response: Core_IntentResponse;
+  requestId: string;
+};
+
+export async function proposeIntent(
+  request: Core_ProposeIntentBody,
+): Promise<ProposeIntentResult> {
+  const response = await getCustodySDK().intents.propose(request);
+  return { request, response, requestId: response.requestId };
+}
 
 let custodyInstance: RippleCustody | null = null;
 

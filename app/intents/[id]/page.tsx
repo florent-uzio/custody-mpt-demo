@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useSidebarContext } from "../../contexts/SidebarContext";
+import { getIntent } from "../../_actions/intents";
 
 type IntentStatus =
   | "Open"
@@ -131,18 +132,7 @@ export default function IntentDetailPage() {
     error,
   } = useQuery({
     queryKey: ["intent", intentId, domainId],
-    queryFn: async () => {
-      const res = await fetch("/api/intents/get", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intentId, domainId }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to fetch intent");
-      }
-      return res.json() as Promise<TrustedIntent>;
-    },
+    queryFn: () => getIntent(domainId, intentId) as Promise<TrustedIntent>,
     enabled: !!intentId && !!domainId,
     staleTime: 60_000,
   });

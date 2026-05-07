@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { CopyButton } from "./CopyButton";
+import { listTickers, type TickerFilters } from "../_actions/tickers";
 
 const DEFAULT_LEDGER_ID = "xrpl-testnet-august-2024";
 
@@ -134,63 +135,21 @@ export function TickersTab() {
     setResponse(null);
 
     try {
-      // Build request body
-      const body: Record<string, unknown> = {};
+      const actionFilters: TickerFilters = {};
+      if (filters.ledgerId) actionFilters.ledgerIds = [filters.ledgerId];
+      if (filters.limit) actionFilters.limit = parseInt(filters.limit, 10);
+      if (filters.startingAfter) actionFilters.startingAfter = filters.startingAfter;
+      if (filters.sortBy) actionFilters.sortBy = filters.sortBy;
+      if (filters.sortOrder) actionFilters.sortOrder = filters.sortOrder;
+      if (filters.kind) actionFilters.kind = filters.kind;
+      if (filters.names)
+        actionFilters.names = filters.names.split(",").map((n) => n.trim()).filter(Boolean);
+      if (filters.symbols)
+        actionFilters.symbols = filters.symbols.split(",").map((s) => s.trim()).filter(Boolean);
+      if (filters.validationStatus) actionFilters.validationStatus = filters.validationStatus;
+      if (filters.locks.length > 0) actionFilters.locks = filters.locks;
 
-      if (filters.ledgerId) {
-        body.ledgerIds = [filters.ledgerId];
-      }
-
-      if (filters.limit) {
-        body.limit = parseInt(filters.limit, 10);
-      }
-
-      if (filters.startingAfter) {
-        body.startingAfter = filters.startingAfter;
-      }
-
-      if (filters.sortBy) {
-        body.sortBy = filters.sortBy;
-      }
-
-      if (filters.sortOrder) {
-        body.sortOrder = filters.sortOrder;
-      }
-
-      if (filters.kind) {
-        body.kind = filters.kind;
-      }
-
-      if (filters.names) {
-        body.names = filters.names.split(",").map((n) => n.trim()).filter(Boolean);
-      }
-
-      if (filters.symbols) {
-        body.symbols = filters.symbols.split(",").map((s) => s.trim()).filter(Boolean);
-      }
-
-      if (filters.validationStatus) {
-        body.validationStatus = filters.validationStatus;
-      }
-
-      if (filters.locks.length > 0) {
-        body.locks = filters.locks;
-      }
-
-      const res = await fetch("/api/tickers/list", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to list tickers");
-      }
-
-      const result = await res.json();
+      const result = (await listTickers(actionFilters)) as unknown as TickersResponse;
       setResponse(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");

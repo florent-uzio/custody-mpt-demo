@@ -3,72 +3,35 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
-import { saveSubmittedIntent } from "../utils/intentStorage";
 import { useDefaultDomain } from "../contexts/DomainContext";
+import { useSubmitPayment } from "../hooks/useSubmitPayment";
 
 export function MPTPaymentTab() {
   const { accounts, loading: accountsLoading } = useAccounts();
+  const { defaultDomainId } = useDefaultDomain();
+  const { mutate, isPending, data: response, error } = useSubmitPayment();
+
   const [accountId, setAccountId] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [issuanceId, setIssuanceId] = useState("");
   const [description, setDescription] = useState("MPT Payment");
-  const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState<{
-    request: unknown;
-    response: unknown;
-  } | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
-  const { defaultDomainId } = useDefaultDomain();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setResponse(null);
-
-    try {
-      const res = await fetch("/api/intents/payment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          accountId,
-          destinationAddress,
-          domainId: defaultDomainId,
-          amount,
-          issuanceId,
-          description,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to propose payment intent");
-      }
-
-      const result = await res.json();
-      setResponse(result);
-      setShowRequestModal(true);
-
-      // Save to localStorage if we have a requestId
-      // The payment API returns { request: ..., response: result }
-      const responseData = result?.response || result;
-      const requestId =
-        responseData?.id || responseData?.requestId || responseData?.data?.id;
-      if (requestId) {
-        saveSubmittedIntent({
-          type: "Payment",
-          requestId: requestId,
-        });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
+    if (!defaultDomainId) return;
+    mutate(
+      {
+        accountId,
+        destinationAddress,
+        domainId: defaultDomainId,
+        amount,
+        issuanceId,
+        description,
+      },
+      { onSuccess: () => setShowRequestModal(true) },
+    );
   };
 
   return (
@@ -219,10 +182,10 @@ export function MPTPaymentTab() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isPending}
             className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
-            {loading ? (
+            {isPending ? (
               <span className="flex items-center justify-center">
                 <svg
                   className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -267,7 +230,9 @@ export function MPTPaymentTab() {
                 clipRule="evenodd"
               />
             </svg>
-            <p className="text-sm text-red-800 font-medium">Error: {error}</p>
+            <p className="text-sm text-red-800 font-medium">
+              Error: {error instanceof Error ? error.message : String(error)}
+            </p>
           </div>
         </div>
       )}

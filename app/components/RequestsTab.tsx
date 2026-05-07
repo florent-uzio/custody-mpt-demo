@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useDefaultDomain } from "../contexts/DomainContext";
+import { getRequestState } from "../_actions/requests";
 
 export function RequestsTab() {
   const [requestId, setRequestId] = useState("");
@@ -19,23 +20,7 @@ export function RequestsTab() {
     setResponse(null);
 
     try {
-      const res = await fetch("/api/requests/state", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          requestId,
-          domainId,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to fetch request state");
-      }
-
-      const result = await res.json();
+      const result = await getRequestState(domainId!, requestId);
       setResponse(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");

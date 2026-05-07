@@ -11,6 +11,7 @@ import type {
   Core_PolicyScope,
   Core_Policy,
 } from "custody";
+import { getPolicy } from "../../_actions/policies";
 
 type Core_LockStatus = Core_Policy["lock"];
 
@@ -92,18 +93,7 @@ export default function PolicyDetailPage() {
     error,
   } = useQuery({
     queryKey: ["policy", policyId, domainId],
-    queryFn: async () => {
-      const res = await fetch("/api/policies/get", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ policyId, domainId }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to fetch policy");
-      }
-      return res.json() as Promise<Core_TrustedPolicy>;
-    },
+    queryFn: () => getPolicy(domainId, policyId) as Promise<Core_TrustedPolicy>,
     enabled: !!policyId && !!domainId,
     staleTime: 60_000,
   });

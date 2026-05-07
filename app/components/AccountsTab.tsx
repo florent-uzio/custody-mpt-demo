@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Core_AccountsCollection } from "custody";
+import { listAccounts, type AccountFilters as ActionFilters } from "../_actions/accounts";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { CopyButton } from "./CopyButton";
 
@@ -112,46 +112,34 @@ export function AccountsTab() {
     }));
   };
 
-  const buildBody = () => {
-    const body: Record<string, unknown> = { domainId: defaultDomainId };
-    if (filters.limit) body.limit = parseInt(filters.limit, 10);
-    if (filters.sortBy) body.sortBy = filters.sortBy;
-    if (filters.sortOrder) body.sortOrder = filters.sortOrder;
-    if (filters.ledgerId) body.ledgerId = filters.ledgerId;
-    if (filters.alias) body.alias = filters.alias;
-    if (filters.vaultId) body.vaultId = filters.vaultId;
-    if (filters.createdBy) body.createdBy = filters.createdBy;
-    if (filters.lastModifiedBy) body.lastModifiedBy = filters.lastModifiedBy;
-    if (filters.description) body.description = filters.description;
+  const buildActionFilters = (): ActionFilters => {
+    const f: ActionFilters = {};
+    if (filters.limit) f.limit = parseInt(filters.limit, 10);
+    if (filters.sortBy) f.sortBy = filters.sortBy;
+    if (filters.sortOrder) f.sortOrder = filters.sortOrder;
+    if (filters.ledgerId) f.ledgerId = filters.ledgerId;
+    if (filters.alias) f.alias = filters.alias;
+    if (filters.vaultId) f.vaultId = filters.vaultId;
+    if (filters.createdBy) f.createdBy = filters.createdBy;
+    if (filters.lastModifiedBy) f.lastModifiedBy = filters.lastModifiedBy;
+    if (filters.description) f.description = filters.description;
     if (filters.customProperties)
-      body.customProperties = filters.customProperties.split(",").map((p) => p.trim()).filter(Boolean);
-    if (filters.locks.length > 0) body.locks = filters.locks;
-    if (filters.processingStatus) body.processingStatus = filters.processingStatus;
+      f.customProperties = filters.customProperties.split(",").map((p) => p.trim()).filter(Boolean);
+    if (filters.locks.length > 0) f.locks = filters.locks;
+    if (filters.processingStatus) f.processingStatus = filters.processingStatus;
     if (filters.additionalLedgerIds)
-      body.additionalLedgerIds = filters.additionalLedgerIds.split(",").map((s) => s.trim()).filter(Boolean);
+      f.additionalLedgerIds = filters.additionalLedgerIds.split(",").map((s) => s.trim()).filter(Boolean);
     if (filters.additionalLedgerStatuses.length > 0)
-      body.additionalLedgerStatuses = filters.additionalLedgerStatuses;
-    return body;
+      f.additionalLedgerStatuses = filters.additionalLedgerStatuses;
+    return f;
   };
 
-  const { data, isLoading, isError, error, isFetching, refetch } =
-    useQuery<Core_AccountsCollection>({
-      queryKey: ["accounts", defaultDomainId, filters],
-      queryFn: async () => {
-        const res = await fetch("/api/accounts/list", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(buildBody()),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || "Failed to list accounts");
-        }
-        return res.json();
-      },
-      enabled: !!defaultDomainId,
-      staleTime: 60_000,
-    });
+  const { data, isLoading, isError, error, isFetching, refetch } = useQuery({
+    queryKey: ["accounts", defaultDomainId, filters],
+    queryFn: () => listAccounts(defaultDomainId!, buildActionFilters()),
+    enabled: !!defaultDomainId,
+    staleTime: 60_000,
+  });
 
   const items = data?.items ?? [];
   const count = data?.count ?? 0;
