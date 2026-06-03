@@ -28,7 +28,8 @@ export type Tab =
   | "users-me"
   | "keypair"
   | "jwt-token"
-  | "config";
+  | "config"
+  | "genesis";
 
 export const TABS: {
   id: Tab;
@@ -104,6 +105,7 @@ export const TABS: {
   { id: "trustset", label: "TrustSet", icon: "🔗", category: "XRPL" },
   { id: "keypair", label: "Keypair Generator", icon: "🔑", category: "Tools" },
   { id: "jwt-token", label: "JWT Token", icon: "🎫", category: "Tools" },
+  { id: "genesis", label: "Run Genesis", icon: "🌱", category: "Setup" },
 ];
 
 interface AppSidebarProps {
@@ -129,7 +131,8 @@ export function AppSidebar({
     pathname.startsWith("/requests") ||
     pathname.startsWith("/transactions") ||
     pathname.startsWith("/transfers") ||
-    pathname.startsWith("/users");
+    pathname.startsWith("/users") ||
+    pathname.startsWith("/genesis");
 
   const groupedTabs = TABS.reduce(
     (acc, tab) => {
@@ -153,6 +156,7 @@ export function AppSidebar({
       return pathname.startsWith("/transfers") || activeTab === tab.id;
     if (tab.id === "users-list") return pathname === "/users";
     if (tab.id === "users-me") return pathname.startsWith("/users/me");
+    if (tab.id === "genesis") return pathname.startsWith("/genesis");
     if (isNavMode) return false;
     return activeTab === tab.id;
   };
@@ -166,7 +170,8 @@ export function AppSidebar({
       tab.id === "transactions" ||
       tab.id === "transfers" ||
       tab.id === "users-list" ||
-      tab.id === "users-me"
+      tab.id === "users-me" ||
+      tab.id === "genesis"
     )
       return;
     if (onTabChange) onTabChange(tab.id);
@@ -321,6 +326,17 @@ export function AppSidebar({
                     if (tab.id === "users-me") {
                       return (
                         <Link key={tab.id} href="/users/me" className={cls}>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
+                          <span className="truncate">{tab.label}</span>
+                        </Link>
+                      );
+                    }
+
+                    if (tab.id === "genesis") {
+                      return (
+                        <Link key={tab.id} href="/genesis" className={cls}>
                           <span className="text-lg flex-shrink-0">
                             {tab.icon}
                           </span>
