@@ -1,7 +1,10 @@
-import type { RunGenesisBody } from "custody";
+import type { RunGenesisBody } from "@florent-uzio/custody";
 
 export type LockStatus = "Unlocked" | "Locked";
-export type GoverningStrategy = "" | "ConsiderDescendants" | "CoerceDescendants";
+export type GoverningStrategy =
+  | ""
+  | "ConsiderDescendants"
+  | "CoerceDescendants";
 export type PolicyScope = "Self" | "Descendants" | "SelfAndDescendants";
 export type KeyType = "Secp256r1" | "Secp256k1" | "Ed25519";
 

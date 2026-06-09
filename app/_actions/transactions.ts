@@ -5,7 +5,7 @@ import type {
   Core_TransactionsCollection,
   Core_TransfersCollection,
   GetTransactionsQueryParams,
-} from "custody";
+} from "@florent-uzio/custody";
 
 import { getCustodySDK } from "@/app/lib/custody";
 

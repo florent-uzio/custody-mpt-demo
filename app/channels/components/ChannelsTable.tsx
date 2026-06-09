@@ -1,14 +1,16 @@
 import Link from "next/link";
-import type { EDS_Channel } from "custody";
+import type { EDS_Channel } from "@florent-uzio/custody";
 import { CopyButton } from "../../components/CopyButton";
 
-const STATUS_STYLES: Record<
-  string,
-  { bg: string; text: string; dot: string }
-> = {
-  ACTIVE:   { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
-  DISABLED: { bg: "bg-gray-100",   text: "text-gray-600",    dot: "bg-gray-400" },
-};
+const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> =
+  {
+    ACTIVE: {
+      bg: "bg-emerald-50",
+      text: "text-emerald-700",
+      dot: "bg-emerald-500",
+    },
+    DISABLED: { bg: "bg-gray-100", text: "text-gray-600", dot: "bg-gray-400" },
+  };
 
 function StatusBadge({ status }: { status: string }) {
   const s = STATUS_STYLES[status] ?? {

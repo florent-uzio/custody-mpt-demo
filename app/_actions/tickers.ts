@@ -4,7 +4,7 @@ import type {
   Core_ApiTicker,
   Core_TickersCollection,
   GetTickersQueryParams,
-} from "custody";
+} from "@florent-uzio/custody";
 
 import { getCustodySDK } from "@/app/lib/custody";
 
@@ -29,13 +29,16 @@ function buildTickerQueryParams(filters: TickerFilters): TickerQueryParams {
   if (filters.limit !== undefined) q.limit = filters.limit;
   if (filters.startingAfter) q.startingAfter = filters.startingAfter;
   if (filters.sortBy) q.sortBy = filters.sortBy as TickerQueryParams["sortBy"];
-  if (filters.sortOrder) q.sortOrder = filters.sortOrder as TickerQueryParams["sortOrder"];
+  if (filters.sortOrder)
+    q.sortOrder = filters.sortOrder as TickerQueryParams["sortOrder"];
   if (filters.kind) q.kind = filters.kind as TickerQueryParams["kind"];
   if (filters.names?.length) q.name = filters.names;
   if (filters.symbols?.length) q.symbol = filters.symbols;
   if (filters.validationStatus)
-    q.validationStatus = filters.validationStatus as TickerQueryParams["validationStatus"];
-  if (filters.locks?.length) q.lock = filters.locks as TickerQueryParams["lock"];
+    q.validationStatus =
+      filters.validationStatus as TickerQueryParams["validationStatus"];
+  if (filters.locks?.length)
+    q.lock = filters.locks as TickerQueryParams["lock"];
   return q;
 }
 

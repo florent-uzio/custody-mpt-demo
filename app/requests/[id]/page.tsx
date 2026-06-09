@@ -3,7 +3,7 @@
 import { useParams, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { type Core_RequestState } from "custody";
+import { type Core_RequestState } from "@florent-uzio/custody";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useSidebarContext } from "../../contexts/SidebarContext";
@@ -61,13 +61,7 @@ function formatDate(iso: string) {
   });
 }
 
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 py-3 border-b border-gray-50 last:border-0">
       <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider sm:w-36 flex-shrink-0 mt-0.5">
@@ -289,9 +283,7 @@ export default function RequestDetailPage() {
                     <span
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${cfg.badgeBg} ${cfg.badgeText}`}
                     >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`}
-                      />
+                      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                       {request.status}
                     </span>
                   </div>
@@ -408,9 +400,7 @@ export default function RequestDetailPage() {
                           key={i}
                           label={entry.status}
                           value={
-                            entry.timestamp
-                              ? formatDate(entry.timestamp)
-                              : "—"
+                            entry.timestamp ? formatDate(entry.timestamp) : "—"
                           }
                         />
                       ),

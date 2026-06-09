@@ -3,7 +3,7 @@ import {
   type Core_IntentResponse,
   type Core_MeReference,
   type Core_ProposeIntentBody,
-} from "custody";
+} from "@florent-uzio/custody";
 import { getConfigValue } from "./config";
 
 export type ProposeIntentResult = {
@@ -34,7 +34,7 @@ export function getCustodySDK(): RippleCustody {
 
     if (!authUrl || !apiUrl) {
       throw new Error(
-        "Missing required environment variables: AUTH_URL and API_URL"
+        "Missing required environment variables: AUTH_URL and API_URL",
       );
     }
 
@@ -96,7 +96,7 @@ export async function getAccountLedgerId(
 }
 
 export async function getCurrentUser(
-  targetDomainId?: string
+  targetDomainId?: string,
 ): Promise<CurrentUserInfo> {
   const custody = getCustodySDK();
   const meResponse: Core_MeReference = await custody.users.me();
@@ -114,14 +114,14 @@ export async function getCurrentUser(
       throw new Error(
         `Domain ${targetDomainId} not found in user's domains. Available domains: ${meResponse.domains
           .map((d) => d.id)
-          .join(", ")}`
+          .join(", ")}`,
       );
     }
   } else {
     // Use first domain (require exactly 1 for safety)
     if (meResponse.domains.length > 1) {
       throw new Error(
-        `User has multiple domains (${meResponse.domains.length}). Please specify a targetDomainId.`
+        `User has multiple domains (${meResponse.domains.length}). Please specify a targetDomainId.`,
       );
     }
     domain = meResponse.domains[0];

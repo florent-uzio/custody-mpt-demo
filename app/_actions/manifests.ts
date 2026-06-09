@@ -4,7 +4,7 @@ import type {
   Core_ApiManifest,
   Core_ManifestsCollection,
   GetManifestsQueryParams,
-} from "custody";
+} from "@florent-uzio/custody";
 
 import { getCustodySDK } from "@/app/lib/custody";
 
@@ -19,14 +19,19 @@ export type ManifestFilters = {
 
 type ManifestQueryParams = NonNullable<GetManifestsQueryParams>;
 
-function buildManifestQueryParams(filters: ManifestFilters): ManifestQueryParams {
+function buildManifestQueryParams(
+  filters: ManifestFilters,
+): ManifestQueryParams {
   const q: ManifestQueryParams = {};
   if (filters.limit !== undefined) q.limit = filters.limit;
   if (filters.startingAfter) q.startingAfter = filters.startingAfter;
-  if (filters.sortBy) q.sortBy = filters.sortBy as ManifestQueryParams["sortBy"];
-  if (filters.sortOrder) q.sortOrder = filters.sortOrder as ManifestQueryParams["sortOrder"];
+  if (filters.sortBy)
+    q.sortBy = filters.sortBy as ManifestQueryParams["sortBy"];
+  if (filters.sortOrder)
+    q.sortOrder = filters.sortOrder as ManifestQueryParams["sortOrder"];
   if (filters.contentType?.length)
-    q["content.type"] = filters.contentType as ManifestQueryParams["content.type"];
+    q["content.type"] =
+      filters.contentType as ManifestQueryParams["content.type"];
   if (filters.processingStatus)
     q["additionalDetails.processingStatus"] =
       filters.processingStatus as ManifestQueryParams["additionalDetails.processingStatus"];

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation } from "@tanstack/react-query";
-import type { RunGenesisBody } from "custody";
+import type { RunGenesisBody } from "@florent-uzio/custody";
 import { useSidebarContext } from "../contexts/SidebarContext";
 import { runGenesis } from "../_actions/genesis";
 import {
@@ -61,7 +61,10 @@ function parseJsonOrThrow<T>(text: string, label: string): T {
   }
 }
 
-function parseCustomPropsJson(text: string, label: string): Record<string, string> {
+function parseCustomPropsJson(
+  text: string,
+  label: string,
+): Record<string, string> {
   if (!text.trim()) return {};
   const obj = parseJsonOrThrow<Record<string, string>>(text, label);
   if (typeof obj !== "object" || obj === null || Array.isArray(obj)) {
@@ -210,10 +213,9 @@ export default function RunGenesisPage() {
       );
     }
     if (systemPropertiesJson.trim()) {
-      body.systemProperties = parseJsonOrThrow<RunGenesisBody["systemProperties"]>(
-        systemPropertiesJson,
-        "System Properties",
-      );
+      body.systemProperties = parseJsonOrThrow<
+        RunGenesisBody["systemProperties"]
+      >(systemPropertiesJson, "System Properties");
     }
     if (ledgersJson.trim()) {
       body.ledgers = parseJsonOrThrow<RunGenesisBody["ledgers"]>(
@@ -224,15 +226,21 @@ export default function RunGenesisPage() {
     return body;
   };
 
-  const validate = (): { ok: true; body: RunGenesisBody } | { ok: false; error: string } => {
-    if (!rootId.trim()) return { ok: false, error: "Root domain id is required." };
+  const validate = ():
+    | { ok: true; body: RunGenesisBody }
+    | { ok: false; error: string } => {
+    if (!rootId.trim())
+      return { ok: false, error: "Root domain id is required." };
     if (!rootAlias.trim())
       return { ok: false, error: "Root domain alias is required." };
     if (users.length === 0)
       return { ok: false, error: "At least one user is required." };
     for (const u of users) {
       if (!u.id.trim())
-        return { ok: false, error: `User id is required (alias "${u.alias}").` };
+        return {
+          ok: false,
+          error: `User id is required (alias "${u.alias}").`,
+        };
       if (!u.alias.trim())
         return { ok: false, error: `User alias is required (id ${u.id}).` };
       if (!u.publicKey.trim())
@@ -255,7 +263,10 @@ export default function RunGenesisPage() {
     }
     for (const p of policies) {
       if (!p.id.trim())
-        return { ok: false, error: `Policy id is required (alias "${p.alias}").` };
+        return {
+          ok: false,
+          error: `Policy id is required (alias "${p.alias}").`,
+        };
       if (!p.alias.trim())
         return { ok: false, error: `Policy alias is required (id ${p.id}).` };
       const rankNum = Number(p.rank);
@@ -457,12 +468,16 @@ export default function RunGenesisPage() {
                 <select
                   value={rootGoverningStrategy}
                   onChange={(e) =>
-                    setRootGoverningStrategy(e.target.value as GoverningStrategy)
+                    setRootGoverningStrategy(
+                      e.target.value as GoverningStrategy,
+                    )
                   }
                   className={inputCls}
                 >
                   <option value="">(omit)</option>
-                  <option value="ConsiderDescendants">ConsiderDescendants</option>
+                  <option value="ConsiderDescendants">
+                    ConsiderDescendants
+                  </option>
                   <option value="CoerceDescendants">CoerceDescendants</option>
                 </select>
               </Field>
@@ -478,7 +493,8 @@ export default function RunGenesisPage() {
 
             <Section title="Permissions (read access)">
               <p className="text-xs text-gray-500 mb-2">
-                Each field is a list of UUIDs. Separate by comma, space, or newline.
+                Each field is a list of UUIDs. Separate by comma, space, or
+                newline.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {READ_ACCESS_KEYS.map((k) => (
@@ -513,9 +529,7 @@ export default function RunGenesisPage() {
                     onChange={(next) =>
                       setUsers(users.map((x, j) => (j === i ? next : x)))
                     }
-                    onRemove={() =>
-                      setUsers(users.filter((_, j) => j !== i))
-                    }
+                    onRemove={() => setUsers(users.filter((_, j) => j !== i))}
                     onDuplicate={() =>
                       setUsers([
                         ...users.slice(0, i + 1),
@@ -577,9 +591,7 @@ export default function RunGenesisPage() {
                   <Field label="apiSigning">
                     <select
                       value={apiSigning}
-                      onChange={(e) =>
-                        setApiSigning(e.target.value as KeyType)
-                      }
+                      onChange={(e) => setApiSigning(e.target.value as KeyType)}
                       className={inputCls}
                     >
                       {KEY_TYPES.map((k) => (
@@ -695,7 +707,10 @@ export default function RunGenesisPage() {
       </div>
 
       {previewOpen && previewBody && (
-        <Modal title="Genesis body preview" onClose={() => setPreviewOpen(false)}>
+        <Modal
+          title="Genesis body preview"
+          onClose={() => setPreviewOpen(false)}
+        >
           <pre className="text-xs font-mono text-gray-700 whitespace-pre-wrap break-words">
             {JSON.stringify(previewBody, null, 2)}
           </pre>
@@ -822,7 +837,9 @@ function KeyValueEditor({
             type="text"
             value={r.k}
             onChange={(e) =>
-              onChange(rows.map((x, j) => (j === i ? { ...x, k: e.target.value } : x)))
+              onChange(
+                rows.map((x, j) => (j === i ? { ...x, k: e.target.value } : x)),
+              )
             }
             className={`${inputCls} font-mono`}
             placeholder="key"
@@ -831,7 +848,9 @@ function KeyValueEditor({
             type="text"
             value={r.v}
             onChange={(e) =>
-              onChange(rows.map((x, j) => (j === i ? { ...x, v: e.target.value } : x)))
+              onChange(
+                rows.map((x, j) => (j === i ? { ...x, v: e.target.value } : x)),
+              )
             }
             className={`${inputCls} font-mono`}
             placeholder="value"
@@ -969,7 +988,9 @@ function UserRowEditor({
       <Field label="customProperties (JSON object, optional)">
         <textarea
           value={row.customPropsJson}
-          onChange={(e) => onChange({ ...row, customPropsJson: e.target.value })}
+          onChange={(e) =>
+            onChange({ ...row, customPropsJson: e.target.value })
+          }
           className={`${inputCls} font-mono text-xs`}
           rows={2}
           placeholder='{"key":"value"}'
@@ -995,7 +1016,9 @@ function LoginIdsEditor({
             value={r.id}
             onChange={(e) =>
               onChange(
-                rows.map((x, j) => (j === i ? { ...x, id: e.target.value } : x)),
+                rows.map((x, j) =>
+                  j === i ? { ...x, id: e.target.value } : x,
+                ),
               )
             }
             className={`${inputCls} font-mono`}
@@ -1129,7 +1152,9 @@ function PolicyRowEditor({
         <input
           type="text"
           value={row.intentTypesText}
-          onChange={(e) => onChange({ ...row, intentTypesText: e.target.value })}
+          onChange={(e) =>
+            onChange({ ...row, intentTypesText: e.target.value })
+          }
           className={inputCls}
           placeholder="v0_CreateUser, v0_UpdateUser"
         />
@@ -1155,7 +1180,9 @@ function PolicyRowEditor({
       <Field label="customProperties (JSON object, optional)">
         <textarea
           value={row.customPropsJson}
-          onChange={(e) => onChange({ ...row, customPropsJson: e.target.value })}
+          onChange={(e) =>
+            onChange({ ...row, customPropsJson: e.target.value })
+          }
           className={`${inputCls} font-mono text-xs`}
           rows={2}
           placeholder='{"key":"value"}'

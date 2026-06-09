@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import type { EDS_Channel } from "custody";
+import type { EDS_Channel } from "@florent-uzio/custody";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { useSidebarContext } from "../contexts/SidebarContext";
 import { listChannels } from "../_actions/channels";
@@ -237,10 +237,7 @@ export default function ChannelsPage() {
           )}
 
           {!isLoading && filtered.length > 0 && (
-            <ChannelsTable
-              items={filtered}
-              totalCount={allChannels.length}
-            />
+            <ChannelsTable items={filtered} totalCount={allChannels.length} />
           )}
 
           {!isLoading && data && filtered.length === 0 && (

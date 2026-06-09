@@ -1,4 +1,4 @@
-import { Core_TransactionDetails } from "custody";
+import { Core_TransactionDetails } from "@florent-uzio/custody";
 import { InfoCard, InfoRow } from "./InfoCard";
 import { CopyButton } from "../CopyButton";
 

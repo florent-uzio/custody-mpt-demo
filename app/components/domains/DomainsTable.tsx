@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { Core_TrustedDomain, GetDomainsQueryParams } from "custody";
+import {
+  Core_TrustedDomain,
+  GetDomainsQueryParams,
+} from "@florent-uzio/custody";
 import { CopyButton } from "../CopyButton";
 import { useDefaultDomain } from "../../contexts/DomainContext";
 
@@ -42,7 +45,9 @@ function SortableHeader({
     >
       <span className="flex items-center gap-1">
         {label}
-        <span className={`transition-colors ${isActive ? "text-blue-500" : "text-gray-300"}`}>
+        <span
+          className={`transition-colors ${isActive ? "text-blue-500" : "text-gray-300"}`}
+        >
           {isActive && currentSortOrder === "ASC" ? "↑" : "↓"}
         </span>
       </span>
@@ -58,7 +63,9 @@ function LockBadge({ lock }: { lock: string }) {
         ? "bg-red-50 text-red-700"
         : "bg-gray-100 text-gray-600";
   return (
-    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${styles}`}>
+    <span
+      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${styles}`}
+    >
       {lock}
     </span>
   );
@@ -126,11 +133,19 @@ export function DomainsTable({
           </thead>
           <tbody className="divide-y divide-gray-50">
             {domains.map(({ data }) => (
-              <tr key={data.id} className="hover:bg-blue-50/40 transition-colors group">
+              <tr
+                key={data.id}
+                className="hover:bg-blue-50/40 transition-colors group"
+              >
                 <td className="px-4 py-3">
-                  <Link href={`/domains/${data.id}`} className="hover:underline">
+                  <Link
+                    href={`/domains/${data.id}`}
+                    className="hover:underline"
+                  >
                     {data.alias ? (
-                      <span className="font-medium text-blue-600">{data.alias}</span>
+                      <span className="font-medium text-blue-600">
+                        {data.alias}
+                      </span>
                     ) : (
                       <span className="text-gray-300 italic text-xs">—</span>
                     )}

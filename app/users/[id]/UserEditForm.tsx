@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { Core_TrustedUser } from "custody";
+import type { Core_TrustedUser } from "@florent-uzio/custody";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useSubmitUpdateUser } from "../../hooks/useSubmitUpdateUser";
 
@@ -41,7 +41,8 @@ export function UserEditForm({
 
   const customRoleIsValid = /^[a-z0-9-]+$/.test(customRoleInput.trim());
   const customRoles = useMemo(
-    () => selectedRoles.filter((r) => !AVAILABLE_ROLES.some((ar) => ar.id === r)),
+    () =>
+      selectedRoles.filter((r) => !AVAILABLE_ROLES.some((ar) => ar.id === r)),
     [selectedRoles],
   );
 
@@ -332,11 +333,7 @@ export function UserEditForm({
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            disabled={
-              isPending ||
-              !alias.trim() ||
-              selectedRoles.length === 0
-            }
+            disabled={isPending || !alias.trim() || selectedRoles.length === 0}
             className="px-5 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-lg font-semibold hover:from-teal-600 hover:to-cyan-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all"
           >
             {isPending ? "Submitting…" : "Propose Update"}

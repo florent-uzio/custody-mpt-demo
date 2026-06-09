@@ -5,7 +5,7 @@ import type {
   Core_IntentResponse,
   Core_TrustedIntent,
   Core_GetIntentsQueryParams,
-} from "custody";
+} from "@florent-uzio/custody";
 
 import {
   getAccountLedgerId,
@@ -59,7 +59,8 @@ function buildIntentQueryParams(filters: IntentFilters): IntentQueryParams {
   if (filters.limit !== undefined) q.limit = filters.limit;
   if (filters.startingAfter) q.startingAfter = filters.startingAfter;
   if (filters.sortBy) q.sortBy = filters.sortBy as IntentQueryParams["sortBy"];
-  if (filters.sortOrder) q.sortOrder = filters.sortOrder as IntentQueryParams["sortOrder"];
+  if (filters.sortOrder)
+    q.sortOrder = filters.sortOrder as IntentQueryParams["sortOrder"];
   if (filters.status?.length)
     q["state.status"] = filters.status as IntentQueryParams["state.status"];
   return q;

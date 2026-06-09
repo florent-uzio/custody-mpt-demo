@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Core_ApiTicker } from "custody";
+import { Core_ApiTicker } from "@florent-uzio/custody";
 import { getTicker } from "../_actions/tickers";
 
 export function useTickers(tickerIds: string[]) {

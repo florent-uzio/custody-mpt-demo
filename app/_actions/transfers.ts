@@ -1,6 +1,6 @@
 "use server";
 
-import type { Core_TransferDetails } from "custody";
+import type { Core_TransferDetails } from "@florent-uzio/custody";
 
 import { getCustodySDK } from "@/app/lib/custody";
 

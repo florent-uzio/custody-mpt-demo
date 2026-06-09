@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
-import type { Core_PolicyScope, Core_Policy } from "custody";
+import type { Core_PolicyScope, Core_Policy } from "@florent-uzio/custody";
 
 type Core_LockStatus = Core_Policy["lock"];
 
@@ -48,7 +48,9 @@ export function PoliciesFilters({
           </label>
           <select
             value={scope}
-            onChange={(e) => onScopeChange(e.target.value as Core_PolicyScope | "")}
+            onChange={(e) =>
+              onScopeChange(e.target.value as Core_PolicyScope | "")
+            }
             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
           >
             <option value="">All scopes</option>
@@ -64,7 +66,9 @@ export function PoliciesFilters({
           </label>
           <select
             value={lock}
-            onChange={(e) => onLockChange(e.target.value as Core_LockStatus | "")}
+            onChange={(e) =>
+              onLockChange(e.target.value as Core_LockStatus | "")
+            }
             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
           >
             <option value="">Any lock status</option>

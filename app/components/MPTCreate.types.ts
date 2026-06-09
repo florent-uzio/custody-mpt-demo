@@ -1,4 +1,4 @@
-import { CustodyMpTokenIssuanceCreate } from "custody";
+import { CustodyMpTokenIssuanceCreate } from "@florent-uzio/custody";
 
 export type MPTFlag = CustodyMpTokenIssuanceCreate["flags"][number];
 

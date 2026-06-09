@@ -1,4 +1,4 @@
-import { Core_TransactionDetails } from "custody";
+import { Core_TransactionDetails } from "@florent-uzio/custody";
 import { InfoCard } from "./InfoCard";
 import { CopyButton } from "../CopyButton";
 
@@ -27,7 +27,9 @@ export function RelatedAccountsCard({
               Domain
             </span>
             <div className="flex items-center gap-1">
-              <span className="font-mono text-xs text-gray-500">{acc.domainId}</span>
+              <span className="font-mono text-xs text-gray-500">
+                {acc.domainId}
+              </span>
               <CopyButton text={acc.domainId} />
             </div>
           </div>

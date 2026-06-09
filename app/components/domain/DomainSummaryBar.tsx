@@ -1,4 +1,4 @@
-import { Core_TrustedDomain } from "custody";
+import { Core_TrustedDomain } from "@florent-uzio/custody";
 import { LockStatusConfig, formatDate } from "./config";
 
 type Domain = Core_TrustedDomain["data"];
@@ -28,20 +28,26 @@ export function DomainSummaryBar({ domain, cfg }: Props) {
             Alias
           </p>
           <p className="text-sm text-gray-700 font-semibold truncate">
-            {domain.alias || <span className="text-gray-300 italic font-normal">No alias</span>}
+            {domain.alias || (
+              <span className="text-gray-300 italic font-normal">No alias</span>
+            )}
           </p>
         </div>
         <div>
           <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">
             Revision
           </p>
-          <p className="text-sm text-gray-700 font-mono">{domain.metadata.revision}</p>
+          <p className="text-sm text-gray-700 font-mono">
+            {domain.metadata.revision}
+          </p>
         </div>
         <div>
           <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">
             Created At
           </p>
-          <p className="text-sm text-gray-700">{formatDate(domain.metadata.createdAt)}</p>
+          <p className="text-sm text-gray-700">
+            {formatDate(domain.metadata.createdAt)}
+          </p>
         </div>
       </div>
     </div>

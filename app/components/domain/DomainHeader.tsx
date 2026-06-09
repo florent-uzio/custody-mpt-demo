@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Core_TrustedDomain } from "custody";
+import { Core_TrustedDomain } from "@florent-uzio/custody";
 import { CopyButton } from "../CopyButton";
 import { useSidebarContext } from "../../contexts/SidebarContext";
 import { LockStatusConfig } from "./config";
@@ -28,11 +28,26 @@ export function DomainHeader({ domainId, alias, lockStatus, cfg }: Props) {
               className="mt-0.5 p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white"
               aria-label="Toggle sidebar"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 {sidebarOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 )}
               </svg>
             </button>
@@ -45,17 +60,24 @@ export function DomainHeader({ domainId, alias, lockStatus, cfg }: Props) {
                   Domains
                 </Link>
                 <span className="text-white/40 text-xs">/</span>
-                <span className="text-white/80 text-xs font-medium">Detail</span>
+                <span className="text-white/80 text-xs font-medium">
+                  Detail
+                </span>
               </div>
               {alias && (
-                <p className="text-white/90 text-lg font-semibold mb-0.5">{alias}</p>
+                <p className="text-white/90 text-lg font-semibold mb-0.5">
+                  {alias}
+                </p>
               )}
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-white font-mono text-sm font-semibold break-all">
                   {domainId}
                 </h1>
                 <div className="bg-white/20 rounded p-0.5">
-                  <CopyButton text={domainId} className="text-white hover:bg-white/20" />
+                  <CopyButton
+                    text={domainId}
+                    className="text-white hover:bg-white/20"
+                  />
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { GetDomainsQueryParams } from "custody";
+import { GetDomainsQueryParams } from "@florent-uzio/custody";
 
 type Params = NonNullable<GetDomainsQueryParams>;
 type SortBy = NonNullable<Params["sortBy"]>;

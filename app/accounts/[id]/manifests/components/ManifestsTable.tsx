@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Core_ApiManifest } from "custody";
+import type { Core_ApiManifest } from "@florent-uzio/custody";
 import { CopyButton } from "../../../../components/CopyButton";
 import { ProcessingBadge } from "./ProcessingBadge";
 import type {
@@ -116,10 +116,8 @@ export function ManifestsTable({
           </thead>
           <tbody className="divide-y divide-gray-50">
             {manifests.map((manifest) => {
-              const processingStatus =
-                manifest.additionalDetails?.processing?.type as
-                  | ManifestProcessingStatus
-                  | undefined;
+              const processingStatus = manifest.additionalDetails?.processing
+                ?.type as ManifestProcessingStatus | undefined;
 
               return (
                 <tr

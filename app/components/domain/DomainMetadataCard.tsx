@@ -1,4 +1,4 @@
-import { Core_TrustedDomain } from "custody";
+import { Core_TrustedDomain } from "@florent-uzio/custody";
 import { InfoCard, InfoRow } from "../transaction/InfoCard";
 import { CopyButton } from "../CopyButton";
 import { formatDate } from "./config";
@@ -23,19 +23,26 @@ export function DomainMetadataCard({ metadata }: Props) {
           label="Created By"
           value={
             <div className="flex items-center gap-1.5">
-              <span className="font-mono text-xs break-all">{metadata.createdBy.id}</span>
+              <span className="font-mono text-xs break-all">
+                {metadata.createdBy.id}
+              </span>
               <CopyButton text={metadata.createdBy.id} />
             </div>
           }
         />
       )}
-      <InfoRow label="Last Modified" value={formatDate(metadata.lastModifiedAt)} />
+      <InfoRow
+        label="Last Modified"
+        value={formatDate(metadata.lastModifiedAt)}
+      />
       {metadata.lastModifiedBy && (
         <InfoRow
           label="Modified By"
           value={
             <div className="flex items-center gap-1.5">
-              <span className="font-mono text-xs break-all">{metadata.lastModifiedBy.id}</span>
+              <span className="font-mono text-xs break-all">
+                {metadata.lastModifiedBy.id}
+              </span>
               <CopyButton text={metadata.lastModifiedBy.id} />
             </div>
           }

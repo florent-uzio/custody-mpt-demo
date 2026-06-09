@@ -4,7 +4,7 @@ import type {
   Core_RequestState,
   GetAllUserRequestsStateInDomainQueryParams,
   GetAllUserRequestsStateQueryParams,
-} from "custody";
+} from "@florent-uzio/custody";
 
 import { getCustodySDK } from "@/app/lib/custody";
 

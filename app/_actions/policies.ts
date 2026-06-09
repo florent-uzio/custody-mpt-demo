@@ -4,7 +4,7 @@ import type {
   Core_TrustedPoliciesCollection,
   Core_TrustedPolicy,
   GetPoliciesQueryParams,
-} from "custody";
+} from "@florent-uzio/custody";
 
 import { getCustodySDK } from "@/app/lib/custody";
 
@@ -24,7 +24,8 @@ function buildPolicyQueryParams(filters: PolicyFilters): PolicyQueryParams {
   if (filters.limit !== undefined) q.limit = filters.limit;
   if (filters.startingAfter) q.startingAfter = filters.startingAfter;
   if (filters.sortBy) q.sortBy = filters.sortBy as PolicyQueryParams["sortBy"];
-  if (filters.sortOrder) q.sortOrder = filters.sortOrder as PolicyQueryParams["sortOrder"];
+  if (filters.sortOrder)
+    q.sortOrder = filters.sortOrder as PolicyQueryParams["sortOrder"];
   if (filters.scope) q.scope = filters.scope as PolicyQueryParams["scope"];
   if (filters.lock?.length) q.lock = filters.lock as PolicyQueryParams["lock"];
   return q;

@@ -3,7 +3,7 @@
 import { useParams, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import type { Core_ApiManifest } from "custody";
+import type { Core_ApiManifest } from "@florent-uzio/custody";
 import { CopyButton } from "../../../../components/CopyButton";
 import { JsonViewer } from "../../../../components/JsonViewer";
 import { useSidebarContext } from "../../../../contexts/SidebarContext";
@@ -28,13 +28,7 @@ function formatDate(iso: string) {
   });
 }
 
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 py-3 border-b border-gray-50 last:border-0">
       <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider sm:w-36 flex-shrink-0 mt-0.5">
@@ -71,33 +65,55 @@ function ManifestContentCard({ manifest }: { manifest: Core_ApiManifest }) {
   const content = manifest.data.content;
 
   if (content.type === "JWT") {
-    const jwt = content as { type: "JWT"; header: Record<string, unknown>; payload: Record<string, unknown> };
+    const jwt = content as {
+      type: "JWT";
+      header: Record<string, unknown>;
+      payload: Record<string, unknown>;
+    };
     return (
       <InfoCard title="Content (JWT)" icon="📄">
         <InfoRow label="Type" value="JWT" />
         {jwt.header && (
           <>
             {(jwt.header as { type?: string }).type && (
-              <InfoRow label="Header Type" value={(jwt.header as { type?: string }).type!} />
+              <InfoRow
+                label="Header Type"
+                value={(jwt.header as { type?: string }).type!}
+              />
             )}
             {(jwt.header as { algorithm?: string }).algorithm && (
-              <InfoRow label="Algorithm" value={(jwt.header as { algorithm?: string }).algorithm!} />
+              <InfoRow
+                label="Algorithm"
+                value={(jwt.header as { algorithm?: string }).algorithm!}
+              />
             )}
           </>
         )}
         {jwt.payload && (
           <>
             {(jwt.payload as { issuer?: string }).issuer && (
-              <InfoRow label="Issuer" value={(jwt.payload as { issuer?: string }).issuer!} />
+              <InfoRow
+                label="Issuer"
+                value={(jwt.payload as { issuer?: string }).issuer!}
+              />
             )}
             {(jwt.payload as { subject?: string }).subject && (
-              <InfoRow label="Subject" value={(jwt.payload as { subject?: string }).subject!} />
+              <InfoRow
+                label="Subject"
+                value={(jwt.payload as { subject?: string }).subject!}
+              />
             )}
             {(jwt.payload as { audience?: string }).audience && (
-              <InfoRow label="Audience" value={(jwt.payload as { audience?: string }).audience!} />
+              <InfoRow
+                label="Audience"
+                value={(jwt.payload as { audience?: string }).audience!}
+              />
             )}
             {(jwt.payload as { jwtId?: string }).jwtId && (
-              <InfoRow label="JWT ID" value={(jwt.payload as { jwtId?: string }).jwtId!} />
+              <InfoRow
+                label="JWT ID"
+                value={(jwt.payload as { jwtId?: string }).jwtId!}
+              />
             )}
           </>
         )}
@@ -156,9 +172,7 @@ export default function ManifestDetailPage() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Gradient header */}
-      <div
-        className={`bg-gradient-to-r ${headerBg} shadow-md flex-shrink-0`}
-      >
+      <div className={`bg-gradient-to-r ${headerBg} shadow-md flex-shrink-0`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
@@ -229,9 +243,7 @@ export default function ManifestDetailPage() {
                 <span
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${badgeStyle.bg} ${badgeStyle.text}`}
                 >
-                  <span
-                    className={`w-2 h-2 rounded-full ${badgeStyle.dot}`}
-                  />
+                  <span className={`w-2 h-2 rounded-full ${badgeStyle.dot}`} />
                   {processingStatus}
                 </span>
               )}
@@ -352,9 +364,7 @@ export default function ManifestDetailPage() {
                     </p>
                     <p className="text-sm text-gray-700">
                       {manifest.data.metadata?.createdAt
-                        ? formatDate(
-                            manifest.data.metadata.createdAt as string,
-                          )
+                        ? formatDate(manifest.data.metadata.createdAt as string)
                         : "—"}
                     </p>
                   </div>
@@ -460,10 +470,7 @@ export default function ManifestDetailPage() {
                           label="Value"
                           value={
                             <span className="font-mono text-xs break-all">
-                              {
-                                (manifest.data.value as { value: string })
-                                  .value
-                              }
+                              {(manifest.data.value as { value: string }).value}
                             </span>
                           }
                         />
