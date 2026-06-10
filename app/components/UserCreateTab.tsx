@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { CopyButton } from "./CopyButton";
 import { useSubmitCreateUser } from "../hooks/useSubmitCreateUser";
+import { useDomains } from "../hooks/useDomains";
 
 const AVAILABLE_ROLES = [
   { id: "admin", label: "Admin", description: "Full administrative access" },
@@ -16,6 +17,28 @@ const AVAILABLE_ROLES = [
 export function UserCreateTab() {
   const { defaultDomainId } = useDefaultDomain();
   const { mutate, isPending, data: response, error } = useSubmitCreateUser();
+  const { data: domainsData, isLoading: domainsLoading } = useDomains({
+    limit: 100,
+  });
+
+  const [domainId, setDomainId] = useState("");
+  // Default to the current domain once it has loaded from localStorage,
+  // unless the user has already picked one.
+  useEffect(() => {
+    if (defaultDomainId) setDomainId((cur) => cur || defaultDomainId);
+  }, [defaultDomainId]);
+
+  const domainOptions = useMemo(() => {
+    const opts = (domainsData?.items ?? []).map(({ data }) => ({
+      id: data.id,
+      label: data.alias || data.id,
+    }));
+    // Keep the current selection available even if it isn't in the fetched page.
+    if (domainId && !opts.some((o) => o.id === domainId)) {
+      opts.unshift({ id: domainId, label: domainId });
+    }
+    return opts;
+  }, [domainsData, domainId]);
 
   const [alias, setAlias] = useState("");
   const [publicKey, setPublicKey] = useState("");
@@ -79,9 +102,9 @@ export function UserCreateTab() {
     const roles = customRoleInput.trim()
       ? addCustomRole(customRoleInput)
       : selectedRoles;
-    if (!defaultDomainId || roles.length === 0) return;
+    if (!domainId || roles.length === 0) return;
     mutate({
-      domainId: defaultDomainId,
+      domainId,
       alias,
       publicKey,
       roles,
@@ -94,39 +117,6 @@ export function UserCreateTab() {
 
   return (
     <div className="space-y-6">
-      {/* Header Card */}
-      <div className="bg-gradient-to-r from-teal-500 to-cyan-600 rounded-xl shadow-lg p-6 text-white">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-white/20 rounded-lg">
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-              />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold">Create User</h2>
-        </div>
-        <p className="text-teal-100 text-sm">
-          Create a new user in your Custody domain by proposing a user creation
-          intent. The user will be added with the specified roles and
-          permissions.
-        </p>
-        <div className="mt-4 flex items-center gap-2 text-xs">
-          <span className="px-2 py-1 bg-white/20 rounded-full">
-            Intent-based
-          </span>
-          <span className="text-teal-200">Uses v0_CreateUser payload</span>
-        </div>
-      </div>
-
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* User Details */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -138,6 +128,37 @@ export function UserCreateTab() {
           </h3>
 
           <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="domainId"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Target Domain *
+              </label>
+              <select
+                id="domainId"
+                value={domainId}
+                onChange={(e) => setDomainId(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-colors bg-white"
+                required
+              >
+                {domainOptions.length === 0 && (
+                  <option value="">
+                    {domainsLoading ? "Loading domains…" : "No domains found"}
+                  </option>
+                )}
+                {domainOptions.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 text-xs text-gray-500">
+                The domain the user will be created in. Defaults to your current
+                domain.
+              </p>
+            </div>
+
             <div>
               <label
                 htmlFor="alias"
@@ -483,7 +504,7 @@ export function UserCreateTab() {
             <div>
               <span className="text-gray-500 block text-xs">Domain ID</span>
               <span className="font-mono text-xs text-gray-800 truncate block">
-                {defaultDomainId || "Not set"}
+                {domainId || "Not set"}
               </span>
             </div>
             <div>
@@ -510,7 +531,7 @@ export function UserCreateTab() {
           type="submit"
           disabled={
             isPending ||
-            !defaultDomainId ||
+            !domainId ||
             !alias ||
             !publicKey ||
             selectedRoles.length === 0

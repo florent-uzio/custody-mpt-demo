@@ -9,10 +9,8 @@ import { MPTAuthorizeTab } from "./components/MPTAuthorizeTab";
 import { MPTCreateTab } from "./components/MPTCreateTab";
 import { MPTSetTab } from "./components/MPTSetTab";
 import { MPTDestroyTab } from "./components/MPTDestroyTab";
-import { UserCreateTab } from "./components/UserCreateTab";
 import { TransactionsTab } from "./components/TransactionsTab";
 import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
-import { DomainsTab } from "./components/DomainsTab";
 import { AccountsTab } from "./components/AccountsTab";
 import { AccountCreateTab } from "./components/AccountCreateTab";
 import { KeypairTab } from "./components/KeypairTab";
@@ -25,7 +23,7 @@ import type { Tab } from "./components/AppSidebar";
 const NOTES_STORAGE_KEY = "mpt_demo_notes";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<Tab>("domains");
+  const [activeTab, setActiveTab] = useState<Tab>("accounts");
   const [notes, setNotes] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -37,7 +35,13 @@ export default function Home() {
       // Restore tab from URL ?tab= param (e.g. navigating back from intents pages)
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab") as Tab;
-      if (tab && TABS.some((t) => t.id === tab) && tab !== "intents-list") {
+      if (
+        tab &&
+        TABS.some((t) => t.id === tab) &&
+        tab !== "intents-list" &&
+        tab !== "domains" &&
+        tab !== "user-invitations"
+      ) {
         setActiveTab(tab);
       }
     }
@@ -137,10 +141,8 @@ export default function Home() {
 
               {/* Tab Content */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                {activeTab === "domains" && <DomainsTab />}
                 {activeTab === "accounts" && <AccountsTab />}
                 {activeTab === "account-create" && <AccountCreateTab />}
-                {activeTab === "user-invitations" && <UserCreateTab />}
                 {activeTab === "requests" && <RequestsTab />}
                 {activeTab === "transfers" && <TransfersTab />}
                 {activeTab === "transactions" && <TransactionsTab />}

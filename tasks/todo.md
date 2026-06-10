@@ -1,3 +1,60 @@
+# User Invitation — domain dropdown + dedicated route
+
+The invitation form (`UserCreateTab`) always used the global `defaultDomainId` from the sidebar. Add a domain **dropdown** (defaulting to the current domain) and promote the in-page tab to a real route `/users/invite`, mirroring `/domains/new`.
+
+## Plan
+- [x] `app/components/UserCreateTab.tsx` — add a "Target Domain" `<select>` (first field of User Details) populated via `useDomains({ limit: 100 })`; local `domainId` state defaulting to `defaultDomainId`; switch submit/validation/summary/disabled from `defaultDomainId` → `domainId`. Also dropped the now-redundant teal intro card (route header replaces it).
+- [x] `app/users/invite/page.tsx` — new route: slim teal breadcrumb header + `<UserCreateTab />`, using existing `users` layout `SidebarContext`.
+- [x] `app/page.tsx` — remove `UserCreateTab` import + render; exclude `user-invitations` from `?tab=` restore.
+- [x] `app/components/AppSidebar.tsx` — `user-invitations` becomes a `<Link href="/users/invite">` (Link branch + `isActive` + `handleTabClick`).
+- [x] `npx tsc --noEmit` clean; `npm run build` clean (`/users/invite` listed as a static route).
+
+## Review
+Domain items are wrapped (`{ data: { id, alias } }`) — matched `DomainsTable`'s `domains.map(({ data }) => …)`. The dropdown lists up to 100 domains (alias, falling back to id), guarantees the current selection stays present even if outside the fetched page, and defaults to the sidebar's `defaultDomainId` once it loads from localStorage. Selection is local to the form — it does not mutate the global default. The in-page tab is gone; the sidebar entry now links to `/users/invite`.
+
+---
+
+# Create Domain — readAccess, users, governingStrategy
+
+`/domains/new` previously proposed `v0_CreateDomain` with only alias/description/lock; the action hardcoded empty `permissions.readAccess`, `users: []`, and never set `governingStrategy`. Add UI + backend wiring so a domain can be created already populated.
+
+## Plan
+- [x] `app/_actions/domains.ts` — extend `ProposeCreateDomainInput` with optional `governingStrategy`, `permissions`, `users` (derived from `CreateDomainPayload`); thread into the payload, keeping the empty defaults when omitted. → verify: `tsc` clean.
+- [x] `app/domains/new/page.tsx` — add state (governingStrategy, perms, users), build/validation logic, and UI: governing-strategy select, collapsible **Permissions (read access)** grid, collapsible **Users** editor (full Genesis parity). Reuse types/builders from `app/genesis/defaults.ts`. → verify: route renders.
+- [x] `npx tsc --noEmit` clean.
+- [x] `npm run build` clean.
+
+## Review
+- **Backend** (`app/_actions/domains.ts`): `ProposeCreateDomainInput` now carries optional `governingStrategy`/`permissions`/`users`, all derived from the SDK `CreateDomainPayload` (no custom types). The payload uses `permissions ?? {empty readAccess}` and `users ?? []`, and spreads `governingStrategy` only when set — so omitting the new fields yields a byte-identical payload to before.
+- **Frontend** (`app/domains/new/page.tsx`): Alias/Description/Lock unchanged; added a Governing-strategy select beside Lock, a collapsible read-access grid (8 UUID-list textareas), and a collapsible Users editor with full Genesis parity (id+regenerate, alias, publicKey, roles, lock, description, repeatable loginIds, customProperties JSON). Reuses `READ_ACCESS_KEYS`, `UserRow`, `LoginIdRow`, `buildDefaultUserRow`, `GoverningStrategy`, `LockStatus`, `ReadAccessKey` from `app/genesis/defaults.ts` — **no type duplication**. JSON/validation errors surface via the existing `validationError` block before submit. All new fields optional: an empty form submits exactly as before.
+- **Tradeoff**: the presentational helpers (Section/Field/UuidField/UserRowEditor/LoginIdsEditor) are page-local copies of Genesis's (blue-themed) rather than a shared module — Genesis (emerald-themed) left untouched, matching the repo's page-local-helper convention. A future shared, theme-parameterized form kit could de-dupe both pages.
+- **Verified**: `npx tsc --noEmit` clean; `npm run build` clean (Next 16 / Turbopack — `/domains/new` prerendered static, all 15 routes generated).
+- **Pending (manual, needs a live tenant + browser)**: submit a populated form and confirm the resulting intent JSON shows `permissions.readAccess`, `users[]`, and `governingStrategy` correctly; confirm an invalid user (missing publicKey/roles) blocks submit with the inline error.
+
+---
+
+# Domains — proper /domains route page
+
+Promote Domains from a home-page tab to a first-class route (matching channels/transfers/etc.) so the list and a visible "Create domain" button live at `/domains`, wired to the already-built `/domains/new`.
+
+## Plan
+- [ ] Create `app/domains/page.tsx` — route page modeled on `channels/page.tsx`; header has a visible **Create domain** button → `/domains/new`. Body reuses `useDomains` + `DomainsFilters` + `DomainsTable` + `JsonViewer`. → verify: `/domains` renders list + button.
+- [ ] Sidebar: make "Domains" a `<Link href="/domains">`; add `/domains` to `isNavMode`, `isActive`, and the `handleTabClick` early-return. → verify: clicking Domains navigates to `/domains` and highlights.
+- [ ] Home `app/page.tsx`: remove `DomainsTab` import + render branch; change default `activeTab` "domains" → "accounts" (avoids blank landing). → verify: `/` shows Accounts, no duplicate domains view.
+- [ ] Delete `app/components/DomainsTab.tsx` (orphaned by the home-page change).
+- [ ] `app/domains/new/page.tsx`: point breadcrumb root + Cancel at `/domains` (the new parent). → verify: Cancel returns to `/domains`.
+- [ ] `npx tsc --noEmit` clean.
+
+## Review
+- Created `app/domains/page.tsx` — route page mirroring `channels/page.tsx`. Header carries the always-visible **Create domain** button (top-right action group) → `/domains/new`. Body reuses `useDomains` + `DomainsFilters` + `DomainsTable` + `JsonViewer` (logic ported verbatim from the old tab).
+- Sidebar: "Domains" is now a `<Link href="/domains">`; added `/domains` to `isNavMode`, an `isActive` clause, and the `handleTabClick` early-return.
+- Home `app/page.tsx`: removed the `DomainsTab` import + render branch; default tab "domains" → "accounts"; excluded `domains` from the `?tab=` restore guard (route now, not a tab).
+- Deleted `app/components/DomainsTab.tsx` — orphaned by the home-page change (recoverable via git).
+- `app/domains/new/page.tsx`: breadcrumb root + Cancel now point at `/domains` (its parent route); success still redirects to the created intent.
+- **Verification**: `npx tsc --noEmit` clean. Dev smoke test (Next 16) — `GET /`, `/domains`, `/domains/new` all 200; `/domains` HTML contains the "Create domain" button; dev log free of compile/runtime errors. (`next lint` removed in Next 16, so lint was not run.)
+
+---
+
 # useSubmitIntent Seam — Candidate #1
 
 Introduce a deep `useSubmitIntent` hook that owns the intent-submission lifecycle (mutation + localStorage recording), and converge every propose-style flow onto it. Per `CONTEXT.md`, the UI verb is *submit* and the SDK verb is *propose*; both refer to the same operation across the seam.

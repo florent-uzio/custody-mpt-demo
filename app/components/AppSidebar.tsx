@@ -126,6 +126,7 @@ export function AppSidebar({
   const isNavMode =
     pathname.startsWith("/accounts") ||
     pathname.startsWith("/channels") ||
+    pathname.startsWith("/domains") ||
     pathname.startsWith("/intents") ||
     pathname.startsWith("/policies") ||
     pathname.startsWith("/requests") ||
@@ -144,6 +145,7 @@ export function AppSidebar({
   );
 
   const isActive = (tab: (typeof TABS)[0]) => {
+    if (tab.id === "domains") return pathname.startsWith("/domains");
     if (tab.id === "accounts")
       return pathname.startsWith("/accounts") || activeTab === tab.id;
     if (tab.id === "intents-list") return pathname.startsWith("/intents");
@@ -152,6 +154,8 @@ export function AppSidebar({
     if (tab.id === "transactions")
       return pathname.startsWith("/transactions") || activeTab === tab.id;
     if (tab.id === "channels") return pathname.startsWith("/channels");
+    if (tab.id === "user-invitations")
+      return pathname.startsWith("/users/invite");
     if (tab.id === "transfers")
       return pathname.startsWith("/transfers") || activeTab === tab.id;
     if (tab.id === "users-list") return pathname === "/users";
@@ -163,7 +167,9 @@ export function AppSidebar({
 
   const handleTabClick = (tab: (typeof TABS)[0]) => {
     if (
+      tab.id === "domains" ||
       tab.id === "channels" ||
+      tab.id === "user-invitations" ||
       tab.id === "intents-list" ||
       tab.id === "policies" ||
       tab.id === "requests" ||
@@ -290,9 +296,35 @@ export function AppSidebar({
                       );
                     }
 
+                    if (tab.id === "domains") {
+                      return (
+                        <Link key={tab.id} href="/domains" className={cls}>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
+                          <span className="truncate">{tab.label}</span>
+                        </Link>
+                      );
+                    }
+
                     if (tab.id === "channels") {
                       return (
                         <Link key={tab.id} href="/channels" className={cls}>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
+                          <span className="truncate">{tab.label}</span>
+                        </Link>
+                      );
+                    }
+
+                    if (tab.id === "user-invitations") {
+                      return (
+                        <Link
+                          key={tab.id}
+                          href="/users/invite"
+                          className={cls}
+                        >
                           <span className="text-lg flex-shrink-0">
                             {tab.icon}
                           </span>
