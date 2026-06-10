@@ -1,4 +1,4 @@
-import { Core_TrustedDomain } from "custody";
+import { Core_TrustedDomain } from "@florent-uzio/custody";
 import { InfoCard, InfoRow } from "../transaction/InfoCard";
 import { CopyButton } from "../CopyButton";
 import { LockStatusConfig } from "./config";
@@ -24,7 +24,9 @@ export function DomainDetailsCard({ domain, cfg }: Props) {
       />
       <InfoRow
         label="Alias"
-        value={domain.alias || <span className="text-gray-300 italic">No alias</span>}
+        value={
+          domain.alias || <span className="text-gray-300 italic">No alias</span>
+        }
       />
       <InfoRow
         label="Lock Status"
@@ -42,7 +44,9 @@ export function DomainDetailsCard({ domain, cfg }: Props) {
           label="Parent ID"
           value={
             <div className="flex items-center gap-1.5">
-              <span className="font-mono text-xs break-all">{domain.parentId}</span>
+              <span className="font-mono text-xs break-all">
+                {domain.parentId}
+              </span>
               <CopyButton text={domain.parentId} />
             </div>
           }

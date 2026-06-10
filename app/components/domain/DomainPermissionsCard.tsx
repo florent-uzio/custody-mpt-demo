@@ -1,4 +1,4 @@
-import { Core_TrustedDomain } from "custody";
+import { Core_TrustedDomain } from "@florent-uzio/custody";
 import { InfoCard, InfoRow } from "../transaction/InfoCard";
 
 type Permissions = Core_TrustedDomain["data"]["permissions"];
@@ -33,11 +33,7 @@ export function DomainPermissionsCard({ permissions }: Props) {
   return (
     <InfoCard title="Permissions — Read Access" icon="🔐">
       {entries.map(([key, values]) => (
-        <InfoRow
-          key={key}
-          label={key}
-          value={<AccessList items={values} />}
-        />
+        <InfoRow key={key} label={key} value={<AccessList items={values} />} />
       ))}
     </InfoCard>
   );

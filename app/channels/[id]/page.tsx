@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { EDS_Channel } from "custody";
+import type { EDS_Channel } from "@florent-uzio/custody";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useDefaultDomain } from "../../contexts/DomainContext";
@@ -44,13 +44,7 @@ function formatDate(iso?: string) {
   });
 }
 
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 py-3 border-b border-gray-50 last:border-0">
       <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider sm:w-36 flex-shrink-0 mt-0.5">
@@ -164,9 +158,7 @@ export default function ChannelDetailPage() {
 
   const status = channel?.status;
   const cfg =
-    status === "DISABLED"
-      ? STATUS_CONFIG.DISABLED
-      : STATUS_CONFIG.ACTIVE;
+    status === "DISABLED" ? STATUS_CONFIG.DISABLED : STATUS_CONFIG.ACTIVE;
 
   const addEditEventType = () => {
     const t = editEventTypeInput.trim();
@@ -391,9 +383,7 @@ export default function ChannelDetailPage() {
                       <select
                         value={editStatus}
                         onChange={(e) =>
-                          setEditStatus(
-                            e.target.value as "ACTIVE" | "DISABLED",
-                          )
+                          setEditStatus(e.target.value as "ACTIVE" | "DISABLED")
                         }
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
                       >
@@ -588,9 +578,7 @@ export default function ChannelDetailPage() {
                         ))}
                       </div>
                     ) : (
-                      <span className="text-gray-300 italic text-sm">
-                        None
-                      </span>
+                      <span className="text-gray-300 italic text-sm">None</span>
                     )}
                   </InfoCard>
 
@@ -702,9 +690,7 @@ export default function ChannelDetailPage() {
                     disabled={!confirmDelete || deleteMutation.isPending}
                     className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
                   >
-                    {deleteMutation.isPending
-                      ? "Deleting…"
-                      : "Delete channel"}
+                    {deleteMutation.isPending ? "Deleting…" : "Delete channel"}
                   </button>
                 </div>
               )}

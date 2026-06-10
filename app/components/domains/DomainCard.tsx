@@ -1,4 +1,4 @@
-import { Core_TrustedDomain } from "custody";
+import { Core_TrustedDomain } from "@florent-uzio/custody";
 import { CopyButton } from "../CopyButton";
 import { useDefaultDomain } from "../../contexts/DomainContext";
 

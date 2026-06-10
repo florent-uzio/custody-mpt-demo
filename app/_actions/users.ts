@@ -7,7 +7,7 @@ import type {
   Core_TrustedUser,
   Core_TrustedUsersCollection,
   GetUsersQueryParams,
-} from "custody";
+} from "@florent-uzio/custody";
 
 import {
   getCurrentUser,
@@ -116,7 +116,10 @@ export async function createUser(
   return proposeIntent(request);
 }
 
-export type UpdateUserInput = Omit<UpdateUserPayload, "type" | "customProperties"> & {
+export type UpdateUserInput = Omit<
+  UpdateUserPayload,
+  "type" | "customProperties"
+> & {
   domainId: string;
   customProperties?: UpdateUserPayload["customProperties"];
 };

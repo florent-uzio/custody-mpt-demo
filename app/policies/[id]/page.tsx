@@ -10,18 +10,42 @@ import type {
   Core_TrustedPolicy,
   Core_PolicyScope,
   Core_Policy,
-} from "custody";
+} from "@florent-uzio/custody";
 import { getPolicy } from "../../_actions/policies";
 
 type Core_LockStatus = Core_Policy["lock"];
 
 const SCOPE_CONFIG: Record<
   Core_PolicyScope,
-  { headerBg: string; badgeBg: string; badgeText: string; dot: string; border: string }
+  {
+    headerBg: string;
+    badgeBg: string;
+    badgeText: string;
+    dot: string;
+    border: string;
+  }
 > = {
-  Self:               { headerBg: "from-blue-500 to-blue-600",     badgeBg: "bg-blue-100",   badgeText: "text-blue-800",   dot: "bg-blue-400",   border: "border-blue-200" },
-  Descendants:        { headerBg: "from-violet-500 to-violet-600", badgeBg: "bg-violet-100", badgeText: "text-violet-800", dot: "bg-violet-400", border: "border-violet-200" },
-  SelfAndDescendants: { headerBg: "from-indigo-500 to-indigo-600", badgeBg: "bg-indigo-100", badgeText: "text-indigo-800", dot: "bg-indigo-400", border: "border-indigo-200" },
+  Self: {
+    headerBg: "from-blue-500 to-blue-600",
+    badgeBg: "bg-blue-100",
+    badgeText: "text-blue-800",
+    dot: "bg-blue-400",
+    border: "border-blue-200",
+  },
+  Descendants: {
+    headerBg: "from-violet-500 to-violet-600",
+    badgeBg: "bg-violet-100",
+    badgeText: "text-violet-800",
+    dot: "bg-violet-400",
+    border: "border-violet-200",
+  },
+  SelfAndDescendants: {
+    headerBg: "from-indigo-500 to-indigo-600",
+    badgeBg: "bg-indigo-100",
+    badgeText: "text-indigo-800",
+    dot: "bg-indigo-400",
+    border: "border-indigo-200",
+  },
 };
 
 const LOCK_STYLES: Record<
@@ -29,8 +53,8 @@ const LOCK_STYLES: Record<
   { bg: string; text: string; dot: string }
 > = {
   Unlocked: { bg: "bg-green-100", text: "text-green-800", dot: "bg-green-400" },
-  Locked:   { bg: "bg-red-100",   text: "text-red-800",   dot: "bg-red-400" },
-  Archived: { bg: "bg-gray-100",  text: "text-gray-700",  dot: "bg-gray-400" },
+  Locked: { bg: "bg-red-100", text: "text-red-800", dot: "bg-red-400" },
+  Archived: { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-400" },
 };
 
 const DEFAULT_CFG = SCOPE_CONFIG.Self;
@@ -106,7 +130,9 @@ export default function PolicyDetailPage() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Gradient header */}
-      <div className={`bg-gradient-to-r ${cfg.headerBg} shadow-md flex-shrink-0`}>
+      <div
+        className={`bg-gradient-to-r ${cfg.headerBg} shadow-md flex-shrink-0`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
@@ -262,7 +288,9 @@ export default function PolicyDetailPage() {
           {policy && !isLoading && (
             <div className="space-y-5">
               {/* Summary bar */}
-              <div className={`bg-white rounded-xl border ${cfg.border} shadow-sm p-5`}>
+              <div
+                className={`bg-white rounded-xl border ${cfg.border} shadow-sm p-5`}
+              >
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
                   <div>
                     <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">
@@ -287,7 +315,9 @@ export default function PolicyDetailPage() {
                     <span
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${lockStyle.bg} ${lockStyle.text}`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${lockStyle.dot}`} />
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${lockStyle.dot}`}
+                      />
                       {policy.data.lock}
                     </span>
                   </div>
@@ -339,7 +369,9 @@ export default function PolicyDetailPage() {
                       <span
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${cfg.badgeBg} ${cfg.badgeText}`}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`}
+                        />
                         {policy.data.scope}
                       </span>
                     }
@@ -350,7 +382,9 @@ export default function PolicyDetailPage() {
                       <span
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${lockStyle.bg} ${lockStyle.text}`}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${lockStyle.dot}`} />
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${lockStyle.dot}`}
+                        />
                         {policy.data.lock}
                       </span>
                     }
@@ -363,23 +397,24 @@ export default function PolicyDetailPage() {
                       </span>
                     }
                   />
-                  {policy.data.intentTypes && policy.data.intentTypes.length > 0 && (
-                    <InfoRow
-                      label="Intent Types"
-                      value={
-                        <div className="flex flex-wrap gap-1.5">
-                          {policy.data.intentTypes.map((t) => (
-                            <span
-                              key={t}
-                              className="inline-flex items-center px-2 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-600"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      }
-                    />
-                  )}
+                  {policy.data.intentTypes &&
+                    policy.data.intentTypes.length > 0 && (
+                      <InfoRow
+                        label="Intent Types"
+                        value={
+                          <div className="flex flex-wrap gap-1.5">
+                            {policy.data.intentTypes.map((t) => (
+                              <span
+                                key={t}
+                                className="inline-flex items-center px-2 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-600"
+                              >
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        }
+                      />
+                    )}
                 </InfoCard>
 
                 {/* Metadata */}
@@ -412,12 +447,15 @@ export default function PolicyDetailPage() {
                     label="Revision"
                     value={policy.data.metadata?.revision ?? "—"}
                   />
-                  {Object.keys(policy.data.metadata?.customProperties ?? {}).length > 0 && (
+                  {Object.keys(policy.data.metadata?.customProperties ?? {})
+                    .length > 0 && (
                     <InfoRow
                       label="Custom Props"
                       value={
                         <div className="flex flex-wrap gap-1.5">
-                          {Object.entries(policy.data.metadata.customProperties).map(([k, v]) => (
+                          {Object.entries(
+                            policy.data.metadata.customProperties,
+                          ).map(([k, v]) => (
                             <span
                               key={k}
                               className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-600"

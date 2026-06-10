@@ -1,4 +1,4 @@
-import { Core_TransactionDetails } from "custody";
+import { Core_TransactionDetails } from "@florent-uzio/custody";
 import { formatDate } from "./config";
 import { InfoCard, InfoRow } from "./InfoCard";
 import { LedgerStatusBadge } from "./LedgerStatusBadge";
@@ -8,7 +8,11 @@ type LedgerTransactionData = NonNullable<
   Core_TransactionDetails["ledgerTransactionData"]
 >;
 
-export function LedgerTransactionCard({ data }: { data: LedgerTransactionData }) {
+export function LedgerTransactionCard({
+  data,
+}: {
+  data: LedgerTransactionData;
+}) {
   const xrplData = data.ledgerData?.type === "Xrpl" ? data.ledgerData : null;
 
   return (
@@ -38,9 +42,7 @@ export function LedgerTransactionCard({ data }: { data: LedgerTransactionData })
       {data.failure && (
         <InfoRow
           label="Failure"
-          value={
-            <span className="text-red-600 text-xs">{data.failure}</span>
-          }
+          value={<span className="text-red-600 text-xs">{data.failure}</span>}
         />
       )}
       {xrplData?.tokenData?.issuanceId && (

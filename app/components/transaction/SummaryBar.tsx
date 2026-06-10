@@ -1,4 +1,4 @@
-import { Core_TransactionDetails } from "custody";
+import { Core_TransactionDetails } from "@florent-uzio/custody";
 import { StatusConfig, ProcessingStatus, formatDate } from "./config";
 import { LedgerStatusBadge } from "./LedgerStatusBadge";
 
@@ -41,7 +41,9 @@ export function SummaryBar({ tx, processingStatus, cfg }: Props) {
           <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">
             Ledger
           </p>
-          <p className="text-sm text-gray-700 font-mono truncate">{tx.ledgerId}</p>
+          <p className="text-sm text-gray-700 font-mono truncate">
+            {tx.ledgerId}
+          </p>
         </div>
         <div>
           <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">

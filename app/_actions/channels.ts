@@ -5,7 +5,7 @@ import type {
   EDS_Channel,
   EDS_ChannelCreate,
   EDS_ChannelUpdate,
-} from "custody";
+} from "@florent-uzio/custody";
 import { getCustodySDK, getCurrentUser } from "@/app/lib/custody";
 
 export type CreateChannelInput = Omit<

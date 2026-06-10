@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { type Core_RequestState } from "custody";
+import { type Core_RequestState } from "@florent-uzio/custody";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { useSidebarContext } from "../contexts/SidebarContext";
 import { CopyButton } from "../components/CopyButton";

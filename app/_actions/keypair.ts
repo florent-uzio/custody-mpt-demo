@@ -1,6 +1,6 @@
 "use server";
 
-import { KeypairService } from "custody";
+import { KeypairService } from "@florent-uzio/custody";
 
 export type KeypairAlgorithm = "ed25519" | "secp256k1" | "secp256r1";
 
@@ -10,7 +10,11 @@ export type GeneratedKeypair = {
   publicKey: string;
 };
 
-const VALID_ALGORITHMS: KeypairAlgorithm[] = ["ed25519", "secp256k1", "secp256r1"];
+const VALID_ALGORITHMS: KeypairAlgorithm[] = [
+  "ed25519",
+  "secp256k1",
+  "secp256r1",
+];
 
 export async function generateKeypair(
   algorithm: KeypairAlgorithm,

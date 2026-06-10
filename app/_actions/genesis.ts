@@ -1,6 +1,6 @@
 "use server";
 
-import type { RunGenesisBody } from "custody";
+import type { RunGenesisBody } from "@florent-uzio/custody";
 import { getCustodySDK } from "@/app/lib/custody";
 
 export async function runGenesis(body: RunGenesisBody): Promise<void> {

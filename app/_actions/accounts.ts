@@ -7,7 +7,7 @@ import type {
   Core_ApiAccount,
   Core_BalancesCollection,
   GetAccountsQueryParams,
-} from "custody";
+} from "@florent-uzio/custody";
 
 import {
   getCurrentUser,
@@ -52,16 +52,19 @@ function buildAccountQueryParams(filters: AccountFilters): AccountQueryParams {
   if (filters.limit !== undefined) q.limit = filters.limit;
   if (filters.startingAfter) q.startingAfter = filters.startingAfter;
   if (filters.sortBy) q.sortBy = filters.sortBy as AccountQueryParams["sortBy"];
-  if (filters.sortOrder) q.sortOrder = filters.sortOrder as AccountQueryParams["sortOrder"];
+  if (filters.sortOrder)
+    q.sortOrder = filters.sortOrder as AccountQueryParams["sortOrder"];
   if (filters.ledgerId) q.ledgerId = filters.ledgerId;
   if (filters.alias) q.alias = filters.alias;
   if (filters.vaultId) q["providerDetails.vaultId"] = filters.vaultId;
   if (filters.createdBy) q["metadata.createdBy"] = filters.createdBy;
-  if (filters.lastModifiedBy) q["metadata.lastModifiedBy"] = filters.lastModifiedBy;
+  if (filters.lastModifiedBy)
+    q["metadata.lastModifiedBy"] = filters.lastModifiedBy;
   if (filters.description) q["metadata.description"] = filters.description;
   if (filters.customProperties?.length)
     q["metadata.customProperties"] = filters.customProperties;
-  if (filters.locks?.length) q.lock = filters.locks as AccountQueryParams["lock"];
+  if (filters.locks?.length)
+    q.lock = filters.locks as AccountQueryParams["lock"];
   if (filters.processingStatus)
     q["additionalDetails.processingStatus"] =
       filters.processingStatus as AccountQueryParams["additionalDetails.processingStatus"];
@@ -115,8 +118,15 @@ export async function getAccountBalances(
 export async function createAccount(
   input: CreateAccountInput,
 ): Promise<ProposeIntentResult> {
-  const { domainId, alias, vaultId, keyStrategy, ledgerIds, lock, description } =
-    input;
+  const {
+    domainId,
+    alias,
+    vaultId,
+    keyStrategy,
+    ledgerIds,
+    lock,
+    description,
+  } = input;
   if (!domainId) throw new Error("domainId is required");
   if (!alias) throw new Error("alias is required");
   if (!vaultId) throw new Error("vaultId is required");

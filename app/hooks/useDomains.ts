@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { GetDomainsQueryParams } from "custody";
+import { GetDomainsQueryParams } from "@florent-uzio/custody";
 import { listDomains } from "../_actions/domains";
 
 export function useDomains(params: GetDomainsQueryParams) {

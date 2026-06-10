@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
-import type { Core_ProposeIntentBody } from "custody";
+import type { Core_ProposeIntentBody } from "@florent-uzio/custody";
 
 type ProposeRequest = Core_ProposeIntentBody["request"];
 type Author = ProposeRequest["author"];

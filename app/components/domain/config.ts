@@ -1,4 +1,4 @@
-import { Core_TrustedDomain } from "custody";
+import { Core_TrustedDomain } from "@florent-uzio/custody";
 
 type Domain = Core_TrustedDomain["data"];
 type LockStatus = Domain["lock"];

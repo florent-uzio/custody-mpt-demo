@@ -10,7 +10,7 @@ import type {
   Core_TrustedPoliciesCollection,
   Core_PolicyScope,
   Core_Policy,
-} from "custody";
+} from "@florent-uzio/custody";
 import { listPolicies } from "../_actions/policies";
 
 type Core_LockStatus = Core_Policy["lock"];

@@ -1,27 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Core_TrustedDomain } from "@florent-uzio/custody";
-import { CopyButton } from "../CopyButton";
 import { useSidebarContext } from "../../contexts/SidebarContext";
-import { LockStatusConfig } from "./config";
+import { UserCreateTab } from "../../components/UserCreateTab";
 
-type LockStatus = Core_TrustedDomain["data"]["lock"];
-
-interface Props {
-  domainId: string;
-  alias?: string;
-  lockStatus?: LockStatus;
-  cfg: LockStatusConfig;
-}
-
-export function DomainHeader({ domainId, alias, lockStatus, cfg }: Props) {
+export default function InviteUserPage() {
   const { sidebarOpen, setSidebarOpen } = useSidebarContext();
 
   return (
-    <div className={`bg-gradient-to-r ${cfg.headerBg} shadow-md flex-shrink-0`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-        <div className="flex items-start justify-between gap-4">
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="bg-gradient-to-r from-teal-500 to-cyan-600 shadow-md flex-shrink-0">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-start gap-3">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -54,44 +43,26 @@ export function DomainHeader({ domainId, alias, lockStatus, cfg }: Props) {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Link
-                  href="/?tab=domains"
+                  href="/users"
                   className="text-white/60 hover:text-white text-xs font-medium transition-colors"
                 >
-                  Domains
+                  Users
                 </Link>
                 <span className="text-white/40 text-xs">/</span>
                 <span className="text-white/80 text-xs font-medium">
-                  Detail
+                  Invite user
                 </span>
               </div>
-              {alias && (
-                <p className="text-white/90 text-lg font-semibold mb-0.5">
-                  {alias}
-                </p>
-              )}
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-white font-mono text-sm font-semibold break-all">
-                  {domainId}
-                </h1>
-                <div className="bg-white/20 rounded p-0.5">
-                  <CopyButton
-                    text={domainId}
-                    className="text-white hover:bg-white/20"
-                  />
-                </div>
-              </div>
+              <h1 className="text-white text-lg font-semibold">Invite user</h1>
             </div>
           </div>
-
-          {lockStatus && (
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${cfg.badgeBg} ${cfg.badgeText} flex-shrink-0`}
-            >
-              <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-              {lockStatus}
-            </span>
-          )}
         </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <UserCreateTab />
+        </main>
       </div>
     </div>
   );
