@@ -11,8 +11,6 @@ import { MPTSetTab } from "./components/MPTSetTab";
 import { MPTDestroyTab } from "./components/MPTDestroyTab";
 import { TransactionsTab } from "./components/TransactionsTab";
 import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
-import { AccountsTab } from "./components/AccountsTab";
-import { AccountCreateTab } from "./components/AccountCreateTab";
 import { KeypairTab } from "./components/KeypairTab";
 import { JwtTokenTab } from "./components/JwtTokenTab";
 import { TrustSetTab } from "./components/TrustSetTab";
@@ -23,7 +21,7 @@ import type { Tab } from "./components/AppSidebar";
 const NOTES_STORAGE_KEY = "mpt_demo_notes";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<Tab>("accounts");
+  const [activeTab, setActiveTab] = useState<Tab>("config");
   const [notes, setNotes] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -40,6 +38,8 @@ export default function Home() {
         TABS.some((t) => t.id === tab) &&
         tab !== "intents-list" &&
         tab !== "domains" &&
+        tab !== "accounts" &&
+        tab !== "account-create" &&
         tab !== "user-invitations"
       ) {
         setActiveTab(tab);
@@ -141,8 +141,6 @@ export default function Home() {
 
               {/* Tab Content */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                {activeTab === "accounts" && <AccountsTab />}
-                {activeTab === "account-create" && <AccountCreateTab />}
                 {activeTab === "requests" && <RequestsTab />}
                 {activeTab === "transfers" && <TransfersTab />}
                 {activeTab === "transactions" && <TransactionsTab />}

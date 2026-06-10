@@ -1,3 +1,62 @@
+# Accounts — dedicated routes (mirror Domains)
+
+Move the Accounts list and Create Account UI off the home dashboard tabs and onto their
+own routes, exactly like Domains (`/domains`, `/domains/new`). Currently only the detail
+route `/accounts/[id]` exists; the list (`AccountsTab`) and create form (`AccountCreateTab`)
+live as tabs on `app/page.tsx`.
+
+## Decisions (confirmed with user)
+- Full mirror: remove Accounts + Create Account from the home dashboard; delete the
+  now-unused `AccountsTab` / `AccountCreateTab` components.
+- Home dashboard default tab becomes **Configuration** (`config`).
+
+## Plan
+- [x] 1. `app/accounts/page.tsx` (NEW) — Domains-style list page (header w/ sidebar toggle,
+      title, count, refresh, "Create account" link → `/accounts/new`) wrapping the existing
+      AccountsTab query/filters/table logic.
+- [x] 2. `app/accounts/new/page.tsx` (NEW) — Domains/new-style breadcrumb header + the
+      existing create-account form (moved from AccountCreateTab).
+- [x] 3. `app/components/AppSidebar.tsx` — route links: `accounts` → `/accounts`,
+      `account-create` → `/accounts/new`; fixed `isActive` (create page vs list) +
+      `handleTabClick`.
+- [x] 4. `app/page.tsx` — removed AccountsTab/AccountCreateTab imports + switch cases;
+      default tab → `config`; excluded `accounts`/`account-create` from `?tab=` restore.
+- [x] 5. Deleted `app/components/AccountsTab.tsx` + `app/components/AccountCreateTab.tsx`.
+- [x] 6. `npx tsc --noEmit` clean; `npm run build` clean.
+
+## Review
+- **`app/accounts/page.tsx`** (list) — ported the `AccountsTab` query/filter/table logic
+  verbatim into a Domains-style page shell. The monolithic tab's internal `Accounts` header
+  (count + refresh) was lifted into the page `<header>`, which also gained the sidebar toggle
+  and the **Create account** link → `/accounts/new` (mirroring `/domains`'s "Create domain").
+  Loading/table/empty containers got `bg-white shadow-sm` since they now sit on the gradient
+  background instead of inside the home dashboard's white card. Detail links keep
+  `?domainId=${defaultDomainId}` so `/accounts/[id]` still receives the domain.
+- **`app/accounts/new/page.tsx`** (create) — ported the `AccountCreateTab` form verbatim
+  (vault fetch, key-strategy/ledger/lock steps, summary, submit, JsonViewer response). The
+  old indigo→purple hero card was replaced by a slim Domains/new-style breadcrumb header bar
+  ("Accounts / Create account") in the same indigo→purple theme, plus a yellow "Set a Default
+  Domain ID" banner for parity with `/domains/new`. Submit behavior unchanged
+  (`useSubmitCreateAccount`); response still renders inline (no redirect — preserved original).
+- **`AppSidebar.tsx`** — `accounts` and `account-create` are now `<Link>`s to `/accounts`
+  and `/accounts/new`. `isActive` distinguishes them: `account-create` lights on
+  `/accounts/new`; `accounts` lights on `/accounts` and `/accounts/[id]` but *not*
+  `/accounts/new`. Both added to the `handleTabClick` early-return (consistency; never hit
+  since they render as Links). `isNavMode` already covered `/accounts`.
+- **`app/page.tsx`** — dropped the two imports + render branches; default tab `"accounts"`
+  → `"config"` (Configuration, per user); excluded `accounts`/`account-create` from the
+  `?tab=` restore so a stale URL param can't render a now-routed view as a blank tab.
+- **Deleted** `app/components/AccountsTab.tsx` + `AccountCreateTab.tsx` — orphaned by the
+  home-page change (recoverable via git). `grep` confirms zero remaining references.
+- **Verified**: `npx tsc --noEmit` exit 0; `npm run build` exit 0 ("Compiled successfully") —
+  `/accounts` and `/accounts/new` both prerender as **static (○)** routes, alongside the
+  existing `/accounts/[id]*` dynamic routes, exactly mirroring `/domains` + `/domains/new`.
+- **Pending (manual, needs a live tenant + browser)**: set a Default Domain ID, then confirm
+  `/accounts` lists/filters/refreshes and the row → `/accounts/[id]` link works; on
+  `/accounts/new` confirm vault load, submit, and the request/response JsonViewer render.
+
+---
+
 # User Invitation — domain dropdown + dedicated route
 
 The invitation form (`UserCreateTab`) always used the global `defaultDomainId` from the sidebar. Add a domain **dropdown** (defaulting to the current domain) and promote the in-page tab to a real route `/users/invite`, mirroring `/domains/new`.
