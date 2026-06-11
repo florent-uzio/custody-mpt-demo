@@ -1,10 +1,16 @@
-export type ConfigKey = "AUTH_URL" | "API_URL" | "PRIVATE_KEY" | "PUBLIC_KEY";
+export type ConfigKey =
+  | "AUTH_URL"
+  | "API_URL"
+  | "PRIVATE_KEY"
+  | "PUBLIC_KEY"
+  | "XRPL_WSS_URL";
 
 export const CONFIG_KEYS: ConfigKey[] = [
   "AUTH_URL",
   "API_URL",
   "PRIVATE_KEY",
   "PUBLIC_KEY",
+  "XRPL_WSS_URL",
 ];
 
 export interface ConfigEntry {
