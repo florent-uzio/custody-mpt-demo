@@ -33,7 +33,9 @@ export function SubmitterAndMode() {
 
   return (
     <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
-      <h2 className="text-sm font-semibold text-gray-800">1 · Submitter &amp; mode</h2>
+      <h2 className="text-sm font-semibold text-gray-800">
+        1 · Submitter &amp; mode
+      </h2>
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
@@ -79,7 +81,10 @@ export function SubmitterAndMode() {
         </label>
         <div className="flex flex-wrap items-center gap-4">
           {(["PlatformManaged", "Explicit"] as const).map((mode) => (
-            <label key={mode} className="flex items-center gap-1.5 text-sm text-gray-700">
+            <label
+              key={mode}
+              className="flex items-center gap-1.5 text-sm text-gray-700"
+            >
               <input
                 type="radio"
                 name="outerSequencing"
@@ -87,7 +92,7 @@ export function SubmitterAndMode() {
                 onChange={() => setOuterSequencing(mode)}
               />
               {mode === "PlatformManaged"
-                ? "Platform-managed (submitter-only)"
+                ? "PlatformManaged (submitter-only, single account)"
                 : "Explicit (required for multi-account)"}
             </label>
           ))}
@@ -106,9 +111,11 @@ export function SubmitterAndMode() {
           )}
         </div>
         <p className="mt-1.5 text-xs text-gray-400">
-          Sequencing is all-or-nothing: <strong>Explicit</strong> sets the outer + every
-          inner Sequence (autofill fills them) — required whenever there are participants.
-          <strong> Platform-managed</strong> works only for a submitter-only batch.
+          Sequencing is all-or-nothing: <strong>Explicit</strong> sets the outer
+          + every inner Sequence (autofill fills them) — required whenever there
+          are participants.
+          <strong> Platform-managed</strong> works only for a submitter-only
+          batch.
         </p>
       </div>
 
