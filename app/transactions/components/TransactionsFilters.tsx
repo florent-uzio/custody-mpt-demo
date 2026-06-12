@@ -2,7 +2,16 @@
 
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
+import type { XrplLedgerId } from "@florent-uzio/custody";
 import { useAccounts } from "../../hooks/useAccounts";
+
+// Known XRPL ledger IDs from the SDK's XrplLedgerId union. Typed against it so
+// these literals stay validated against the SDK type.
+const XRPL_LEDGER_IDS: readonly XrplLedgerId[] = [
+  "xrpl",
+  "xrpl-testnet-august-2024",
+  "xrpl-devnet",
+];
 
 interface Props {
   accountId: string;
@@ -68,13 +77,17 @@ export function TransactionsFilters({
           <label className="block text-xs font-medium text-gray-600 mb-1.5">
             Ledger ID
           </label>
-          <input
-            type="text"
+          <select
             value={ledgerId}
             onChange={(e) => onLedgerIdChange(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-            placeholder="Ledger ID"
-          />
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
+          >
+            {XRPL_LEDGER_IDS.map((id) => (
+              <option key={id} value={id}>
+                {id}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

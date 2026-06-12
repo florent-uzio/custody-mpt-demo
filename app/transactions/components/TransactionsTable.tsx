@@ -25,6 +25,16 @@ interface TransactionItem {
   };
 }
 
+/**
+ * Intent details matched to a transaction by `orderReference.id`, which equals
+ * the intent's `data.details.payload.id`. Keyed by that shared payload id.
+ */
+export interface IntentMatch {
+  intentId: string;
+  description?: string;
+  xrplType?: string;
+}
+
 const PROCESSING_STYLES: Record<
   string,
   { bg: string; text: string; dot: string }
@@ -84,9 +94,15 @@ interface Props {
   items: TransactionItem[];
   totalCount: number;
   domainId?: string;
+  intentByOrderRef?: Map<string, IntentMatch>;
 }
 
-export function TransactionsTable({ items, totalCount, domainId }: Props) {
+export function TransactionsTable({
+  items,
+  totalCount,
+  domainId,
+  intentByOrderRef,
+}: Props) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -99,6 +115,15 @@ export function TransactionsTable({ items, totalCount, domainId }: Props) {
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Transaction ID
               </th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                XRPL Type
+              </th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Intent
+              </th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                Description
+              </th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                 Ledger Status
               </th>
@@ -109,7 +134,11 @@ export function TransactionsTable({ items, totalCount, domainId }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {items.map((item) => (
+            {items.map((item) => {
+              const match = item.orderReference?.id
+                ? intentByOrderRef?.get(item.orderReference.id)
+                : undefined;
+              return (
               <tr
                 key={item.id}
                 className="hover:bg-blue-50/40 transition-colors group"
@@ -131,6 +160,36 @@ export function TransactionsTable({ items, totalCount, domainId }: Props) {
                     </span>
                     <CopyButton text={item.id} />
                   </div>
+                </td>
+                <td className="px-4 py-3">
+                  {match?.xrplType ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-50 text-violet-700 border border-violet-100">
+                      {match.xrplType}
+                    </span>
+                  ) : (
+                    <span className="text-gray-300 text-xs italic">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  {match ? (
+                    <Link
+                      href={`/intents/${match.intentId}?domainId=${domainId}`}
+                      className="font-mono text-xs text-blue-600 hover:underline"
+                    >
+                      {truncateId(match.intentId)}
+                    </Link>
+                  ) : (
+                    <span className="text-gray-300 text-xs italic">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 hidden md:table-cell max-w-xs">
+                  {match?.description ? (
+                    <span className="text-gray-600 text-xs truncate block">
+                      {match.description}
+                    </span>
+                  ) : (
+                    <span className="text-gray-300 text-xs italic">—</span>
+                  )}
                 </td>
                 <td className="px-4 py-3 hidden sm:table-cell">
                   {item.ledgerTransactionData?.ledgerStatus ? (
@@ -166,7 +225,8 @@ export function TransactionsTable({ items, totalCount, domainId }: Props) {
                   </Link>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

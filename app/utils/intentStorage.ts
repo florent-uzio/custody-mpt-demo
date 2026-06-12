@@ -9,7 +9,9 @@ export interface SubmittedIntent {
     | "UpdateUser"
     | "CreateAccount"
     | "Payment"
-    | "TrustSet";
+    | "TrustSet"
+    | "TicketCreate"
+    | "Batch";
   requestId: string;
   submittedAt: string;
   intentId?: string; // Will be fetched later from Request API

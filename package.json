@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@florent-uzio/custody": "^2.3.0",
+    "@florent-uzio/custody": "^2.4.0",
     "@tanstack/react-query": "^5.90.16",
     "@tanstack/react-query-devtools": "^5.91.2",
     "@types/uuid": "^10.0.0",
@@ -18,7 +18,8 @@
     "next": "^16.0.10",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "xrpl": "^4.6.0"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

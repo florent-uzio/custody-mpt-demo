@@ -39,6 +39,14 @@ const FIELDS: {
     sensitive: true,
     description: "Public key in DER format",
   },
+  {
+    key: "XRPL_WSS_URL",
+    label: "XRPL Node WSS URL",
+    required: false,
+    sensitive: false,
+    description:
+      "WebSocket URL of the XRPL node used to autofill Batch inner sequences (e.g. wss://s.devnet.rippletest.net:51233). Must point at the same network as the accounts you batch.",
+  },
 ];
 
 function SourceBadge({ source }: { source: "override" | "env" | "empty" }) {
@@ -75,6 +83,7 @@ export function ConfigTab() {
     API_URL: "",
     PRIVATE_KEY: "",
     PUBLIC_KEY: "",
+    XRPL_WSS_URL: "",
   });
   const [visibleFields, setVisibleFields] = useState<Set<ConfigKey>>(new Set());
   const [successMessage, setSuccessMessage] = useState("");
@@ -86,6 +95,7 @@ export function ConfigTab() {
         API_URL: config.API_URL.value,
         PRIVATE_KEY: config.PRIVATE_KEY.value,
         PUBLIC_KEY: config.PUBLIC_KEY.value,
+        XRPL_WSS_URL: config.XRPL_WSS_URL.value,
       });
     }
   }, [config]);
