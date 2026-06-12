@@ -14,7 +14,9 @@ export default function IntentsPage() {
 
   const [statusFilter, setStatusFilter] = useState<IntentStatus | "">("");
   const [limit, setLimit] = useState(20);
-  const [sortBy, setSortBy] = useState<IntentSortBy | undefined>(undefined);
+  const [sortBy, setSortBy] = useState<IntentSortBy | undefined>(
+    "details.metadata.createdAt"
+  );
   const [sortOrder, setSortOrder] = useState<SortOrder>("DESC");
 
   const {
