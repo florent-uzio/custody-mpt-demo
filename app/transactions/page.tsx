@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { useSidebarContext } from "../contexts/SidebarContext";
 import { TransactionsFilters } from "./components/TransactionsFilters";
-import { TransactionsTable } from "./components/TransactionsTable";
+import {
+  TransactionsTable,
+  type IntentMatch,
+} from "./components/TransactionsTable";
 import { listTransactions } from "../_actions/transactions";
+import { listIntents } from "../_actions/intents";
+import type { IntentsCollection } from "../intents/intents.types";
 
 const DEFAULT_LEDGER_ID = "xrpl-testnet-august-2024";
 
@@ -70,8 +75,41 @@ export default function TransactionsPage() {
       staleTime: 60_000,
     });
 
+  // Fetch recent intents so transactions can be matched to the intent that
+  // created them (transaction.orderReference.id === intent payload id).
+  const { data: intentsData } = useQuery<IntentsCollection>({
+    queryKey: ["intents-for-transactions", defaultDomainId],
+    queryFn: () =>
+      listIntents(defaultDomainId!, {
+        limit: 100,
+        sortBy: "details.metadata.createdAt",
+        sortOrder: "DESC",
+      }),
+    enabled: !!defaultDomainId,
+    staleTime: 60_000,
+  });
+
   const items = data?.items ?? [];
   const totalCount = data?.count ?? 0;
+
+  // Map intent payload id -> intent details. The transaction's
+  // orderReference.id equals the intent's data.details.payload.id.
+  const intentByOrderRef = useMemo(() => {
+    const map = new Map<string, IntentMatch>();
+    for (const { data: intent } of intentsData?.items ?? []) {
+      const payload = intent.details.payload as {
+        id?: string;
+        parameters?: { operation?: { type?: string } };
+      };
+      if (!payload.id) continue;
+      map.set(payload.id, {
+        intentId: intent.id,
+        description: intent.details.metadata.description,
+        xrplType: payload.parameters?.operation?.type,
+      });
+    }
+    return map;
+  }, [intentsData]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -244,6 +282,7 @@ export default function TransactionsPage() {
               items={items}
               totalCount={totalCount}
               domainId={defaultDomainId}
+              intentByOrderRef={intentByOrderRef}
             />
           )}
 
