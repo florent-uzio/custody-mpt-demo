@@ -27,3 +27,6 @@ dist-ssr
 .env.local
 
 .next
+
+# TypeScript incremental build info
+*.tsbuildinfo
