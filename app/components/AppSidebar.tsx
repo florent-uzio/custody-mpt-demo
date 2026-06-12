@@ -21,6 +21,7 @@ export type Tab =
   | "mpt-set"
   | "mpt-destroy"
   | "trustset"
+  | "tickets"
   | "batch"
   | "submitted-intents"
   | "intents-list"
@@ -104,6 +105,7 @@ export const TABS: {
   { id: "mpt-set", label: "MPT Set", icon: "⚙️", category: "XRPL" },
   { id: "mpt-destroy", label: "MPT Destroy", icon: "🗑️", category: "XRPL" },
   { id: "trustset", label: "TrustSet", icon: "🔗", category: "XRPL" },
+  { id: "tickets", label: "Tickets", icon: "🎟️", category: "XRPL" },
   { id: "batch", label: "Batch", icon: "📦", category: "XRPL" },
   { id: "keypair", label: "Keypair Generator", icon: "🔑", category: "Tools" },
   { id: "jwt-token", label: "JWT Token", icon: "🎫", category: "Tools" },
@@ -133,6 +135,7 @@ export function AppSidebar({
     pathname.startsWith("/intents") ||
     pathname.startsWith("/policies") ||
     pathname.startsWith("/requests") ||
+    pathname.startsWith("/tickets") ||
     pathname.startsWith("/transactions") ||
     pathname.startsWith("/transfers") ||
     pathname.startsWith("/users") ||
@@ -162,6 +165,7 @@ export function AppSidebar({
     if (tab.id === "transactions")
       return pathname.startsWith("/transactions") || activeTab === tab.id;
     if (tab.id === "channels") return pathname.startsWith("/channels");
+    if (tab.id === "tickets") return pathname.startsWith("/tickets");
     if (tab.id === "batch") return pathname.startsWith("/batch");
     if (tab.id === "user-invitations")
       return pathname.startsWith("/users/invite");
@@ -180,6 +184,7 @@ export function AppSidebar({
       tab.id === "accounts" ||
       tab.id === "account-create" ||
       tab.id === "channels" ||
+      tab.id === "tickets" ||
       tab.id === "batch" ||
       tab.id === "user-invitations" ||
       tab.id === "intents-list" ||
@@ -344,6 +349,17 @@ export function AppSidebar({
                     if (tab.id === "channels") {
                       return (
                         <Link key={tab.id} href="/channels" className={cls}>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
+                          <span className="truncate">{tab.label}</span>
+                        </Link>
+                      );
+                    }
+
+                    if (tab.id === "tickets") {
+                      return (
+                        <Link key={tab.id} href="/tickets" className={cls}>
                           <span className="text-lg flex-shrink-0">
                             {tab.icon}
                           </span>

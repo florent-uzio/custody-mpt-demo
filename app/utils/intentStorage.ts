@@ -10,6 +10,7 @@ export interface SubmittedIntent {
     | "CreateAccount"
     | "Payment"
     | "TrustSet"
+    | "TicketCreate"
     | "Batch";
   requestId: string;
   submittedAt: string;
