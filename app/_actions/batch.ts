@@ -208,6 +208,7 @@ export async function requestBatchSignature(
     domainId: signer.domainId,
     accountId: signer.accountId,
     ledgerId: signer.ledgerId,
+    description: "Raw Signing Batch",
   });
 }
 
@@ -248,6 +249,7 @@ export async function proposeBatch(
   const sdk = getCustodySDK();
   const response = await sdk.xrpl.proposeBatch(payload, batchSigners, {
     domainId,
+    description: "Batch",
   });
   return { requestId: response.requestId, response };
 }

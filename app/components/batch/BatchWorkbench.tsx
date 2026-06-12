@@ -39,13 +39,20 @@ export function BatchWorkbench() {
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-gray-400">
             Session{" "}
-            <span className="font-mono">{sessionApi.session.id.slice(0, 8)}…</span>
+            <span className="font-mono">
+              {sessionApi.session.id.slice(0, 8)}…
+            </span>
           </p>
           <button
             onClick={onReset}
             className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -53,14 +60,14 @@ export function BatchWorkbench() {
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            Reset workbench
+            Reset Batch
           </button>
         </div>
 
         {!defaultDomainId && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-700">
-            Set a <strong>Default Domain ID</strong> in the sidebar to load accounts
-            and submit the batch.
+            Set a <strong>Default Domain ID</strong> in the sidebar to load
+            accounts and submit the batch.
           </div>
         )}
 
