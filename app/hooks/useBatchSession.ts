@@ -124,7 +124,12 @@ export function useBatchSession() {
           ...s,
           entries: s.entries.map((e, i) => ({
             ...e,
-            sequence: result.entrySequences[i] ?? e.sequence,
+            // Ticket entries are sequenced by the user's chosen ticket — autofill
+            // never fills them (the node round-trip returns no Sequence for them).
+            sequence:
+              e.sequencingType === "Ticket"
+                ? e.sequence
+                : (result.entrySequences[i] ?? e.sequence),
           })),
           outerSequence:
             s.outerSequencing === "Explicit"
@@ -185,7 +190,13 @@ export function useBatchSession() {
     const entries = [];
     for (const e of session.entries) {
       if (!e.address) return null;
-      entries.push({ address: e.address, sequence: e.sequence, operation: e.operation });
+      entries.push({
+        address: e.address,
+        sequence: e.sequence,
+        ticketSequence:
+          e.sequencingType === "Ticket" ? e.ticketSequence : undefined,
+        operation: e.operation,
+      });
     }
     return {
       submitterAddress: session.submitterAddress,

@@ -95,6 +95,47 @@ export async function autofillBatch(
   }
 }
 
+// ── Tickets (account_objects) ────────────────────────────────────────────────
+
+/**
+ * Fetches an account's on-ledger Ticket sequences from `XRPL_WSS_URL` via
+ * `account_objects` (type `ticket`), so an inner entry can be sequenced by a
+ * pre-reserved Ticket instead of an AccountSequence. Paginates on `marker`
+ * (an account holds ≤250 tickets, so this is normally one page). Sorted ascending.
+ */
+export async function fetchAccountTickets(address: string): Promise<number[]> {
+  if (!address) throw new Error("address is required");
+  const wssUrl = getConfigValue("XRPL_WSS_URL");
+  if (!wssUrl) {
+    throw new Error(
+      "XRPL_WSS_URL is not configured. Set it in .env or on the Configuration page.",
+    );
+  }
+
+  const client = new Client(wssUrl);
+  try {
+    await client.connect();
+    const tickets: number[] = [];
+    let marker: unknown;
+    do {
+      const resp = await client.request({
+        command: "account_objects",
+        account: address,
+        type: "ticket",
+        limit: 400,
+        marker,
+      });
+      for (const obj of resp.result.account_objects) {
+        if (obj.LedgerEntryType === "Ticket") tickets.push(obj.TicketSequence);
+      }
+      marker = resp.result.marker;
+    } while (marker);
+    return tickets.sort((a, b) => a - b);
+  } finally {
+    await client.disconnect();
+  }
+}
+
 // ── Step 1: dry-run (XLS-56) ─────────────────────────────────────────────────
 
 /**

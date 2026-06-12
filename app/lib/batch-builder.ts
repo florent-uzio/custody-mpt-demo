@@ -29,6 +29,13 @@ export type BatchBuildEntry = {
   address: string;
   /** Inner Sequence — set for payload building; omitted for autofill. */
   sequence?: number;
+  /**
+   * Pre-reserved Ticket sequence. When set, the inner txn carries `TicketSequence`
+   * instead of `Sequence` — the adapter maps it to `{ type: "Ticket" }`, and
+   * `Client.autofill` leaves the entry untouched (it only fills entries with
+   * neither Sequence nor TicketSequence).
+   */
+  ticketSequence?: number;
   operation: BatchOperationDraft;
 };
 
@@ -113,7 +120,14 @@ export function buildXrplBatch(
     Flags: EXECUTION_MODE_FLAG[input.executionMode],
     RawTransactions: input.entries.map((entry) => {
       const tx = withInnerBatchFlag(operationToXrpl(entry.address, entry.operation));
-      if (opts.withSequences && entry.sequence != null) tx.Sequence = entry.sequence;
+      if (entry.ticketSequence != null) {
+        // Ticket entries are sequenced client-side: set TicketSequence always
+        // (even in the autofill build) so the adapter emits `{ type: "Ticket" }`
+        // and `Client.autofill` skips this entry.
+        tx.TicketSequence = entry.ticketSequence;
+      } else if (opts.withSequences && entry.sequence != null) {
+        tx.Sequence = entry.sequence;
+      }
       return { RawTransaction: tx };
     }),
     ...(opts.withSequences &&
@@ -138,13 +152,13 @@ export function buildBatchPayload(input: BatchBuildInput): BatchPayloadInput {
         "Explicit sequencing requires an outer Batch Sequence — autofill, or enter it under Submitter & mode.",
       );
     }
-    if (input.entries.some((e) => e.sequence == null)) {
+    if (input.entries.some((e) => e.sequence == null && e.ticketSequence == null)) {
       throw new Error(
-        "Explicit sequencing requires a Sequence on every inner transaction — autofill, or enter them.",
+        "Explicit sequencing requires a Sequence or Ticket on every inner transaction — autofill, select a ticket, or enter them.",
       );
     }
-    // Outer Sequence + every entry Sequence are present → the adapter maps them
-    // all to AccountSequence: fully explicit.
+    // Outer Sequence is present, and every entry carries a Sequence or
+    // TicketSequence → the adapter maps each to AccountSequence/Ticket: fully explicit.
     return batchToCustodyBatchPayload(buildXrplBatch(input, { withSequences: true }));
   }
 

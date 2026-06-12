@@ -48,8 +48,16 @@ export type BatchEntryDraft = {
   /** XRPL address, filled once resolved from `accountId`. */
   address?: string;
   operation: BatchOperationDraft;
+  /**
+   * How this inner transaction is sequenced. `undefined` ≡ `"AccountSequence"`
+   * (back-compat with sessions saved before tickets). `"Ticket"` references a
+   * pre-reserved TicketSequence (picked from the account's on-ledger tickets).
+   */
+  sequencingType?: "AccountSequence" | "Ticket";
   /** Inner Sequence — autofilled from the node or typed. Frozen once signed. */
   sequence?: number;
+  /** Chosen ticket — used when `sequencingType === "Ticket"`. */
+  ticketSequence?: number;
 };
 
 /** Async state for one participant's signature. */

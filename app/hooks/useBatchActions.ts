@@ -3,6 +3,7 @@ import type { BatchPayloadInput, Core_BatchSigner } from "@florent-uzio/custody"
 import {
   autofillBatch,
   dryRunBatch,
+  fetchAccountTickets,
   fetchBatchSignature,
   previewBatchPayload,
   proposeBatch,
@@ -26,6 +27,10 @@ export function useBatchActions() {
 
   const autofill = useMutation({
     mutationFn: (input: BatchBuildInput) => autofillBatch(input),
+  });
+
+  const fetchTickets = useMutation({
+    mutationFn: (address: string) => fetchAccountTickets(address),
   });
 
   const previewPayload = useMutation({
@@ -57,6 +62,7 @@ export function useBatchActions() {
   return {
     resolveAddress,
     autofill,
+    fetchTickets,
     previewPayload,
     dryRun,
     requestSignature,
