@@ -57,6 +57,12 @@ const AVAILABLE_LEDGERS = [
     network: "devnet",
   },
   {
+    id: "xrpl-repo-sandbox",
+    label: "XRPL Sandbox",
+    description: "XRP Ledger Sandbox Network",
+    network: "sandbox",
+  },
+  {
     id: "xrpl-testnet-august-2024",
     label: "XRPL Testnet",
     description: "XRP Ledger Test Network",
@@ -672,7 +678,9 @@ export default function NewAccountPage() {
                           className={`text-xs px-2 py-0.5 rounded-full ${
                             ledger.network === "mainnet"
                               ? "bg-green-100 text-green-700"
-                              : "bg-yellow-100 text-yellow-700"
+                              : ledger.network === "sandbox"
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-yellow-100 text-yellow-700"
                           }`}
                         >
                           {ledger.network}
@@ -707,6 +715,12 @@ export default function NewAccountPage() {
                       type="text"
                       value={customLedger}
                       onChange={(e) => setCustomLedger(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addCustomLedger();
+                        }
+                      }}
                       placeholder="custom-ledger-id"
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                     />
