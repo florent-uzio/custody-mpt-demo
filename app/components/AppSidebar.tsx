@@ -21,6 +21,7 @@ export type Tab =
   | "mpt-set"
   | "mpt-destroy"
   | "trustset"
+  | "clawback"
   | "tickets"
   | "batch"
   | "submitted-intents"
@@ -105,6 +106,7 @@ export const TABS: {
   { id: "mpt-set", label: "MPT Set", icon: "⚙️", category: "XRPL" },
   { id: "mpt-destroy", label: "MPT Destroy", icon: "🗑️", category: "XRPL" },
   { id: "trustset", label: "TrustSet", icon: "🔗", category: "XRPL" },
+  { id: "clawback", label: "Clawback", icon: "↩️", category: "XRPL" },
   { id: "tickets", label: "Tickets", icon: "🎟️", category: "XRPL" },
   { id: "batch", label: "Batch", icon: "📦", category: "XRPL" },
   { id: "keypair", label: "Keypair Generator", icon: "🔑", category: "Tools" },

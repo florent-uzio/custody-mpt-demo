@@ -14,6 +14,7 @@ import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
 import { KeypairTab } from "./components/KeypairTab";
 import { JwtTokenTab } from "./components/JwtTokenTab";
 import { TrustSetTab } from "./components/TrustSetTab";
+import { ClawbackTab } from "./components/ClawbackTab";
 import { ConfigTab } from "./components/ConfigTab";
 import { AppSidebar, TABS } from "./components/AppSidebar";
 import type { Tab } from "./components/AppSidebar";
@@ -152,6 +153,7 @@ export default function Home() {
                 {activeTab === "mpt-set" && <MPTSetTab />}
                 {activeTab === "mpt-destroy" && <MPTDestroyTab />}
                 {activeTab === "trustset" && <TrustSetTab />}
+                {activeTab === "clawback" && <ClawbackTab />}
                 {activeTab === "keypair" && <KeypairTab />}
                 {activeTab === "jwt-token" && <JwtTokenTab />}
                 {activeTab === "config" && <ConfigTab />}
