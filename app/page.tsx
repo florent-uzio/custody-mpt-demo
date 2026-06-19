@@ -40,7 +40,8 @@ export default function Home() {
         tab !== "domains" &&
         tab !== "accounts" &&
         tab !== "account-create" &&
-        tab !== "user-invitations"
+        tab !== "user-invitations" &&
+        tab !== "clawback"
       ) {
         setActiveTab(tab);
       }

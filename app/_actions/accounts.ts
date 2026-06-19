@@ -115,6 +115,56 @@ export async function getAccountBalances(
   return sdk.accounts.getAccountBalances({ domainId, accountId });
 }
 
+export type AccountAddress = { ledgerId: string; address: string };
+
+export type AccountWithAddress = {
+  id: string;
+  alias: string;
+  /** Preferred display address (XRPL r-address if available). */
+  address: string | null;
+  addresses: AccountAddress[];
+};
+
+/**
+ * Lists accounts enriched with their ledger addresses so the UI can show a
+ * human-friendly "alias (r-address)" instead of bare UUIDs.
+ */
+export async function listAccountsWithAddresses(
+  domainId: string,
+): Promise<AccountWithAddress[]> {
+  if (!domainId) throw new Error("domainId is required");
+  const sdk = getCustodySDK();
+  const accounts = await sdk.accounts.list({ domainId });
+
+  return Promise.all(
+    accounts.items.map(async (item): Promise<AccountWithAddress> => {
+      let addresses: AccountAddress[] = [];
+      try {
+        const res = await sdk.accounts.addresses({
+          domainId,
+          accountId: item.data.id,
+        });
+        addresses = res.items.map((a) => ({
+          ledgerId: a.data.ledgerId,
+          address: a.data.address,
+        }));
+      } catch {
+        // An account may not yet have an activated address; skip silently.
+      }
+      const preferred =
+        addresses.find((a) => a.address.startsWith("r")) ??
+        addresses[0] ??
+        null;
+      return {
+        id: item.data.id,
+        alias: item.data.alias || item.data.id,
+        address: preferred?.address ?? null,
+        addresses,
+      };
+    }),
+  );
+}
+
 export async function createAccount(
   input: CreateAccountInput,
 ): Promise<ProposeIntentResult> {

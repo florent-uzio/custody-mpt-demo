@@ -21,6 +21,7 @@ export type Tab =
   | "mpt-set"
   | "mpt-destroy"
   | "trustset"
+  | "clawback"
   | "tickets"
   | "batch"
   | "submitted-intents"
@@ -105,6 +106,7 @@ export const TABS: {
   { id: "mpt-set", label: "MPT Set", icon: "⚙️", category: "XRPL" },
   { id: "mpt-destroy", label: "MPT Destroy", icon: "🗑️", category: "XRPL" },
   { id: "trustset", label: "TrustSet", icon: "🔗", category: "XRPL" },
+  { id: "clawback", label: "Clawback", icon: "↩️", category: "XRPL" },
   { id: "tickets", label: "Tickets", icon: "🎟️", category: "XRPL" },
   { id: "batch", label: "Batch", icon: "📦", category: "XRPL" },
   { id: "keypair", label: "Keypair Generator", icon: "🔑", category: "Tools" },
@@ -131,6 +133,7 @@ export function AppSidebar({
     pathname.startsWith("/accounts") ||
     pathname.startsWith("/batch") ||
     pathname.startsWith("/channels") ||
+    pathname.startsWith("/clawback") ||
     pathname.startsWith("/domains") ||
     pathname.startsWith("/intents") ||
     pathname.startsWith("/policies") ||
@@ -167,6 +170,7 @@ export function AppSidebar({
     if (tab.id === "channels") return pathname.startsWith("/channels");
     if (tab.id === "tickets") return pathname.startsWith("/tickets");
     if (tab.id === "batch") return pathname.startsWith("/batch");
+    if (tab.id === "clawback") return pathname.startsWith("/clawback");
     if (tab.id === "user-invitations")
       return pathname.startsWith("/users/invite");
     if (tab.id === "transfers")
@@ -184,6 +188,7 @@ export function AppSidebar({
       tab.id === "accounts" ||
       tab.id === "account-create" ||
       tab.id === "channels" ||
+      tab.id === "clawback" ||
       tab.id === "tickets" ||
       tab.id === "batch" ||
       tab.id === "user-invitations" ||
@@ -371,6 +376,17 @@ export function AppSidebar({
                     if (tab.id === "batch") {
                       return (
                         <Link key={tab.id} href="/batch" className={cls}>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
+                          <span className="truncate">{tab.label}</span>
+                        </Link>
+                      );
+                    }
+
+                    if (tab.id === "clawback") {
+                      return (
+                        <Link key={tab.id} href="/clawback" className={cls}>
                           <span className="text-lg flex-shrink-0">
                             {tab.icon}
                           </span>
