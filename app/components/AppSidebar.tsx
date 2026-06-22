@@ -138,6 +138,7 @@ export function AppSidebar({
     pathname.startsWith("/intents") ||
     pathname.startsWith("/policies") ||
     pathname.startsWith("/requests") ||
+    pathname.startsWith("/tickers") ||
     pathname.startsWith("/tickets") ||
     pathname.startsWith("/transactions") ||
     pathname.startsWith("/transfers") ||
@@ -166,6 +167,7 @@ export function AppSidebar({
     if (tab.id === "intents-list") return pathname.startsWith("/intents");
     if (tab.id === "policies") return pathname.startsWith("/policies");
     if (tab.id === "requests") return pathname.startsWith("/requests");
+    if (tab.id === "tickers") return pathname.startsWith("/tickers");
     if (tab.id === "transactions")
       return pathname.startsWith("/transactions") || activeTab === tab.id;
     if (tab.id === "channels") return pathname.startsWith("/channels");
@@ -198,6 +200,7 @@ export function AppSidebar({
       tab.id === "intents-list" ||
       tab.id === "policies" ||
       tab.id === "requests" ||
+      tab.id === "tickers" ||
       tab.id === "transactions" ||
       tab.id === "transfers" ||
       tab.id === "users-list" ||
@@ -324,6 +327,17 @@ export function AppSidebar({
                     if (tab.id === "domains") {
                       return (
                         <Link key={tab.id} href="/domains" className={cls}>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
+                          <span className="truncate">{tab.label}</span>
+                        </Link>
+                      );
+                    }
+
+                    if (tab.id === "tickers") {
+                      return (
+                        <Link key={tab.id} href="/tickers" className={cls}>
                           <span className="text-lg flex-shrink-0">
                             {tab.icon}
                           </span>

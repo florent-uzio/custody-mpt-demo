@@ -1,6 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { Core_ApiTicker } from "@florent-uzio/custody";
-import { getTicker } from "../_actions/tickers";
+import { Core_ApiTicker, GetTickersQueryParams } from "@florent-uzio/custody";
+import { getTicker, listTickers } from "../_actions/tickers";
+
+export function useTickersList(params: GetTickersQueryParams = {}) {
+  return useQuery({
+    queryKey: ["tickers-list", params],
+    queryFn: () => listTickers(params),
+    staleTime: 30_000,
+  });
+}
 
 export function useTickers(tickerIds: string[]) {
   return useQuery({

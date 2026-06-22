@@ -2,55 +2,141 @@
 
 import type {
   Core_ApiTicker,
+  Core_ProposeIntentBody,
   Core_TickersCollection,
   GetTickersQueryParams,
 } from "@florent-uzio/custody";
 
-import { getCustodySDK } from "@/app/lib/custody";
+import {
+  getCustodySDK,
+  getCurrentUser,
+  proposeIntent,
+  type ProposeIntentResult,
+} from "@/app/lib/custody";
+import { buildProposeIntent } from "@/app/lib/intent-builder";
 
-export type TickerFilters = {
-  ledgerIds?: string[];
-  limit?: number;
-  startingAfter?: string;
-  sortBy?: string;
-  sortOrder?: string;
-  kind?: string;
-  names?: string[];
-  symbols?: string[];
-  validationStatus?: string;
-  locks?: string[];
+type CreateTickerPayload = Extract<
+  Core_ProposeIntentBody["request"]["payload"],
+  { type: "v0_CreateTicker" }
+>;
+type UpdateTickerPayload = Extract<
+  Core_ProposeIntentBody["request"]["payload"],
+  { type: "v0_UpdateTicker" }
+>;
+type LockTickerPayload = Extract<
+  Core_ProposeIntentBody["request"]["payload"],
+  { type: "v0_LockTicker" }
+>;
+type UnlockTickerPayload = Extract<
+  Core_ProposeIntentBody["request"]["payload"],
+  { type: "v0_UnlockTicker" }
+>;
+
+export type ProposeCreateTickerInput = Omit<CreateTickerPayload, "type"> & {
+  domainId: string;
 };
 
-type TickerQueryParams = NonNullable<GetTickersQueryParams>;
+export type ProposeUpdateTickerInput = Omit<UpdateTickerPayload, "type"> & {
+  domainId: string;
+};
 
-function buildTickerQueryParams(filters: TickerFilters): TickerQueryParams {
-  const q: TickerQueryParams = {};
-  if (filters.ledgerIds?.length) q.ledgerId = filters.ledgerIds;
-  if (filters.limit !== undefined) q.limit = filters.limit;
-  if (filters.startingAfter) q.startingAfter = filters.startingAfter;
-  if (filters.sortBy) q.sortBy = filters.sortBy as TickerQueryParams["sortBy"];
-  if (filters.sortOrder)
-    q.sortOrder = filters.sortOrder as TickerQueryParams["sortOrder"];
-  if (filters.kind) q.kind = filters.kind as TickerQueryParams["kind"];
-  if (filters.names?.length) q.name = filters.names;
-  if (filters.symbols?.length) q.symbol = filters.symbols;
-  if (filters.validationStatus)
-    q.validationStatus =
-      filters.validationStatus as TickerQueryParams["validationStatus"];
-  if (filters.locks?.length)
-    q.lock = filters.locks as TickerQueryParams["lock"];
-  return q;
-}
+export type ProposeLockTickerInput = Omit<LockTickerPayload, "type"> & {
+  domainId: string;
+};
+
+export type ProposeUnlockTickerInput = Omit<UnlockTickerPayload, "type"> & {
+  domainId: string;
+};
 
 export async function listTickers(
-  filters: TickerFilters = {},
+  params: GetTickersQueryParams = {},
 ): Promise<Core_TickersCollection> {
   const sdk = getCustodySDK();
-  return sdk.tickers.list(buildTickerQueryParams(filters));
+  return sdk.tickers.list(params);
 }
 
 export async function getTicker(tickerId: string): Promise<Core_ApiTicker> {
   if (!tickerId) throw new Error("tickerId is required");
   const sdk = getCustodySDK();
   return sdk.tickers.get({ tickerId });
+}
+
+export async function proposeCreateTicker(
+  input: ProposeCreateTickerInput,
+): Promise<ProposeIntentResult> {
+  const { domainId, ...rest } = input;
+  if (!domainId) throw new Error("domainId is required");
+
+  const currentUser = await getCurrentUser(domainId);
+
+  const payload: CreateTickerPayload = { ...rest, type: "v0_CreateTicker" };
+
+  const request = buildProposeIntent({
+    author: { id: currentUser.userId, domainId: currentUser.domainId },
+    targetDomainId: domainId,
+    payload,
+    description: `Create ticker: ${rest.name}`,
+  });
+
+  return proposeIntent(request);
+}
+
+export async function proposeUpdateTicker(
+  input: ProposeUpdateTickerInput,
+): Promise<ProposeIntentResult> {
+  const { domainId, ...rest } = input;
+  if (!domainId) throw new Error("domainId is required");
+
+  const currentUser = await getCurrentUser(domainId);
+
+  const payload: UpdateTickerPayload = { ...rest, type: "v0_UpdateTicker" };
+
+  const request = buildProposeIntent({
+    author: { id: currentUser.userId, domainId: currentUser.domainId },
+    targetDomainId: domainId,
+    payload,
+    description: `Update ticker: ${rest.name}`,
+  });
+
+  return proposeIntent(request);
+}
+
+export async function proposeLockTicker(
+  input: ProposeLockTickerInput,
+): Promise<ProposeIntentResult> {
+  const { domainId, ...rest } = input;
+  if (!domainId) throw new Error("domainId is required");
+
+  const currentUser = await getCurrentUser(domainId);
+
+  const payload: LockTickerPayload = { ...rest, type: "v0_LockTicker" };
+
+  const request = buildProposeIntent({
+    author: { id: currentUser.userId, domainId: currentUser.domainId },
+    targetDomainId: domainId,
+    payload,
+    description: "Lock ticker",
+  });
+
+  return proposeIntent(request);
+}
+
+export async function proposeUnlockTicker(
+  input: ProposeUnlockTickerInput,
+): Promise<ProposeIntentResult> {
+  const { domainId, ...rest } = input;
+  if (!domainId) throw new Error("domainId is required");
+
+  const currentUser = await getCurrentUser(domainId);
+
+  const payload: UnlockTickerPayload = { ...rest, type: "v0_UnlockTicker" };
+
+  const request = buildProposeIntent({
+    author: { id: currentUser.userId, domainId: currentUser.domainId },
+    targetDomainId: domainId,
+    payload,
+    description: "Unlock ticker",
+  });
+
+  return proposeIntent(request);
 }
