@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useTicker } from "../../../hooks/useTickers";
 import { useDefaultDomain } from "../../../contexts/DomainContext";
@@ -15,9 +15,9 @@ import {
   type TickerEditInitial,
   type TickerEditResult,
 } from "../../components/TickerEditForm";
+import { JsonViewer } from "../../../components/JsonViewer";
 
 export default function EditTickerPage() {
-  const router = useRouter();
   const params = useParams();
   const tickerId = params.id as string;
   const { defaultDomainId } = useDefaultDomain();
@@ -31,9 +31,6 @@ export default function EditTickerPage() {
 
   const mutation = useMutation({
     mutationFn: (input: ProposeUpdateTickerInput) => proposeUpdateTicker(input),
-    onSuccess: ({ requestId }) => {
-      router.push(`/intents/${requestId}`);
-    },
   });
 
   const handleSubmit = (result: TickerEditResult) => {
@@ -212,6 +209,22 @@ export default function EditTickerPage() {
               cancelHref={detailHref}
               onSubmit={handleSubmit}
             />
+          )}
+
+          {mutation.data && (
+            <div className="mt-6 space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
+                Update ticker intent proposed. Intent ID:{" "}
+                <span className="font-mono">
+                  {mutation.data.request.request.id}
+                </span>
+              </div>
+              <JsonViewer
+                data={mutation.data.request}
+                title="Proposed intent (request)"
+              />
+              <JsonViewer data={mutation.data.response} title="Response" />
+            </div>
           )}
         </main>
       </div>

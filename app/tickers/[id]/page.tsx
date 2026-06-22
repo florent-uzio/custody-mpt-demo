@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { Core_ApiTicker } from "@florent-uzio/custody";
 import { useTicker } from "../../hooks/useTickers";
@@ -41,7 +41,6 @@ function formatDate(iso: string) {
 
 export default function TickerDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const tickerId = params.id as string;
   const { defaultDomainId } = useDefaultDomain();
   const { sidebarOpen, setSidebarOpen } = useSidebarContext();
@@ -53,9 +52,6 @@ export default function TickerDetailPage() {
 
   const lockMutation = useMutation({
     mutationFn: (input: ProposeLockTickerInput) => proposeLockTicker(input),
-    onSuccess: ({ requestId }) => {
-      router.push(`/intents/${requestId}`);
-    },
   });
 
   const handleLock = () => {
@@ -68,9 +64,6 @@ export default function TickerDetailPage() {
 
   const unlockMutation = useMutation({
     mutationFn: (input: ProposeUnlockTickerInput) => proposeUnlockTicker(input),
-    onSuccess: ({ requestId }) => {
-      router.push(`/intents/${requestId}`);
-    },
   });
 
   const handleUnlock = () => {
@@ -96,6 +89,9 @@ export default function TickerDetailPage() {
       lockActionNote = `Set a Default Domain ID in the sidebar to ${lockAction} this ticker.`;
     }
   }
+
+  // Proposed lock/unlock intent result (shown inline after a successful submit).
+  const lockResult = lockMutation.data ?? unlockMutation.data;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -262,6 +258,23 @@ export default function TickerDetailPage() {
               {unlockMutation.error instanceof Error
                 ? unlockMutation.error.message
                 : "Failed to propose unlock ticker intent"}
+            </div>
+          )}
+
+          {lockResult && (
+            <div className="mb-5 space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
+                {lockMutation.data ? "Lock" : "Unlock"} ticker intent proposed.
+                Intent ID:{" "}
+                <span className="font-mono">
+                  {lockResult.request.request.id}
+                </span>
+              </div>
+              <JsonViewer
+                data={lockResult.request}
+                title="Proposed intent (request)"
+              />
+              <JsonViewer data={lockResult.response} title="Response" />
             </div>
           )}
 

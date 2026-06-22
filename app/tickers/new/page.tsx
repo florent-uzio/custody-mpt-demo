@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useDefaultDomain } from "../../contexts/DomainContext";
 import { useSidebarContext } from "../../contexts/SidebarContext";
@@ -13,17 +12,14 @@ import {
   TickerCreateForm,
   type TickerCreateResult,
 } from "../components/TickerCreateForm";
+import { JsonViewer } from "../../components/JsonViewer";
 
 export default function NewTickerPage() {
-  const router = useRouter();
   const { defaultDomainId } = useDefaultDomain();
   const { sidebarOpen, setSidebarOpen } = useSidebarContext();
 
   const mutation = useMutation({
     mutationFn: (input: ProposeCreateTickerInput) => proposeCreateTicker(input),
-    onSuccess: ({ requestId }) => {
-      router.push(`/intents/${requestId}`);
-    },
   });
 
   const handleSubmit = (result: TickerCreateResult) => {
@@ -119,6 +115,22 @@ export default function NewTickerPage() {
             cancelHref="/tickers"
             onSubmit={handleSubmit}
           />
+
+          {mutation.data && (
+            <div className="mt-6 space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
+                Create ticker intent proposed. Intent ID:{" "}
+                <span className="font-mono">
+                  {mutation.data.request.request.id}
+                </span>
+              </div>
+              <JsonViewer
+                data={mutation.data.request}
+                title="Proposed intent (request)"
+              />
+              <JsonViewer data={mutation.data.response} title="Response" />
+            </div>
+          )}
         </main>
       </div>
     </div>
