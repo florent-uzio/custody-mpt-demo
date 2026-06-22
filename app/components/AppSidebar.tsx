@@ -141,6 +141,7 @@ export function AppSidebar({
     pathname.startsWith("/tickets") ||
     pathname.startsWith("/transactions") ||
     pathname.startsWith("/transfers") ||
+    pathname.startsWith("/trustset") ||
     pathname.startsWith("/users") ||
     pathname.startsWith("/genesis");
 
@@ -170,6 +171,7 @@ export function AppSidebar({
     if (tab.id === "channels") return pathname.startsWith("/channels");
     if (tab.id === "tickets") return pathname.startsWith("/tickets");
     if (tab.id === "batch") return pathname.startsWith("/batch");
+    if (tab.id === "trustset") return pathname.startsWith("/trustset");
     if (tab.id === "clawback") return pathname.startsWith("/clawback");
     if (tab.id === "user-invitations")
       return pathname.startsWith("/users/invite");
@@ -188,6 +190,7 @@ export function AppSidebar({
       tab.id === "accounts" ||
       tab.id === "account-create" ||
       tab.id === "channels" ||
+      tab.id === "trustset" ||
       tab.id === "clawback" ||
       tab.id === "tickets" ||
       tab.id === "batch" ||
@@ -376,6 +379,17 @@ export function AppSidebar({
                     if (tab.id === "batch") {
                       return (
                         <Link key={tab.id} href="/batch" className={cls}>
+                          <span className="text-lg flex-shrink-0">
+                            {tab.icon}
+                          </span>
+                          <span className="truncate">{tab.label}</span>
+                        </Link>
+                      );
+                    }
+
+                    if (tab.id === "trustset") {
+                      return (
+                        <Link key={tab.id} href="/trustset" className={cls}>
                           <span className="text-lg flex-shrink-0">
                             {tab.icon}
                           </span>

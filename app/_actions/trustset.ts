@@ -30,7 +30,9 @@ function toCurrencyHex(currency: string): string {
   return hex.padEnd(40, "0");
 }
 
-export async function trustSet(input: TrustSetInput): Promise<ProposeIntentResult> {
+export async function trustSet(
+  input: TrustSetInput,
+): Promise<ProposeIntentResult> {
   const {
     domainId,
     accountId,
