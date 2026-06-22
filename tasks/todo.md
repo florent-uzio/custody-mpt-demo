@@ -1,3 +1,96 @@
+# Tickers: tab → route + create/update intents
+
+Convert `TickersTab` into a full `/tickers` route (list table, detail, create, update),
+using **only** `@florent-uzio/custody` SDK types.
+
+## Decisions (resolved via grilling)
+- **Create scope:** XRPL only, all 3 property variants (Native / FungibleToken / MultiPurposeToken).
+  Property-type `<select>` swaps fields; `kind` derived (Native→`Native`, others→`Token`).
+- **Filters:** refactor `listTickers` to take `GetTickersQueryParams` directly; delete the custom
+  `TickerFilters` + `buildTickerQueryParams` (only `TickersTab` consumed them).
+- **domainId source:** `useDefaultDomain()` context for create + update (reads are not domain-scoped);
+  guard + warning when unset, mirroring `domains/new`.
+- **Update UX:** separate `/tickers/[id]/edit` route with an edit-only form
+  (name, decimals, symbol, description, customProperties). "Edit" button on detail. Mirrors policies.
+- **Ledger select options:** `["xrpl", "xrpl-testnet-august-2024", "xrpl-devnet"]` (from transactions).
+- Component location: `app/tickers/components/` (co-located, like transactions/policies).
+
+## Plan
+
+### 1. Server actions — `app/_actions/tickers.ts` (modify)
+- [ ] Delete `TickerFilters`, `buildTickerQueryParams`, `TickerQueryParams`.
+- [ ] `listTickers(params: GetTickersQueryParams = {})` → `sdk.tickers.list(params)`.
+- [ ] Keep `getTicker(tickerId)`.
+- [ ] Add `ProposeCreateTickerInput = Omit<Core_v0_CreateTicker,"type"> & { domainId }`.
+- [ ] Add `ProposeUpdateTickerInput = Omit<Core_v0_UpdateTicker,"type"> & { domainId }`.
+- [ ] Add `proposeCreateTicker` / `proposeUpdateTicker` → `getCurrentUser(domainId)` +
+      `buildProposeIntent` + `proposeIntent` (policies pattern). verify: tsc clean.
+
+### 2. Hooks — `app/hooks/useTickers.ts` (modify)
+- [ ] Add `useTickersList(params: GetTickersQueryParams)` (queryKey `["tickers-list", params]`).
+- [ ] Leave existing `useTickers(ids)` (used by accounts/[id]) and `useTicker(id)` untouched.
+
+### 3. Routes — `app/tickers/`
+- [ ] `layout.tsx` (copy `domains/layout.tsx`).
+- [ ] `page.tsx` — header + "New ticker" button + `TickersFilters` + `TickersTable` + `JsonViewer`.
+- [ ] `new/page.tsx` — create form (XRPL, 3 variants), `useMutation(proposeCreateTicker)`,
+      success → `/intents/{requestId}`, default-domain guard.
+- [ ] `[id]/page.tsx` — detail cards (`useTicker`) + "Edit" link + MPT explorer link + `JsonViewer`.
+- [ ] `[id]/edit/page.tsx` — edit-only form, revision from `data.metadata.revision`,
+      `useMutation(proposeUpdateTicker)`, success → `/intents/{requestId}`.
+
+### 4. Components — `app/tickers/components/`
+- [ ] `TickersFilters.tsx` — ledgerId select, kind select, validationStatus (Validated/NonValidated),
+      lock toggles (Unlocked/Locked/Archived), name/symbol text, sortBy/sortOrder/limit. Controlled.
+- [ ] `TickersTable.tsx` — Name, Symbol, Kind, Decimals, Lock, Ledger, Ticker ID(+copy), arrow→detail.
+- [ ] `TickerCreateForm.tsx` — builds `Core_TickerLedgerDetails_XRPL` from property-type select.
+- [ ] `TickerEditForm.tsx` — name/decimals/symbol/description/customProperties.
+
+### 5. Sidebar — `app/components/AppSidebar.tsx` (modify)
+- [ ] Add `<Link href="/tickers">` handler for `tab.id === "tickers"` (mirror domains).
+- [ ] Add `isActive`: `pathname.startsWith("/tickers")`; add `/tickers` to nav-mode + handleTabClick.
+
+### 6. Cleanup
+- [ ] `app/page.tsx`: remove `TickersTab` import + `{activeTab === "tickers" && <TickersTab />}`.
+- [ ] Delete `app/components/TickersTab.tsx`.
+
+### 7. Verify
+- [x] `npx tsc --noEmit` clean (exit 0).
+- [x] `npm run build` clean ("Compiled successfully"; `/tickers` + `/tickers/new` static ○,
+      `/tickers/[id]` + `/tickers/[id]/edit` dynamic ƒ).
+- [ ] Runtime list/create/edit against a live tenant — manual (needs API creds + browser).
+
+## Review
+Branch: `feat/tickers-route` (main untouched).
+
+- **`app/_actions/tickers.ts`** — dropped the custom `TickerFilters`/`buildTickerQueryParams`;
+  `listTickers(params: GetTickersQueryParams)` now passes straight through to `sdk.tickers.list`.
+  Added `proposeCreateTicker`/`proposeUpdateTicker` following the policies pattern
+  (`getCurrentUser(domainId)` → `buildProposeIntent` → `proposeIntent`). Input types derived
+  via `Omit<Extract<…payload,{type}>, "type"> & { domainId }` — no hand-rolled SDK shapes.
+- **`app/hooks/useTickers.ts`** — added `useTickersList`; `useTickers(ids)` (used by
+  `accounts/[id]`) and `useTicker(id)` left untouched. Distinct query key `["tickers-list"]`.
+- **Routes** `app/tickers/{layout,page,new,[id],[id]/edit}` — list mirrors `domains/page`
+  (header + "New ticker" button + filters + table + JsonViewer); new/edit mirror
+  `domains/new` + `policies/[id]/edit` (mutation → `/intents/{requestId}`, default-domain guard).
+- **Components** `app/tickers/components/` — `TickersFilters` (ledger select w/ xrpl-devnet, kind,
+  validation Validated/NonValidated, lock toggles, name/symbol, sort, limit — all typed off
+  `GetTickersQueryParams`), `TickersTable` (row→detail arrow, sortable headers, kind/lock badges),
+  `TickerCreateForm` (XRPL Native/FungibleToken/MPT — property-type select swaps fields, `kind`
+  derived), `TickerEditForm` (name/decimals/symbol/description/customProperties).
+- **Sidebar** — `tickers` now a `<Link href="/tickers">` with `isActive`/`isNavMode`/`handleTabClick`
+  wiring (mirrors domains).
+- **Cleanup** — removed `TickersTab` import + render from `app/page.tsx`, excluded `tickers` from
+  the `?tab=` restore, deleted `app/components/TickersTab.tsx` (grep-confirmed orphan).
+- **Corrected legacy bugs** in the old tab's enums: sortOrder is `ASC|DESC` (was Ascending/
+  Descending), validationStatus is `Validated|NonValidated` (was All/Validated/Unvalidated).
+- **Verified**: `tsc --noEmit` exit 0; `npm run build` exit 0.
+- **Pending (manual, live tenant + browser)**: load `/tickers` & filter; create a ticker (each of
+  the 3 XRPL variants) and confirm the proposed intent JSON; edit a ticker and confirm revision +
+  fields in the update intent.
+
+---
+
 # Accounts — dedicated routes (mirror Domains)
 
 Move the Accounts list and Create Account UI off the home dashboard tabs and onto their

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { RequestsTab } from "./components/RequestsTab";
 import { TransfersTab } from "./components/TransfersTab";
-import { TickersTab } from "./components/TickersTab";
 import { PaymentTab } from "./components/PaymentTab";
 import { MPTAuthorizeTab } from "./components/MPTAuthorizeTab";
 import { MPTCreateTab } from "./components/MPTCreateTab";
@@ -41,7 +40,8 @@ export default function Home() {
         tab !== "account-create" &&
         tab !== "user-invitations" &&
         tab !== "clawback" &&
-        tab !== "trustset"
+        tab !== "trustset" &&
+        tab !== "tickers"
       ) {
         setActiveTab(tab);
       }
@@ -146,7 +146,6 @@ export default function Home() {
                 {activeTab === "transfers" && <TransfersTab />}
                 {activeTab === "transactions" && <TransactionsTab />}
                 {activeTab === "submitted-intents" && <SubmittedIntentsTab />}
-                {activeTab === "tickers" && <TickersTab />}
                 {activeTab === "payment" && <PaymentTab />}
                 {activeTab === "mpt-create" && <MPTCreateTab />}
                 {activeTab === "mpt-authorize" && <MPTAuthorizeTab />}
