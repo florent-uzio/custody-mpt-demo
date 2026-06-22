@@ -11,8 +11,6 @@ import {
   buildTransactionOrderPayload,
 } from "@/app/lib/intent-builder";
 
-const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
-
 export type MptCreateInput = {
   domainId: string;
   accountId: string;
@@ -123,10 +121,13 @@ export async function mptDestroy(input: MptDestroyInput): Promise<ProposeIntentR
   if (!domainId) throw new Error("domainId is required");
   if (!issuanceId) throw new Error("issuanceId is required");
 
-  const ledgerId = await getAccountLedgerId(domainId, accountId);
+  const [ledgerId, currentUser] = await Promise.all([
+    getAccountLedgerId(domainId, accountId),
+    getCurrentUser(domainId),
+  ]);
 
   const request = buildProposeIntent({
-    author: { id: CURRENT_USER_ID, domainId },
+    author: { id: currentUser.userId, domainId },
     targetDomainId: domainId,
     payload: buildTransactionOrderPayload({
       ledgerId,
@@ -155,10 +156,13 @@ export async function mptSet(input: MptSetInput): Promise<ProposeIntentResult> {
 
   const sdkFlags: ("tfMPTLock" | "tfMPTUnlock")[] =
     flags === 1 ? ["tfMPTLock"] : ["tfMPTUnlock"];
-  const ledgerId = await getAccountLedgerId(domainId, accountId);
+  const [ledgerId, currentUser] = await Promise.all([
+    getAccountLedgerId(domainId, accountId),
+    getCurrentUser(domainId),
+  ]);
 
   const request = buildProposeIntent({
-    author: { id: CURRENT_USER_ID, domainId },
+    author: { id: currentUser.userId, domainId },
     targetDomainId: domainId,
     payload: buildTransactionOrderPayload({
       ledgerId,
