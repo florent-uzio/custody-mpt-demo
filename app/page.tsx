@@ -13,7 +13,6 @@ import { TransactionsTab } from "./components/TransactionsTab";
 import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
 import { KeypairTab } from "./components/KeypairTab";
 import { JwtTokenTab } from "./components/JwtTokenTab";
-import { TrustSetTab } from "./components/TrustSetTab";
 import { ConfigTab } from "./components/ConfigTab";
 import { AppSidebar, TABS } from "./components/AppSidebar";
 import type { Tab } from "./components/AppSidebar";
@@ -41,7 +40,8 @@ export default function Home() {
         tab !== "accounts" &&
         tab !== "account-create" &&
         tab !== "user-invitations" &&
-        tab !== "clawback"
+        tab !== "clawback" &&
+        tab !== "trustset"
       ) {
         setActiveTab(tab);
       }
@@ -152,7 +152,6 @@ export default function Home() {
                 {activeTab === "mpt-authorize" && <MPTAuthorizeTab />}
                 {activeTab === "mpt-set" && <MPTSetTab />}
                 {activeTab === "mpt-destroy" && <MPTDestroyTab />}
-                {activeTab === "trustset" && <TrustSetTab />}
                 {activeTab === "keypair" && <KeypairTab />}
                 {activeTab === "jwt-token" && <JwtTokenTab />}
                 {activeTab === "config" && <ConfigTab />}

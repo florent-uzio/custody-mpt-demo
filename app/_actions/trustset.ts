@@ -4,6 +4,7 @@ import { convertStringToHex } from "xrpl";
 
 import {
   getAccountLedgerId,
+  getCurrentUser,
   proposeIntent,
   type ProposeIntentResult,
 } from "@/app/lib/custody";
@@ -11,8 +12,6 @@ import {
   buildProposeIntent,
   buildTransactionOrderPayload,
 } from "@/app/lib/intent-builder";
-
-const CURRENT_USER_ID = "6ac20654-450e-29e4-65e2-1bdecb7db7c4";
 
 export type TrustSetInput = {
   domainId: string;
@@ -31,7 +30,9 @@ function toCurrencyHex(currency: string): string {
   return hex.padEnd(40, "0");
 }
 
-export async function trustSet(input: TrustSetInput): Promise<ProposeIntentResult> {
+export async function trustSet(
+  input: TrustSetInput,
+): Promise<ProposeIntentResult> {
   const {
     domainId,
     accountId,
@@ -48,13 +49,16 @@ export async function trustSet(input: TrustSetInput): Promise<ProposeIntentResul
   if (!currency || !issuer) throw new Error("currency and issuer are required");
   if (value === undefined || value === "") throw new Error("value is required");
 
-  const ledgerId = await getAccountLedgerId(domainId, accountId);
+  const [ledgerId, currentUser] = await Promise.all([
+    getAccountLedgerId(domainId, accountId),
+    getCurrentUser(domainId),
+  ]);
   const trustlineProperties = customProperties || {
     description: "Create a Trustline",
   };
 
   const request = buildProposeIntent({
-    author: { id: CURRENT_USER_ID, domainId },
+    author: { id: currentUser.userId, domainId },
     targetDomainId: domainId,
     payload: buildTransactionOrderPayload({
       ledgerId,
