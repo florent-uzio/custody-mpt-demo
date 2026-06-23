@@ -1,11 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useMutation } from "@tanstack/react-query";
 import type { RunGenesisBody } from "@florent-uzio/custody";
-import { useSidebarContext } from "../contexts/SidebarContext";
 import { runGenesis } from "../_actions/genesis";
+import {
+  Page,
+  PageHeader,
+  PageContainer,
+  PageHero,
+  SubmitButton,
+  ErrorBanner,
+} from "../components/layout";
 import {
   DEFAULT_ROOT_ALIAS,
   DESCENDANTS_PLACEHOLDER,
@@ -74,8 +80,6 @@ function parseCustomPropsJson(
 }
 
 export default function RunGenesisPage() {
-  const { sidebarOpen, setSidebarOpen } = useSidebarContext();
-
   const [rootId, setRootId] = useState<string>(() => newUuid());
   const [rootAlias, setRootAlias] = useState<string>(DEFAULT_ROOT_ALIAS);
   const [rootLock, setRootLock] = useState<LockStatus>("Unlocked");
@@ -361,62 +365,18 @@ export default function RunGenesisPage() {
   }, [validationError, mutation.isError, mutation.error]);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="bg-gradient-to-r from-emerald-500 to-teal-600 shadow-md flex-shrink-0">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex items-start gap-3">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="mt-0.5 p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white"
-              aria-label="Toggle sidebar"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                {sidebarOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
-            </button>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Link
-                  href="/"
-                  className="text-white/60 hover:text-white text-xs font-medium transition-colors"
-                >
-                  Home
-                </Link>
-                <span className="text-white/40 text-xs">/</span>
-                <span className="text-white/80 text-xs font-medium">Setup</span>
-                <span className="text-white/40 text-xs">/</span>
-                <span className="text-white/80 text-xs font-medium">
-                  Run Genesis
-                </span>
-              </div>
-              <h1 className="text-white text-lg font-semibold">Run Genesis</h1>
-            </div>
-          </div>
-        </div>
-      </div>
+    <Page>
+      <PageHeader title="Run Genesis" subtitle="Setup · Genesis" />
+      <PageContainer width="form">
+        <PageHero
+          theme="emerald"
+          icon="🌱"
+          title="Run Genesis"
+          description="Bootstrap the root domain and initial users, policies, and permissions for a fresh tenant. This operation is irreversible."
+          badge={{ label: "Genesis", note: "One-time system bootstrap" }}
+        />
 
-      <div className="flex-1 overflow-y-auto">
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 mb-6">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
             <svg
               className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5"
               fill="currentColor"
@@ -667,11 +627,7 @@ export default function RunGenesisPage() {
               />
             </Section>
 
-            {errorMessage && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
-                {errorMessage}
-              </div>
-            )}
+            <ErrorBanner error={errorMessage} />
 
             {mutation.isSuccess && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700">
@@ -694,18 +650,16 @@ export default function RunGenesisPage() {
               >
                 Preview body
               </button>
-              <button
-                type="submit"
-                disabled={mutation.isPending}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                {mutation.isPending ? "Running…" : "Run Genesis"}
-              </button>
             </div>
-          </form>
-        </main>
-      </div>
 
+            <SubmitButton
+              theme="emerald"
+              pending={mutation.isPending}
+              pendingLabel="Running…"
+            >
+              Run Genesis
+            </SubmitButton>
+          </form>
       {previewOpen && previewBody && (
         <Modal
           title="Genesis body preview"
@@ -739,7 +693,8 @@ export default function RunGenesisPage() {
           </div>
         </Modal>
       )}
-    </div>
+      </PageContainer>
+    </Page>
   );
 }
 

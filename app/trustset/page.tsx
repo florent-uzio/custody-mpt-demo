@@ -5,7 +5,6 @@ import { JsonViewer } from "../components/JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { useSubmitTrustSet } from "../hooks/useSubmitTrustSet";
 import { useDefaultDomain } from "../contexts/DomainContext";
-import { useSidebarContext } from "../contexts/SidebarContext";
 import { AccountSection } from "../components/trustset/AccountSection";
 import { LimitAmountSection } from "../components/trustset/LimitAmountSection";
 import { FlagsSection } from "../components/trustset/FlagsSection";
@@ -17,10 +16,18 @@ import {
   CUSTODY_VALUE_SCALE_EXPONENT,
   scaleByPowerOfTen,
 } from "../lib/token-amount";
+import {
+  Page,
+  PageHeader,
+  PageContainer,
+  PageHero,
+  SubmitButton,
+  ErrorBanner,
+  DomainWarning,
+} from "../components/layout";
 
 export default function TrustSetPage() {
   const { defaultDomainId } = useDefaultDomain();
-  const { sidebarOpen, setSidebarOpen } = useSidebarContext();
   const { accounts, loading: accountsLoading } = useAccounts();
   const { mutate, isPending, data: response, error } = useSubmitTrustSet();
 
@@ -60,183 +67,78 @@ export default function TrustSetPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 shadow-md flex-shrink-0">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex items-start gap-3">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="mt-0.5 p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white"
-              aria-label="Toggle sidebar"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                {sidebarOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
-            </button>
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <div className="p-2 bg-white/20 rounded-lg">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                    />
-                  </svg>
-                </div>
-                <h1 className="text-2xl font-bold text-white">TrustSet</h1>
-              </div>
-              <p className="text-emerald-100 text-sm">
-                Create a trustline on the XRP Ledger. A trustline represents the
-                willingness to hold a specific token issued by another account.
-              </p>
-              <div className="mt-3 flex items-center gap-2 text-xs">
-                <span className="px-2 py-1 bg-white/20 rounded-full text-white">
-                  TrustSet
-                </span>
-                <span className="text-emerald-200">
-                  XRPL native trustline transaction
-                </span>
-              </div>
-            </div>
+    <Page>
+      <PageHeader title="TrustSet" subtitle="XRPL · TrustSet" />
+      <PageContainer width="form">
+        <PageHero
+          theme="emerald"
+          icon="🔗"
+          title="Create Trustline"
+          description="Create a trustline on the XRP Ledger. A trustline represents the willingness to hold a specific token issued by another account."
+          badge={{ label: "TrustSet", note: "XRPL native trustline transaction" }}
+        />
+
+        {!defaultDomainId && <DomainWarning action="creating a trustline" />}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <AccountSection
+            accountId={accountId}
+            onChange={setAccountId}
+            accounts={accounts}
+            loading={accountsLoading}
+          />
+
+          <LimitAmountSection
+            currency={currency}
+            onCurrencyChange={setCurrency}
+            issuer={issuer}
+            onIssuerChange={setIssuer}
+            value={value}
+            onValueChange={setValue}
+            scaleValue={scaleValue}
+            onScaleChange={setScaleValue}
+          />
+
+          <FlagsSection
+            selectedFlags={selectedFlags}
+            onToggle={handleFlagToggle}
+          />
+
+          <OptionsSection
+            enableRippling={enableRippling}
+            onEnableRipplingChange={setEnableRippling}
+          />
+
+          <CustomPropertiesSection
+            customProperties={customProperties}
+            onChange={setCustomProperties}
+          />
+
+          <ConfigSummary
+            domainId={defaultDomainId}
+            selectedFlags={selectedFlags}
+            enableRippling={enableRippling}
+          />
+
+          <SubmitButton
+            theme="emerald"
+            pending={isPending}
+            disabled={!defaultDomainId || accounts.length === 0}
+            pendingLabel="Creating TrustSet..."
+          >
+            Create TrustSet
+          </SubmitButton>
+        </form>
+
+        <ErrorBanner error={error} />
+
+        {response && (
+          <div className="space-y-4">
+            <JsonViewer data={response.request} title="Request Payload" />
+            <JsonViewer data={response.response} title="API Response" />
           </div>
-        </div>
-      </div>
-
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto">
-        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <AccountSection
-              accountId={accountId}
-              onChange={setAccountId}
-              accounts={accounts}
-              loading={accountsLoading}
-            />
-
-            <LimitAmountSection
-              currency={currency}
-              onCurrencyChange={setCurrency}
-              issuer={issuer}
-              onIssuerChange={setIssuer}
-              value={value}
-              onValueChange={setValue}
-              scaleValue={scaleValue}
-              onScaleChange={setScaleValue}
-            />
-
-            <FlagsSection
-              selectedFlags={selectedFlags}
-              onToggle={handleFlagToggle}
-            />
-
-            <OptionsSection
-              enableRippling={enableRippling}
-              onEnableRipplingChange={setEnableRippling}
-            />
-
-            <CustomPropertiesSection
-              customProperties={customProperties}
-              onChange={setCustomProperties}
-            />
-
-            <ConfigSummary
-              domainId={defaultDomainId}
-              selectedFlags={selectedFlags}
-              enableRippling={enableRippling}
-            />
-
-            <button
-              type="submit"
-              disabled={isPending || !defaultDomainId || accounts.length === 0}
-              className="w-full px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-semibold hover:from-emerald-700 hover:to-teal-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
-            >
-              {isPending ? (
-                <span className="flex items-center justify-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Creating TrustSet...
-                </span>
-              ) : (
-                "Create TrustSet"
-              )}
-            </button>
-          </form>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-center">
-                <svg
-                  className="w-5 h-5 text-red-600 mr-2 flex-shrink-0"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <p className="text-sm text-red-800 font-medium">
-                  Error:{" "}
-                  {error instanceof Error ? error.message : String(error)}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {response && (
-            <div className="space-y-4">
-              <JsonViewer data={response.request} title="Request Payload" />
-              <JsonViewer data={response.response} title="API Response" />
-            </div>
-          )}
-        </main>
-      </div>
-    </div>
+        )}
+      </PageContainer>
+    </Page>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { QueryProvider } from "./providers/QueryProvider";
 import { DomainProvider } from "./contexts/DomainContext";
+import { AppShell } from "./components/layout/AppShell";
 
 export const metadata: Metadata = {
   title: "Ripple Custody",
@@ -17,7 +18,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <QueryProvider>
-          <DomainProvider>{children}</DomainProvider>
+          <DomainProvider>
+            <AppShell>{children}</AppShell>
+          </DomainProvider>
         </QueryProvider>
       </body>
     </html>

@@ -5,210 +5,76 @@ import { usePathname } from "next/navigation";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { CopyButton } from "./CopyButton";
 
-export type Tab =
-  | "domains"
-  | "accounts"
-  | "account-create"
-  | "user-invitations"
-  | "requests"
-  | "transfers"
-  | "transactions"
-  | "channels"
-  | "tickers"
-  | "mpt-create"
-  | "mpt-authorize"
-  | "payment"
-  | "mpt-set"
-  | "mpt-destroy"
-  | "trustset"
-  | "clawback"
-  | "tickets"
-  | "batch"
-  | "submitted-intents"
-  | "intents-list"
-  | "policies"
-  | "users-list"
-  | "users-me"
-  | "keypair"
-  | "jwt-token"
-  | "config"
-  | "genesis";
-
-export const TABS: {
-  id: Tab;
+export interface NavItem {
+  id: string;
   label: string;
   icon: string;
   category: string;
-}[] = [
-  { id: "config", label: "Configuration", icon: "⚙️", category: "Settings" },
-  { id: "domains", label: "Domains", icon: "🌐", category: "General" },
-  { id: "accounts", label: "Accounts", icon: "👤", category: "General" },
-  {
-    id: "account-create",
-    label: "Create Account",
-    icon: "➕",
-    category: "General",
-  },
-  {
-    id: "user-invitations",
-    label: "User Invitations",
-    icon: "✉️",
-    category: "Users",
-  },
-  { id: "requests", label: "Requests", icon: "📋", category: "Operations" },
-  { id: "transfers", label: "Transfers", icon: "💸", category: "Operations" },
-  {
-    id: "transactions",
-    label: "Transactions",
-    icon: "📝",
-    category: "Operations",
-  },
-  {
-    id: "channels",
-    label: "Channels",
-    icon: "📡",
-    category: "Operations",
-  },
-  {
-    id: "submitted-intents",
-    label: "Submitted Intents",
-    icon: "📜",
-    category: "Operations",
-  },
-  {
-    id: "intents-list",
-    label: "Intents List",
-    icon: "🗂️",
-    category: "Operations",
-  },
-  {
-    id: "policies",
-    label: "Policies",
-    icon: "🛡️",
-    category: "Operations",
-  },
-  {
-    id: "users-list",
-    label: "Users",
-    icon: "👥",
-    category: "Users",
-  },
-  {
-    id: "users-me",
-    label: "Me",
-    icon: "🪪",
-    category: "Users",
-  },
-  { id: "tickers", label: "Tickers", icon: "📊", category: "Data" },
-  { id: "payment", label: "Payment", icon: "💳", category: "XRPL" },
-  { id: "mpt-create", label: "MPT Create", icon: "🪙", category: "XRPL" },
-  { id: "mpt-authorize", label: "MPT Authorize", icon: "✅", category: "XRPL" },
-  { id: "mpt-set", label: "MPT Set", icon: "⚙️", category: "XRPL" },
-  { id: "mpt-destroy", label: "MPT Destroy", icon: "🗑️", category: "XRPL" },
-  { id: "trustset", label: "TrustSet", icon: "🔗", category: "XRPL" },
-  { id: "clawback", label: "Clawback", icon: "↩️", category: "XRPL" },
-  { id: "tickets", label: "Tickets", icon: "🎟️", category: "XRPL" },
-  { id: "batch", label: "Batch", icon: "📦", category: "XRPL" },
-  { id: "keypair", label: "Keypair Generator", icon: "🔑", category: "Tools" },
-  { id: "jwt-token", label: "JWT Token", icon: "🎫", category: "Tools" },
-  { id: "genesis", label: "Run Genesis", icon: "🌱", category: "Setup" },
+  href: string;
+}
+
+/** Single source of truth for sidebar navigation. Every entry is a real route. */
+export const NAV_ITEMS: NavItem[] = [
+  { id: "config", label: "Configuration", icon: "⚙️", category: "Settings", href: "/config" },
+  { id: "domains", label: "Domains", icon: "🌐", category: "General", href: "/domains" },
+  { id: "accounts", label: "Accounts", icon: "👤", category: "General", href: "/accounts" },
+  { id: "users-list", label: "Users", icon: "👥", category: "Users", href: "/users" },
+  { id: "users-me", label: "Me", icon: "🪪", category: "Users", href: "/users/me" },
+  { id: "requests", label: "Requests", icon: "📋", category: "Operations", href: "/requests" },
+  { id: "transfers", label: "Transfers", icon: "💸", category: "Operations", href: "/transfers" },
+  { id: "transactions", label: "Transactions", icon: "📝", category: "Operations", href: "/transactions" },
+  { id: "channels", label: "Channels", icon: "📡", category: "Operations", href: "/channels" },
+  { id: "intents-list", label: "Intents List", icon: "🗂️", category: "Operations", href: "/intents" },
+  { id: "policies", label: "Policies", icon: "🛡️", category: "Operations", href: "/policies" },
+  { id: "tickers", label: "Tickers", icon: "📊", category: "Data", href: "/tickers" },
+  { id: "payment", label: "Payment", icon: "💳", category: "XRPL", href: "/payment" },
+  { id: "mpt-create", label: "MPT Create", icon: "🪙", category: "XRPL", href: "/mpt/create" },
+  { id: "mpt-authorize", label: "MPT Authorize", icon: "✅", category: "XRPL", href: "/mpt/authorize" },
+  { id: "mpt-set", label: "MPT Set", icon: "⚙️", category: "XRPL", href: "/mpt/set" },
+  { id: "mpt-destroy", label: "MPT Destroy", icon: "🗑️", category: "XRPL", href: "/mpt/destroy" },
+  { id: "trustset", label: "TrustSet", icon: "🔗", category: "XRPL", href: "/trustset" },
+  { id: "clawback", label: "Clawback", icon: "↩️", category: "XRPL", href: "/clawback" },
+  { id: "tickets", label: "Tickets", icon: "🎟️", category: "XRPL", href: "/tickets" },
+  { id: "batch", label: "Batch", icon: "📦", category: "XRPL", href: "/batch" },
+  { id: "keypair", label: "Keypair Generator", icon: "🔑", category: "Tools", href: "/keypair" },
+  { id: "jwt-token", label: "JWT Token", icon: "🎫", category: "Tools", href: "/jwt-token" },
+  { id: "genesis", label: "Run Genesis", icon: "🌱", category: "Setup", href: "/genesis" },
 ];
 
 interface AppSidebarProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  activeTab?: Tab;
-  onTabChange?: (tab: Tab) => void;
 }
 
-export function AppSidebar({
-  open,
-  onOpenChange,
-  activeTab,
-  onTabChange,
-}: AppSidebarProps) {
+/**
+ * Returns the id of the nav item that best matches the current pathname using
+ * longest-prefix matching, so e.g. `/accounts/new` lights "Create Account"
+ * (not "Accounts") and `/users/me` lights "Me" (not "Users").
+ */
+function activeNavId(pathname: string): string | null {
+  let best: NavItem | null = null;
+  for (const item of NAV_ITEMS) {
+    if (pathname === item.href || pathname.startsWith(item.href + "/")) {
+      if (!best || item.href.length > best.href.length) best = item;
+    }
+  }
+  return best?.id ?? null;
+}
+
+export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
   const { defaultDomainId, setDefaultDomainId } = useDefaultDomain();
   const pathname = usePathname();
-  const isNavMode =
-    pathname.startsWith("/accounts") ||
-    pathname.startsWith("/batch") ||
-    pathname.startsWith("/channels") ||
-    pathname.startsWith("/clawback") ||
-    pathname.startsWith("/domains") ||
-    pathname.startsWith("/intents") ||
-    pathname.startsWith("/policies") ||
-    pathname.startsWith("/requests") ||
-    pathname.startsWith("/tickers") ||
-    pathname.startsWith("/tickets") ||
-    pathname.startsWith("/transactions") ||
-    pathname.startsWith("/transfers") ||
-    pathname.startsWith("/trustset") ||
-    pathname.startsWith("/users") ||
-    pathname.startsWith("/genesis");
+  const activeId = activeNavId(pathname);
 
-  const groupedTabs = TABS.reduce(
-    (acc, tab) => {
-      if (!acc[tab.category]) acc[tab.category] = [];
-      acc[tab.category].push(tab);
+  const groupedItems = NAV_ITEMS.reduce(
+    (acc, item) => {
+      (acc[item.category] ??= []).push(item);
       return acc;
     },
-    {} as Record<string, typeof TABS>,
+    {} as Record<string, NavItem[]>,
   );
 
-  const isActive = (tab: (typeof TABS)[0]) => {
-    if (tab.id === "domains") return pathname.startsWith("/domains");
-    if (tab.id === "account-create")
-      return pathname.startsWith("/accounts/new");
-    if (tab.id === "accounts")
-      return (
-        pathname.startsWith("/accounts") &&
-        !pathname.startsWith("/accounts/new")
-      );
-    if (tab.id === "intents-list") return pathname.startsWith("/intents");
-    if (tab.id === "policies") return pathname.startsWith("/policies");
-    if (tab.id === "requests") return pathname.startsWith("/requests");
-    if (tab.id === "tickers") return pathname.startsWith("/tickers");
-    if (tab.id === "transactions")
-      return pathname.startsWith("/transactions") || activeTab === tab.id;
-    if (tab.id === "channels") return pathname.startsWith("/channels");
-    if (tab.id === "tickets") return pathname.startsWith("/tickets");
-    if (tab.id === "batch") return pathname.startsWith("/batch");
-    if (tab.id === "trustset") return pathname.startsWith("/trustset");
-    if (tab.id === "clawback") return pathname.startsWith("/clawback");
-    if (tab.id === "user-invitations")
-      return pathname.startsWith("/users/invite");
-    if (tab.id === "transfers")
-      return pathname.startsWith("/transfers") || activeTab === tab.id;
-    if (tab.id === "users-list") return pathname === "/users";
-    if (tab.id === "users-me") return pathname.startsWith("/users/me");
-    if (tab.id === "genesis") return pathname.startsWith("/genesis");
-    if (isNavMode) return false;
-    return activeTab === tab.id;
-  };
-
-  const handleTabClick = (tab: (typeof TABS)[0]) => {
-    if (
-      tab.id === "domains" ||
-      tab.id === "accounts" ||
-      tab.id === "account-create" ||
-      tab.id === "channels" ||
-      tab.id === "trustset" ||
-      tab.id === "clawback" ||
-      tab.id === "tickets" ||
-      tab.id === "batch" ||
-      tab.id === "user-invitations" ||
-      tab.id === "intents-list" ||
-      tab.id === "policies" ||
-      tab.id === "requests" ||
-      tab.id === "tickers" ||
-      tab.id === "transactions" ||
-      tab.id === "transfers" ||
-      tab.id === "users-list" ||
-      tab.id === "users-me" ||
-      tab.id === "genesis"
-    )
-      return;
-    if (onTabChange) onTabChange(tab.id);
+  const closeOnMobile = () => {
     if (typeof window !== "undefined" && window.innerWidth < 1024) {
       onOpenChange(false);
     }
@@ -235,10 +101,13 @@ export function AppSidebar({
       >
         <div className="h-full flex flex-col">
           {/* Sidebar Header */}
-          <div className="p-6 border-b border-gray-200">
+          <Link
+            href="/"
+            className="block p-6 border-b border-gray-200 hover:bg-gray-50 transition-colors"
+          >
             <h2 className="text-lg font-bold text-gray-900">Ripple Custody</h2>
             <p className="text-xs text-gray-500 mt-1">Operations Dashboard</p>
-          </div>
+          </Link>
 
           {/* Default Domain ID */}
           <div className="p-4 border-b border-gray-200">
@@ -266,248 +135,30 @@ export function AppSidebar({
 
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto p-4 space-y-6">
-            {Object.entries(groupedTabs).map(([category, tabs]) => (
+            {Object.entries(groupedItems).map(([category, items]) => (
               <div key={category}>
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
                   {category}
                 </h3>
                 <div className="space-y-1">
-                  {tabs.map((tab) => {
-                    const active = isActive(tab);
-                    const cls = `w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                      active
-                        ? "bg-blue-50 text-blue-700 border border-blue-200"
-                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                    }`;
-
-                    if (tab.id === "intents-list") {
-                      return (
-                        <Link key={tab.id} href="/intents" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "policies") {
-                      return (
-                        <Link key={tab.id} href="/policies" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "requests") {
-                      return (
-                        <Link key={tab.id} href="/requests" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "transactions") {
-                      return (
-                        <Link key={tab.id} href="/transactions" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "domains") {
-                      return (
-                        <Link key={tab.id} href="/domains" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "tickers") {
-                      return (
-                        <Link key={tab.id} href="/tickers" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "accounts") {
-                      return (
-                        <Link key={tab.id} href="/accounts" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "account-create") {
-                      return (
-                        <Link key={tab.id} href="/accounts/new" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "channels") {
-                      return (
-                        <Link key={tab.id} href="/channels" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "tickets") {
-                      return (
-                        <Link key={tab.id} href="/tickets" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "batch") {
-                      return (
-                        <Link key={tab.id} href="/batch" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "trustset") {
-                      return (
-                        <Link key={tab.id} href="/trustset" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "clawback") {
-                      return (
-                        <Link key={tab.id} href="/clawback" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "user-invitations") {
-                      return (
-                        <Link
-                          key={tab.id}
-                          href="/users/invite"
-                          className={cls}
-                        >
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "transfers") {
-                      return (
-                        <Link key={tab.id} href="/transfers" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "users-list") {
-                      return (
-                        <Link key={tab.id} href="/users" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "users-me") {
-                      return (
-                        <Link key={tab.id} href="/users/me" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (tab.id === "genesis") {
-                      return (
-                        <Link key={tab.id} href="/genesis" className={cls}>
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
-                    if (isNavMode) {
-                      return (
-                        <Link
-                          key={tab.id}
-                          href={`/?tab=${tab.id}`}
-                          className={cls}
-                        >
-                          <span className="text-lg flex-shrink-0">
-                            {tab.icon}
-                          </span>
-                          <span className="truncate">{tab.label}</span>
-                        </Link>
-                      );
-                    }
-
+                  {items.map((item) => {
+                    const active = activeId === item.id;
                     return (
-                      <button
-                        key={tab.id}
-                        onClick={() => handleTabClick(tab)}
-                        className={cls}
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        onClick={closeOnMobile}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                          active
+                            ? "bg-blue-50 text-blue-700 border border-blue-200"
+                            : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                        }`}
                       >
                         <span className="text-lg flex-shrink-0">
-                          {tab.icon}
+                          {item.icon}
                         </span>
-                        <span className="truncate">{tab.label}</span>
-                      </button>
+                        <span className="truncate">{item.label}</span>
+                      </Link>
                     );
                   })}
                 </div>

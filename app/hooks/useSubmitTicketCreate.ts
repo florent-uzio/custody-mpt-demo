@@ -3,5 +3,5 @@ import { useSubmitIntent } from "./useSubmitIntent";
 import type { TicketCreatePayload } from "../components/TicketCreate.types";
 
 export function useSubmitTicketCreate() {
-  return useSubmitIntent<TicketCreatePayload>("TicketCreate", ticketCreate);
+  return useSubmitIntent<TicketCreatePayload>(ticketCreate);
 }

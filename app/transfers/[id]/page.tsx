@@ -5,9 +5,15 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
-import { useSidebarContext } from "../../contexts/SidebarContext";
 import { getTransfer } from "../../_actions/transfers";
 import { proposeReleaseTransfers } from "../../_actions/intents";
+import {
+  Page,
+  PageHeader,
+  PageContainer,
+  PageHero,
+  ErrorBanner,
+} from "../../components/layout";
 
 interface TransferDetail {
   id: string;
@@ -124,7 +130,6 @@ export default function TransferDetailPage() {
   const searchParams = useSearchParams();
   const transferId = params.id as string;
   const domainId = searchParams.get("domainId") ?? "";
-  const { sidebarOpen, setSidebarOpen } = useSidebarContext();
 
   const releaseMutation = useMutation({
     mutationFn: (accountId: string) =>
@@ -151,140 +156,84 @@ export default function TransferDetailPage() {
     ? (KIND_CONFIG[transfer.kind] ?? FALLBACK_CONFIG)
     : FALLBACK_CONFIG;
 
-  return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Gradient header */}
-      <div
-        className={`bg-gradient-to-r ${cfg.headerBg} shadow-md flex-shrink-0`}
+  const shortId = transferId
+    ? `${transferId.slice(0, 8)}…${transferId.slice(-4)}`
+    : "—";
+
+  const refreshAction = (
+    <button
+      onClick={() => {}}
+      className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+      title="Refresh"
+    >
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="mt-0.5 p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white"
-                aria-label="Toggle sidebar"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  {sidebarOpen ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  )}
-                </svg>
-              </button>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Link
-                    href="/transfers"
-                    className="text-white/60 hover:text-white text-xs font-medium transition-colors"
-                  >
-                    Transfers
-                  </Link>
-                  <span className="text-white/40 text-xs">/</span>
-                  <span className="text-white/80 text-xs font-medium">
-                    Detail
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-white font-mono text-sm font-semibold break-all">
-                    {transferId}
-                  </h1>
-                  <div className="bg-white/20 rounded p-0.5">
-                    <CopyButton
-                      text={transferId}
-                      className="text-white hover:bg-white/20"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+        />
+      </svg>
+    </button>
+  );
 
-            {transfer && (
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${cfg.badgeBg} ${cfg.badgeText} flex-shrink-0`}
-              >
-                <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                {transfer.kind}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+  return (
+    <Page>
+      <PageHeader
+        title="Transfer"
+        breadcrumbs={[
+          { label: "Transfers", href: "/transfers" },
+          { label: shortId },
+        ]}
+        actions={refreshAction}
+      />
+      <PageContainer width="detail">
+        <PageHero
+          theme="sky"
+          icon="💸"
+          title={transferId}
+          description="Inspect the full details of this transfer, including senders, recipient, value, and raw metadata."
+          badge={transfer ? { label: transfer.kind } : undefined}
+        />
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Loading */}
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center py-24 gap-4">
-              <svg
-                className="animate-spin w-8 h-8 text-blue-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              <p className="text-gray-500 text-sm">Loading transfer…</p>
-            </div>
-          )}
-
-          {/* Error */}
-          {isError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-5 flex items-start gap-3">
-              <svg
-                className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"
+        {/* Loading */}
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <svg
+              className="animate-spin w-8 h-8 text-blue-500"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
                 fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <div>
-                <p className="text-sm font-semibold text-red-700">
-                  Error loading transfer
-                </p>
-                <p className="text-sm text-red-600 mt-0.5">
-                  {error instanceof Error ? error.message : "An error occurred"}
-                </p>
-              </div>
-            </div>
-          )}
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+            <p className="text-gray-500 text-sm">Loading transfer…</p>
+          </div>
+        )}
 
-          {/* Content */}
-          {transfer && !isLoading && (
-            <div className="space-y-5">
+        {/* Error */}
+        {isError && <ErrorBanner error={error} />}
+
+        {/* Content */}
+        {transfer && !isLoading && (
+          <div className="space-y-5">
               {/* Summary bar */}
               <div
                 className={`bg-white rounded-xl border ${cfg.border} shadow-sm p-5`}
@@ -554,8 +503,7 @@ export default function TransferDetailPage() {
               <JsonViewer data={transfer} title="Full Transfer (Raw)" />
             </div>
           )}
-        </main>
-      </div>
-    </div>
+        </PageContainer>
+    </Page>
   );
 }

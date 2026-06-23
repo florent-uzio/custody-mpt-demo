@@ -1,13 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useDefaultDomain } from "../../contexts/DomainContext";
-import { useSidebarContext } from "../../contexts/SidebarContext";
 import { CopyButton } from "../../components/CopyButton";
 import { useSubmitCreateAccount } from "../../hooks/useSubmitCreateAccount";
 import { listVaults } from "../../_actions/vaults";
+import {
+  Page,
+  PageHeader,
+  PageContainer,
+  PageHero,
+  SubmitButton,
+  ErrorBanner,
+  DomainWarning,
+} from "../../components/layout";
 
 interface Vault {
   data: {
@@ -78,7 +85,6 @@ const AVAILABLE_LEDGERS = [
 
 export default function NewAccountPage() {
   const { defaultDomainId } = useDefaultDomain();
-  const { sidebarOpen, setSidebarOpen } = useSidebarContext();
   const { mutate, isPending, data: response, error } = useSubmitCreateAccount();
 
   // Vaults state
@@ -210,86 +216,24 @@ export default function NewAccountPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 shadow-md flex-shrink-0">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex items-start gap-3">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="mt-0.5 p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white"
-              aria-label="Toggle sidebar"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                {sidebarOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
-            </button>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Link
-                  href="/accounts"
-                  className="text-white/60 hover:text-white text-xs font-medium transition-colors"
-                >
-                  Accounts
-                </Link>
-                <span className="text-white/40 text-xs">/</span>
-                <span className="text-white/80 text-xs font-medium">
-                  Create account
-                </span>
-              </div>
-              <h1 className="text-white text-lg font-semibold">
-                Create XRPL account
-              </h1>
-              <p className="text-indigo-100 text-xs mt-1">
-                Proposes an account creation intent (v0_CreateAccount), tied to a
-                vault for secure key management.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <Page>
+      <PageHeader
+        title="Create Account"
+        subtitle="Accounts · Create"
+        breadcrumbs={[{ label: "Accounts", href: "/accounts" }, { label: "Create" }]}
+      />
+      <PageContainer width="form">
+        <PageHero
+          theme="indigo"
+          icon="➕"
+          title="Create XRPL Account"
+          description="Proposes an account creation intent (v0_CreateAccount), tied to a vault for secure key management."
+          badge={{ label: "v0_CreateAccount", note: "Account creation intent" }}
+        />
 
-      <div className="flex-1 overflow-y-auto">
-        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-          {!defaultDomainId && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3">
-              <svg
-                className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <p className="text-sm text-yellow-700">
-                Set a <strong>Default Domain ID</strong> in the sidebar before
-                creating an account.
-              </p>
-            </div>
-          )}
+        {!defaultDomainId && <DomainWarning action="creating an account" />}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
             {/* Account Details */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -904,87 +848,26 @@ export default function NewAccountPage() {
               </div>
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isPending || !defaultDomainId || !alias || !vaultId}
-              className="w-full px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
-            >
-              {isPending ? (
-                <span className="flex items-center justify-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Creating Account...
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                  Create Account Intent
-                </span>
-              )}
-            </button>
-          </form>
+          <SubmitButton
+            theme="indigo"
+            pending={isPending}
+            disabled={!defaultDomainId || !alias || !vaultId}
+            pendingLabel="Creating Account..."
+          >
+            Create Account Intent
+          </SubmitButton>
+        </form>
 
-          {/* Error Display */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-center">
-                <svg
-                  className="w-5 h-5 text-red-600 mr-2 flex-shrink-0"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <p className="text-sm text-red-800 font-medium">
-                  Error: {error instanceof Error ? error.message : String(error)}
-                </p>
-              </div>
-            </div>
-          )}
+        <ErrorBanner error={error} />
 
-          {/* Response Display */}
-          {response && (
-            <div className="space-y-4">
-              <JsonViewer data={response.request} title="Request Payload" />
-              <JsonViewer data={response.response} title="API Response" />
-            </div>
-          )}
-        </main>
-      </div>
-    </div>
+        {/* Response Display */}
+        {response && (
+          <div className="space-y-4">
+            <JsonViewer data={response.request} title="Request Payload" />
+            <JsonViewer data={response.response} title="API Response" />
+          </div>
+        )}
+      </PageContainer>
+    </Page>
   );
 }
