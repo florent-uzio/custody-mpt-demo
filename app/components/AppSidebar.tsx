@@ -104,10 +104,21 @@ export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
           {/* Sidebar Header */}
           <Link
             href="/"
-            className="block p-6 border-b border-gray-200 hover:bg-gray-50 transition-colors"
+            title="Go to home dashboard"
+            aria-label="Ripple Custody — go to home dashboard"
+            className="group flex items-center gap-3 p-6 border-b border-gray-200 hover:bg-blue-50 transition-colors"
           >
-            <h2 className="text-lg font-bold text-gray-900">Ripple Custody</h2>
-            <p className="text-xs text-gray-500 mt-1">Operations Dashboard</p>
+            <span className="w-10 h-10 flex-shrink-0 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-200 transition-colors">
+              🏠
+            </span>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                Ripple Custody
+              </h2>
+              <p className="text-xs text-gray-500 group-hover:text-blue-600 transition-colors">
+                Operations Dashboard
+              </p>
+            </div>
           </Link>
 
           {/* Default Domain ID */}
