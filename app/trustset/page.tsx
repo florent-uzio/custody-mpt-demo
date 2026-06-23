@@ -13,6 +13,10 @@ import { OptionsSection } from "../components/trustset/OptionsSection";
 import { CustomPropertiesSection } from "../components/trustset/CustomPropertiesSection";
 import { ConfigSummary } from "../components/trustset/ConfigSummary";
 import type { TrustSetFlag } from "../components/TrustSet.types";
+import {
+  CUSTODY_VALUE_SCALE_EXPONENT,
+  scaleByPowerOfTen,
+} from "../lib/token-amount";
 
 export default function TrustSetPage() {
   const { defaultDomainId } = useDefaultDomain();
@@ -24,6 +28,7 @@ export default function TrustSetPage() {
   const [currency, setCurrency] = useState("");
   const [issuer, setIssuer] = useState("");
   const [value, setValue] = useState("");
+  const [scaleValue, setScaleValue] = useState(true);
   const [selectedFlags, setSelectedFlags] = useState<TrustSetFlag[]>([]);
   const [enableRippling, setEnableRippling] = useState(false);
   const [customProperties, setCustomProperties] = useState<
@@ -45,7 +50,9 @@ export default function TrustSetPage() {
       domainId: defaultDomainId,
       currency,
       issuer,
-      value,
+      value: scaleValue
+        ? scaleByPowerOfTen(value, CUSTODY_VALUE_SCALE_EXPONENT)
+        : value,
       flags: selectedFlags,
       enableRippling,
       customProperties,
@@ -140,6 +147,8 @@ export default function TrustSetPage() {
               onIssuerChange={setIssuer}
               value={value}
               onValueChange={setValue}
+              scaleValue={scaleValue}
+              onScaleChange={setScaleValue}
             />
 
             <FlagsSection
