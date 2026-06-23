@@ -1,3 +1,6 @@
+import { IssuerField } from "./IssuerField";
+import { TrustLimitValueField } from "./TrustLimitValueField";
+
 interface Props {
   currency: string;
   onCurrencyChange: (value: string) => void;
@@ -5,6 +8,8 @@ interface Props {
   onIssuerChange: (value: string) => void;
   value: string;
   onValueChange: (value: string) => void;
+  scaleValue: boolean;
+  onScaleChange: (value: boolean) => void;
 }
 
 export function LimitAmountSection({
@@ -14,6 +19,8 @@ export function LimitAmountSection({
   onIssuerChange,
   value,
   onValueChange,
+  scaleValue,
+  onScaleChange,
 }: Props) {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -25,68 +32,35 @@ export function LimitAmountSection({
       </h3>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="trustset-currency"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Currency Code
-            </label>
-            <input
-              type="text"
-              id="trustset-currency"
-              value={currency}
-              onChange={(e) => onCurrencyChange(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-colors"
-              placeholder="USD, RLUSD, EUR..."
-              required
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Currencies longer than 3 characters will be hex-encoded
-              automatically
-            </p>
-          </div>
-          <div>
-            <label
-              htmlFor="trustset-issuer"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Issuer Address
-            </label>
-            <input
-              type="text"
-              id="trustset-issuer"
-              value={issuer}
-              onChange={(e) => onIssuerChange(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-colors"
-              placeholder="rIssuerXXXX..."
-              required
-            />
-          </div>
-        </div>
-
         <div>
           <label
-            htmlFor="trustset-value"
+            htmlFor="trustset-currency"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Trust Limit Value
+            Currency Code
           </label>
           <input
             type="text"
-            id="trustset-value"
-            value={value}
-            onChange={(e) => onValueChange(e.target.value)}
+            id="trustset-currency"
+            value={currency}
+            onChange={(e) => onCurrencyChange(e.target.value)}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-colors"
-            placeholder="1000000"
+            placeholder="USD, RLUSD, EUR..."
             required
           />
           <p className="mt-1 text-xs text-gray-500">
-            Maximum amount of this currency the account is willing to hold (0 or
-            positive)
+            Currencies longer than 3 characters will be hex-encoded automatically
           </p>
         </div>
+
+        <IssuerField issuer={issuer} onIssuerChange={onIssuerChange} />
+
+        <TrustLimitValueField
+          value={value}
+          onValueChange={onValueChange}
+          scaleValue={scaleValue}
+          onScaleChange={onScaleChange}
+        />
       </div>
     </div>
   );

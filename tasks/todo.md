@@ -305,3 +305,54 @@ After Phase 4: `saveSubmittedIntent` is imported only by `useSubmitIntent` — n
 - PaymentTab's request-modal vs. inline rendering divergence — UX call.
 - `AccountCreateTab` fetching vaults via inline `useEffect` — falls under the "React Query everywhere" follow-up.
 - `CURRENT_USER_ID` hardcode in `mpt.ts` and `trustset.ts` — still candidate #3.
+
+---
+
+## TrustSet — human-friendly value scaling (× 10⁸¹)
+
+**Problem**: Ripple Custody multiplies a TrustSet limit value by 10⁻⁸¹ before submitting to the XRPL. To create a trustline of `100`, the user must currently type `100` followed by 81 zeros. Painful and error-prone.
+
+**Goal**: Let the user type a human-readable value (`100`) and auto-scale it by 10⁸¹ to cancel the backend's 10⁻⁸¹. Toggle is ON by default; OFF sends the raw value (backward compatible). Add an inline explanation linking the XRPL token-precision docs.
+
+**Design decisions**:
+- Scale with **string math, not `Number`** — `Number("100") * 1e81` stringifies to `"1e+83"` (scientific notation) and loses precision. A decimal-point shift on the string is exact and handles decimals.
+- Scale **client-side** so the UI can show a live preview of the exact value submitted; the server action stays untouched (surgical).
+- Fixed `× 10⁸¹` toggle (not an editable exponent) — matches "enabled by default" and avoids unrequested config. Exponent kept as a named constant.
+
+**Steps**:
+1. [x] `app/lib/token-amount.ts` — `CUSTODY_VALUE_SCALE_EXPONENT`, `isDecimalString`, `scaleByPowerOfTen` (pure, string-based) → verify: unit-trace 100/1.5/0.001/0
+2. [x] `app/components/trustset/TrustLimitValueField.tsx` — value input + scale toggle + explanation + live preview → verify: 86 lines
+3. [x] `app/components/trustset/LimitAmountSection.tsx` — delegate value to new field, accept scale props → verify: 84 lines
+4. [x] `app/trustset/page.tsx` — `scaleValue` state (default true), scale on submit → verify: passes raw when off
+5. [x] `npx tsc --noEmit` → verify: clean
+
+**Review**:
+- `scaleByPowerOfTen("100", 81)` reproduces the user's hand-typed 84-digit number exactly (`"100"` + 81 zeros). Decimals verified: `1.5 → 1.5e81`, `0.001 → 1e78`, `0 → 0`.
+- String-based shift confirmed necessary: `Number` path would have emitted `"1e+83"`.
+- Toggle ON by default; OFF sends the raw value unchanged (server action `trustset.ts` untouched).
+- Live preview box shows the exact submitted value, matching the server-built Request Payload.
+- Both touched components remain within the ~100-line convention.
+
+---
+
+## TrustSet — issuer as free address OR custody-account dropdown
+
+**Problem**: The issuer was a free-text r-address only. The user wants to also pick a Ripple Custody account (like `batch` inner ops / `clawback` holder), resolving to its r-address.
+
+**Design decisions**:
+- The `trustset` server action takes `issuer` as a plain address string, so resolve the picked account → r-address **client-side** and feed it into the existing `issuer` state. No server-action change; `page.tsx` unchanged.
+- Used the existing `useAccountsWithAddresses` hook (already powering `clawback`) — accounts come enriched with their preferred r-address, so the dropdown sets the issuer **synchronously**. This avoids the batch's async `resolveAddress` round-trip and its per-ledger `ledgerId` ambiguity.
+- Default mode = free address → preserves prior behavior.
+- Split out `CustodyAccountSelect` because `IssuerField` crossed the ~100-line rule (108 → 71); the new widget is a focused, reusable "pick account → emit r-address" dropdown.
+
+**Steps**:
+1. [x] `app/components/trustset/CustodyAccountSelect.tsx` — accounts-with-addresses dropdown emitting the r-address; no-address accounts disabled → verify: 57 lines
+2. [x] `app/components/trustset/IssuerField.tsx` — address/account mode toggle + free input + dropdown → verify: 71 lines
+3. [x] `app/components/trustset/LimitAmountSection.tsx` — currency on its own row, delegate issuer to `IssuerField` → verify: 67 lines
+4. [x] `npx tsc --noEmit` → verify: clean
+
+**Review**:
+- `page.tsx` untouched — the feature is fully contained in the Limit Amount components.
+- Account mode resolves to the account's preferred r-address (shown under the dropdown for transparency); accounts lacking an activated address are listed but disabled.
+- Switching account → address mode keeps the resolved address pre-filled and editable.
+- Not yet exercised in a running browser (needs a configured domain + custody backend) — logic mirrors the proven `clawback` holder pattern.
