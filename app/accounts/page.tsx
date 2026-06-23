@@ -8,8 +8,14 @@ import {
   type AccountFilters as ActionFilters,
 } from "../_actions/accounts";
 import { useDefaultDomain } from "../contexts/DomainContext";
-import { useSidebarContext } from "../contexts/SidebarContext";
 import { CopyButton } from "../components/CopyButton";
+import {
+  Page,
+  PageHeader,
+  PageHero,
+  PageContainer,
+  ErrorBanner,
+} from "../components/layout";
 
 interface AccountFilters {
   limit: string;
@@ -110,7 +116,6 @@ const EMPTY_FILTERS: AccountFilters = {
 
 export default function AccountsPage() {
   const { defaultDomainId } = useDefaultDomain();
-  const { sidebarOpen, setSidebarOpen } = useSidebarContext();
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<AccountFilters>(EMPTY_FILTERS);
 
@@ -187,118 +192,74 @@ export default function AccountsPage() {
   ].filter(Boolean).length;
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between flex-shrink-0 shadow-sm">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            aria-label="Toggle sidebar"
-          >
-            <svg
-              className="w-5 h-5 text-gray-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+    <Page>
+      <PageHeader
+        title="Accounts"
+        subtitle="General · Accounts"
+        actions={
+          <div className="flex items-center gap-3">
+            {isFetching && !isLoading && (
+              <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                <svg
+                  className="animate-spin w-3.5 h-3.5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                Refreshing…
+              </span>
+            )}
+            <button
+              onClick={() => refetch()}
+              disabled={isFetching || !defaultDomainId}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 disabled:opacity-40"
+              title="Refresh"
             >
-              {sidebarOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              )}
-            </svg>
-          </button>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Accounts</h1>
-            <p className="text-xs text-gray-500">General</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {isFetching && !isLoading && (
-            <span className="flex items-center gap-1.5 text-xs text-gray-400">
               <svg
-                className="animate-spin w-3.5 h-3.5"
-                xmlns="http://www.w3.org/2000/svg"
+                className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
                 fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
                 <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                 />
               </svg>
-              Refreshing…
-            </span>
-          )}
-          {data && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">
-              {count} {count === 1 ? "account" : "accounts"}
-            </span>
-          )}
-          <button
-            onClick={() => refetch()}
-            disabled={isFetching || !defaultDomainId}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 disabled:opacity-40"
-            title="Refresh"
-          >
-            <svg
-              className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            </button>
+            <Link
+              href="/accounts/new"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          </button>
-          <Link
-            href="/accounts/new"
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Create account
-          </Link>
-        </div>
-      </header>
-
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+              Create account
+            </Link>
+          </div>
+        }
+      />
+      <PageContainer width="list">
+        <PageHero
+          theme="indigo"
+          icon="👤"
+          title="Accounts"
+          description="Custody accounts in the selected domain."
+          badge={{ label: "Accounts", note: `${count} total` }}
+        />
           {/* Filters toggle */}
           <div>
             <button
@@ -580,26 +541,7 @@ export default function AccountsPage() {
           )}
 
           {/* Error */}
-          {isError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-2">
-              <svg
-                className="w-4 h-4 text-red-500 flex-shrink-0"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <p className="text-sm text-red-700">
-                {error instanceof Error
-                  ? error.message
-                  : "Failed to load accounts"}
-              </p>
-            </div>
-          )}
+          {isError && <ErrorBanner error={error} />}
 
           {/* Loading skeleton */}
           {isLoading && (
@@ -752,8 +694,7 @@ export default function AccountsPage() {
               </p>
             </div>
           )}
-        </div>
-      </div>
-    </div>
+      </PageContainer>
+    </Page>
   );
 }

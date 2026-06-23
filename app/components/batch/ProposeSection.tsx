@@ -1,7 +1,6 @@
 "use client";
 
 import type { Core_BatchSigner } from "@florent-uzio/custody";
-import { saveSubmittedIntent } from "../../utils/intentStorage";
 import { JsonViewer } from "../JsonViewer";
 import { useWorkbench } from "./WorkbenchContext";
 
@@ -25,7 +24,6 @@ export function ProposeSection() {
       signers,
       domainId,
     });
-    saveSubmittedIntent({ type: "Batch", requestId });
     setProposed(requestId);
   };
 
@@ -67,8 +65,7 @@ export function ProposeSection() {
         <div className="space-y-2">
           <p className="text-sm text-emerald-700">
             Batch proposed · requestId{" "}
-            <span className="font-mono">{session.proposedRequestId}</span> (recorded
-            in Submitted Intents).
+            <span className="font-mono">{session.proposedRequestId}</span>.
           </p>
           {actions.propose.data && (
             <JsonViewer data={actions.propose.data} title="Propose response" />

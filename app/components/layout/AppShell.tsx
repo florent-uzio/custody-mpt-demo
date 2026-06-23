@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { AppSidebar } from "../components/AppSidebar";
-import { SidebarContext } from "../contexts/SidebarContext";
+import { AppSidebar } from "../AppSidebar";
+import { SidebarContext } from "../../contexts/SidebarContext";
 
-export default function GenesisLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+/**
+ * App-wide shell: owns sidebar open/close state, provides it via SidebarContext
+ * (so every PageHeader can toggle it), and renders the sidebar next to the
+ * scrollable page area. Mounted once in the root layout — replaces the
+ * formerly-duplicated per-route layout.tsx files.
+ */
+export function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (

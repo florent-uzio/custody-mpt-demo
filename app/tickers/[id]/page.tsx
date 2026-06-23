@@ -6,7 +6,6 @@ import { useMutation } from "@tanstack/react-query";
 import { Core_ApiTicker } from "@florent-uzio/custody";
 import { useTicker } from "../../hooks/useTickers";
 import { useDefaultDomain } from "../../contexts/DomainContext";
-import { useSidebarContext } from "../../contexts/SidebarContext";
 import {
   proposeLockTicker,
   proposeUnlockTicker,
@@ -15,6 +14,13 @@ import {
 } from "../../_actions/tickers";
 import { JsonViewer } from "../../components/JsonViewer";
 import { CopyButton } from "../../components/CopyButton";
+import {
+  Page,
+  PageHeader,
+  PageContainer,
+  PageHero,
+  ErrorBanner,
+} from "../../components/layout";
 
 type Ticker = Core_ApiTicker;
 
@@ -43,7 +49,6 @@ export default function TickerDetailPage() {
   const params = useParams();
   const tickerId = params.id as string;
   const { defaultDomainId } = useDefaultDomain();
-  const { sidebarOpen, setSidebarOpen } = useSidebarContext();
 
   const { data: ticker, isLoading, isError, error } = useTicker(tickerId);
   const data = ticker?.data;
@@ -93,242 +98,180 @@ export default function TickerDetailPage() {
   // Proposed lock/unlock intent result (shown inline after a successful submit).
   const lockResult = lockMutation.data ?? unlockMutation.data;
 
-  return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 shadow-md flex-shrink-0">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="mt-0.5 p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white"
-                aria-label="Toggle sidebar"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  {sidebarOpen ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  )}
-                </svg>
-              </button>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Link
-                    href="/tickers"
-                    className="text-white/60 hover:text-white text-xs font-medium transition-colors"
-                  >
-                    Tickers
-                  </Link>
-                  <span className="text-white/40 text-xs">/</span>
-                  <span className="text-white/80 text-xs font-medium">
-                    Detail
-                  </span>
-                </div>
-                <h1 className="text-white text-lg font-semibold">
-                  {data?.name ?? "Ticker"}
-                </h1>
-              </div>
-            </div>
-            <div className="mt-0.5 flex flex-col items-end gap-1.5">
-              <div className="flex items-center gap-2">
-              {data?.lock === "Unlocked" && (
-                <button
-                  onClick={handleLock}
-                  disabled={
-                    lockMutation.isPending ||
-                    !defaultDomainId ||
-                    revision === undefined
-                  }
-                  title={
-                    !defaultDomainId
-                      ? "Set a Default Domain ID in the sidebar to lock"
-                      : revision === undefined
-                        ? "Ticker revision unavailable"
-                        : undefined
-                  }
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/20 hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-white text-sm font-medium"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
-                  </svg>
-                  {lockMutation.isPending ? "Locking…" : "Lock"}
-                </button>
-              )}
-              {data?.lock === "Locked" && (
-                <button
-                  onClick={handleUnlock}
-                  disabled={
-                    unlockMutation.isPending ||
-                    !defaultDomainId ||
-                    revision === undefined
-                  }
-                  title={
-                    !defaultDomainId
-                      ? "Set a Default Domain ID in the sidebar to unlock"
-                      : revision === undefined
-                        ? "Ticker revision unavailable"
-                        : undefined
-                  }
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/20 hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-white text-sm font-medium"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 11V7a4 4 0 018 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
-                    />
-                  </svg>
-                  {unlockMutation.isPending ? "Unlocking…" : "Unlock"}
-                </button>
-              )}
-              <Link
-                href={`/tickers/${tickerId}/edit`}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white text-sm font-medium"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-                Edit
-              </Link>
-              </div>
-              {lockActionNote && (
-                <p className="text-white/80 text-xs max-w-xs text-right leading-snug">
-                  {lockActionNote}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
-        <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {lockMutation.isError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5 text-sm text-red-700 font-medium">
-              {lockMutation.error instanceof Error
-                ? lockMutation.error.message
-                : "Failed to propose lock ticker intent"}
-            </div>
-          )}
-
-          {unlockMutation.isError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5 text-sm text-red-700 font-medium">
-              {unlockMutation.error instanceof Error
-                ? unlockMutation.error.message
-                : "Failed to propose unlock ticker intent"}
-            </div>
-          )}
-
-          {lockResult && (
-            <div className="mb-5 space-y-4">
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
-                {lockMutation.data ? "Lock" : "Unlock"} ticker intent proposed.
-                Intent ID:{" "}
-                <span className="font-mono">
-                  {lockResult.request.request.id}
-                </span>
-              </div>
-              <JsonViewer
-                data={lockResult.request}
-                title="Proposed intent (request)"
+  const headerActions = (
+    <div className="flex flex-col items-end gap-1.5">
+      <div className="flex items-center gap-2">
+        {data?.lock === "Unlocked" && (
+          <button
+            onClick={handleLock}
+            disabled={
+              lockMutation.isPending ||
+              !defaultDomainId ||
+              revision === undefined
+            }
+            title={
+              !defaultDomainId
+                ? "Set a Default Domain ID in the sidebar to lock"
+                : revision === undefined
+                  ? "Ticker revision unavailable"
+                  : undefined
+            }
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 text-sm font-medium"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
               />
-              <JsonViewer data={lockResult.response} title="Response" />
-            </div>
-          )}
+            </svg>
+            {lockMutation.isPending ? "Locking…" : "Lock"}
+          </button>
+        )}
+        {data?.lock === "Locked" && (
+          <button
+            onClick={handleUnlock}
+            disabled={
+              unlockMutation.isPending ||
+              !defaultDomainId ||
+              revision === undefined
+            }
+            title={
+              !defaultDomainId
+                ? "Set a Default Domain ID in the sidebar to unlock"
+                : revision === undefined
+                  ? "Ticker revision unavailable"
+                  : undefined
+            }
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 text-sm font-medium"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 11V7a4 4 0 018 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
+              />
+            </svg>
+            {unlockMutation.isPending ? "Unlocking…" : "Unlock"}
+          </button>
+        )}
+        <Link
+          href={`/tickers/${tickerId}/edit`}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm font-medium"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            />
+          </svg>
+          Edit
+        </Link>
+      </div>
+      {lockActionNote && (
+        <p className="text-gray-500 text-xs max-w-xs text-right leading-snug">
+          {lockActionNote}
+        </p>
+      )}
+    </div>
+  );
 
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center py-24 gap-4">
-              <svg
-                className="animate-spin w-8 h-8 text-blue-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              <p className="text-gray-500 text-sm">Loading ticker…</p>
-            </div>
-          )}
+  return (
+    <Page>
+      <PageHeader
+        title="Ticker"
+        breadcrumbs={[
+          { label: "Tickers", href: "/tickers" },
+          { label: data?.name ?? tickerId },
+        ]}
+        actions={headerActions}
+      />
+      <PageContainer width="detail">
+        <PageHero
+          theme="blue"
+          icon="📊"
+          title={data?.name ?? tickerId}
+          description="Ticker details, ledger properties and metadata for this custody asset."
+          badge={
+            data?.lock
+              ? { label: data.lock, note: data.kind }
+              : undefined
+          }
+        />
 
-          {isError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-5 flex items-start gap-3">
-              <svg
-                className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"
+        {lockMutation.isError && (
+          <ErrorBanner error={lockMutation.error} />
+        )}
+
+        {unlockMutation.isError && (
+          <ErrorBanner error={unlockMutation.error} />
+        )}
+
+        {lockResult && (
+          <div className="space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
+              {lockMutation.data ? "Lock" : "Unlock"} ticker intent proposed.
+              Intent ID:{" "}
+              <span className="font-mono">
+                {lockResult.request.request.id}
+              </span>
+            </div>
+            <JsonViewer
+              data={lockResult.request}
+              title="Proposed intent (request)"
+            />
+            <JsonViewer data={lockResult.response} title="Response" />
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <svg
+              className="animate-spin w-8 h-8 text-blue-500"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
                 fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <div>
-                <p className="text-sm font-semibold text-red-700">
-                  Error loading ticker
-                </p>
-                <p className="text-sm text-red-600 mt-0.5">
-                  {error instanceof Error ? error.message : "An error occurred"}
-                </p>
-              </div>
-            </div>
-          )}
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+            <p className="text-gray-500 text-sm">Loading ticker…</p>
+          </div>
+        )}
 
-          {ticker && data && !isLoading && (
+        {isError && <ErrorBanner error={error} />}
+
+        {ticker && data && !isLoading && (
             <div className="space-y-5">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* Details */}
@@ -441,9 +384,8 @@ export default function TickerDetailPage() {
               <JsonViewer data={ticker} title="Full Ticker (Raw)" />
             </div>
           )}
-        </main>
-      </div>
-    </div>
+      </PageContainer>
+    </Page>
   );
 }
 

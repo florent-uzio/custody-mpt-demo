@@ -1,164 +1,93 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RequestsTab } from "./components/RequestsTab";
-import { TransfersTab } from "./components/TransfersTab";
-import { PaymentTab } from "./components/PaymentTab";
-import { MPTAuthorizeTab } from "./components/MPTAuthorizeTab";
-import { MPTCreateTab } from "./components/MPTCreateTab";
-import { MPTSetTab } from "./components/MPTSetTab";
-import { MPTDestroyTab } from "./components/MPTDestroyTab";
-import { TransactionsTab } from "./components/TransactionsTab";
-import { SubmittedIntentsTab } from "./components/SubmittedIntentsTab";
-import { KeypairTab } from "./components/KeypairTab";
-import { JwtTokenTab } from "./components/JwtTokenTab";
-import { ConfigTab } from "./components/ConfigTab";
-import { AppSidebar, TABS } from "./components/AppSidebar";
-import type { Tab } from "./components/AppSidebar";
+import Link from "next/link";
+import { NAV_ITEMS } from "./components/AppSidebar";
+import { Page, PageHeader, PageContainer, PageHero } from "./components/layout";
 
 const NOTES_STORAGE_KEY = "mpt_demo_notes";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<Tab>("config");
-  const [notes, setNotes] = useState<string>("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [notes, setNotes] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
-      if (savedNotes) setNotes(savedNotes);
-
-      // Restore tab from URL ?tab= param (e.g. navigating back from intents pages)
-      const params = new URLSearchParams(window.location.search);
-      const tab = params.get("tab") as Tab;
-      if (
-        tab &&
-        TABS.some((t) => t.id === tab) &&
-        tab !== "intents-list" &&
-        tab !== "domains" &&
-        tab !== "accounts" &&
-        tab !== "account-create" &&
-        tab !== "user-invitations" &&
-        tab !== "clawback" &&
-        tab !== "trustset" &&
-        tab !== "tickers"
-      ) {
-        setActiveTab(tab);
-      }
-    }
+    const saved = localStorage.getItem(NOTES_STORAGE_KEY);
+    if (saved) setNotes(saved);
   }, []);
 
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newNotes = e.target.value;
-    setNotes(newNotes);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(NOTES_STORAGE_KEY, newNotes);
-    }
+    setNotes(e.target.value);
+    localStorage.setItem(NOTES_STORAGE_KEY, e.target.value);
   };
 
-  const activeTabMeta = TABS.find((t) => t.id === activeTab);
+  // Group nav items by category for the quick-links grid.
+  const groups = NAV_ITEMS.reduce(
+    (acc, item) => {
+      (acc[item.category] ??= []).push(item);
+      return acc;
+    },
+    {} as Record<string, typeof NAV_ITEMS>,
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="flex h-screen overflow-hidden">
-        <AppSidebar
-          open={sidebarOpen}
-          onOpenChange={setSidebarOpen}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
+    <Page>
+      <PageHeader title="Dashboard" subtitle="Ripple Custody · Operations" />
+      <PageContainer width="list">
+        <PageHero
+          theme="blue"
+          icon="🏠"
+          title="Ripple Custody Operations"
+          description="Manage domains, accounts, users and XRPL operations. Pick a tool below or jump in from the sidebar."
+          badge={{ label: "Internal", note: "Operations dashboard" }}
         />
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Top Bar */}
-          <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label="Toggle sidebar"
-              >
-                <svg
-                  className="w-6 h-6 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  {sidebarOpen ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  )}
-                </svg>
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {activeTabMeta?.label || "Dashboard"}
-                </h1>
-                <p className="text-sm text-gray-600">
-                  {activeTabMeta?.category || "General"} Operations
-                </p>
-              </div>
-            </div>
-          </header>
-
-          {/* Content Area */}
-          <main className="flex-1 overflow-y-auto">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              {/* Notes Section */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-                <label
-                  htmlFor="notes"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Notes{" "}
-                  <span className="text-gray-400 font-normal">
-                    (MPT IDs, etc.)
-                  </span>
-                </label>
-                <textarea
-                  id="notes"
-                  value={notes}
-                  onChange={handleNotesChange}
-                  rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-y font-mono text-sm"
-                  placeholder="Save your MPT IDs, notes, or any other information here...&#10;&#10;Example:&#10;MPT Issuance ID: 00CA8BD9F2582AF39B51725D510C5401ED4495ECFB250591"
-                />
-                <p className="mt-2 text-xs text-gray-500">
-                  Your notes are automatically saved and will persist across
-                  sessions.
-                </p>
-              </div>
-
-              {/* Tab Content */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                {activeTab === "requests" && <RequestsTab />}
-                {activeTab === "transfers" && <TransfersTab />}
-                {activeTab === "transactions" && <TransactionsTab />}
-                {activeTab === "submitted-intents" && <SubmittedIntentsTab />}
-                {activeTab === "payment" && <PaymentTab />}
-                {activeTab === "mpt-create" && <MPTCreateTab />}
-                {activeTab === "mpt-authorize" && <MPTAuthorizeTab />}
-                {activeTab === "mpt-set" && <MPTSetTab />}
-                {activeTab === "mpt-destroy" && <MPTDestroyTab />}
-                {activeTab === "keypair" && <KeypairTab />}
-                {activeTab === "jwt-token" && <JwtTokenTab />}
-                {activeTab === "config" && <ConfigTab />}
-              </div>
-            </div>
-          </main>
+        {/* Notes scratchpad */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <label
+            htmlFor="notes"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Notes{" "}
+            <span className="text-gray-400 font-normal">(MPT IDs, etc.)</span>
+          </label>
+          <textarea
+            id="notes"
+            value={notes}
+            onChange={handleNotesChange}
+            rows={4}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-y font-mono text-sm"
+            placeholder="Save your MPT IDs, notes, or any other information here...&#10;&#10;Example:&#10;MPT Issuance ID: 00CA8BD9F2582AF39B51725D510C5401ED4495ECFB250591"
+          />
+          <p className="mt-2 text-xs text-gray-500">
+            Your notes are automatically saved and will persist across sessions.
+          </p>
         </div>
-      </div>
-    </div>
+
+        {/* Quick links */}
+        <div className="space-y-6">
+          {Object.entries(groups).map(([category, items]) => (
+            <div key={category}>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-1">
+                {category}
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {items.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className="flex items-center gap-3 p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all"
+                  >
+                    <span className="text-2xl flex-shrink-0">{item.icon}</span>
+                    <span className="text-sm font-medium text-gray-800 truncate">
+                      {item.label}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </PageContainer>
+    </Page>
   );
 }

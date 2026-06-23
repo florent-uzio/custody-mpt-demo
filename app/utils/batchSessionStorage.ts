@@ -10,7 +10,7 @@ import type { BatchSignatureHandle } from "../_actions/batch";
 // signatures → propose) where signatures wait on out-of-band operator approval.
 // Persisting the session lets a reload resume exactly where it left off and lets
 // a signature approved an hour ago still be fetched. One active session at a
-// time. Mirrors the localStorage approach in `intentStorage.ts`.
+// time, persisted in localStorage.
 
 /** Inner payment being constructed (typed Payment path — see Q4). */
 export type BatchPaymentDraft = {

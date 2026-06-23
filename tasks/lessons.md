@@ -9,6 +9,29 @@
 - **Rule**: The tab/page component itself should only compose sub-components — no inline markup blocks.
 - **Example**: `MPTCreateTab.tsx` delegates to `IssuerAccountSection`, `TokenPropertiesSection`, `TokenFlagsSection`, `MetadataSection`, `ConfigSummary` — follow this pattern always.
 
+## Page layout — always use the shared kit (`app/components/layout/`)
+
+- **Rule**: Build every page from the kit, never hand-roll a header/hero/submit/error again.
+  Standard anatomy:
+  ```tsx
+  <Page>
+    <PageHeader title subtitle? breadcrumbs? actions? />   {/* white bar; OWNS the sidebar toggle */}
+    <PageContainer width="form|detail|list">               {/* 3xl | 5xl | 7xl */}
+      <PageHero theme icon title description badge? />      {/* themed gradient card */}
+      ...sections... (SectionCard / SubmitButton / ErrorBanner / DomainWarning)
+    </PageContainer>
+  </Page>
+  ```
+- **Rule**: Width tiers are fixed — forms/actions = `form` (3xl), detail/profile = `detail` (5xl),
+  lists/tables = `list` (7xl). Don't introduce `max-w-4xl`/ad-hoc widths.
+- **Rule**: Pick a `ThemeName` from `pageTheme.ts` (blue/indigo/violet/emerald/teal/rose/amber/sky/
+  slate). Theme strings must stay COMPLETE literals (Tailwind JIT) — never build class names by
+  concatenation.
+- **Rule**: Never import `useSidebarContext` in a page — `PageHeader` owns the toggle. The shell
+  (`AppShell`) is mounted once in the root layout; routes do NOT need their own `layout.tsx`.
+- **Rule**: Navigation lives in one place — `NAV_ITEMS` in `AppSidebar.tsx` (id/label/icon/category/
+  href). Add a route there; active state is longest-prefix on `pathname`. No `activeTab` state.
+
 ## Patterns & Conventions
 
 ### Always use TanStack Query for data fetching

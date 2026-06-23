@@ -1,30 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { EDS_Channel } from "@florent-uzio/custody";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useDefaultDomain } from "../../contexts/DomainContext";
-import { useSidebarContext } from "../../contexts/SidebarContext";
 import {
   deleteChannel,
   getChannel,
   updateChannel,
 } from "../../_actions/channels";
+import {
+  Page,
+  PageHeader,
+  PageContainer,
+  PageHero,
+  ErrorBanner,
+} from "../../components/layout";
 
 const STATUS_CONFIG = {
   ACTIVE: {
-    headerBg: "from-emerald-500 to-teal-500",
     badgeBg: "bg-emerald-100",
     badgeText: "text-emerald-800",
     dot: "bg-emerald-400",
     border: "border-emerald-200",
   },
   DISABLED: {
-    headerBg: "from-gray-500 to-gray-600",
     badgeBg: "bg-gray-100",
     badgeText: "text-gray-700",
     dot: "bg-gray-400",
@@ -83,7 +86,6 @@ export default function ChannelDetailPage() {
   const queryClient = useQueryClient();
   const channelId = params.id as string;
   const { defaultDomainId } = useDefaultDomain();
-  const { sidebarOpen, setSidebarOpen } = useSidebarContext();
 
   const [editMode, setEditMode] = useState(false);
   const [editName, setEditName] = useState("");
@@ -183,84 +185,27 @@ export default function ChannelDetailPage() {
     setEditMode(false);
   };
 
+  const shortId = channelId.length > 12 ? `${channelId.slice(0, 8)}…` : channelId;
+
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      <div
-        className={`bg-gradient-to-r ${cfg.headerBg} shadow-md flex-shrink-0`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="mt-0.5 p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white"
-                aria-label="Toggle sidebar"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  {sidebarOpen ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  )}
-                </svg>
-              </button>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Link
-                    href="/channels"
-                    className="text-white/60 hover:text-white text-xs font-medium transition-colors"
-                  >
-                    Channels
-                  </Link>
-                  <span className="text-white/40 text-xs">/</span>
-                  <span className="text-white/80 text-xs font-medium">
-                    Detail
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-white font-mono text-sm font-semibold break-all">
-                    {channelId}
-                  </h1>
-                  <div className="bg-white/20 rounded p-0.5">
-                    <CopyButton
-                      text={channelId}
-                      className="text-white hover:bg-white/20"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+    <Page>
+      <PageHeader
+        title="Channel"
+        breadcrumbs={[
+          { label: "Channels", href: "/channels" },
+          { label: shortId },
+        ]}
+      />
+      <PageContainer width="detail">
+        <PageHero
+          theme="sky"
+          icon="📡"
+          title={channel?.name ?? channelId}
+          description="Webhook channel receiving custody events for this domain."
+          badge={status ? { label: status } : undefined}
+        />
 
-            {status && (
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${cfg.badgeBg} ${cfg.badgeText} flex-shrink-0`}
-              >
-                <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                {status}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {!defaultDomainId && (
+        {!defaultDomainId && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3">
               <svg
                 className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5"
@@ -306,29 +251,7 @@ export default function ChannelDetailPage() {
             </div>
           )}
 
-          {isError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-5 flex items-start gap-3 mt-4">
-              <svg
-                className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <div>
-                <p className="text-sm font-semibold text-red-700">
-                  Error loading channel
-                </p>
-                <p className="text-sm text-red-600 mt-0.5">
-                  {error instanceof Error ? error.message : "An error occurred"}
-                </p>
-              </div>
-            </div>
-          )}
+          {isError && <ErrorBanner error={error} />}
 
           {channel && !isLoading && (
             <div className="space-y-5">
@@ -696,8 +619,7 @@ export default function ChannelDetailPage() {
               )}
             </div>
           )}
-        </main>
-      </div>
-    </div>
+      </PageContainer>
+    </Page>
   );
 }

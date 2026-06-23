@@ -1,3 +1,69 @@
+# UI Consistency + Tabs → Routes (design-system kit)
+
+Branch: `feat/ui-consistency`. Bring uniform headers + widths to every page and convert the
+remaining home-page tabs into real routes.
+
+## Decisions (confirmed with user via AskUserQuestion)
+- **Header system:** persistent slim **white top bar** on every page (`PageHeader`) + a themed
+  **gradient hero card** inside content (`PageHero`). Tickets-inspired, generalized into a kit.
+- **Width tiers:** forms/actions `max-w-3xl` · detail/profile `max-w-5xl` · lists/tables `max-w-7xl`.
+- **Tabs:** convert ALL functional tabs to real routes; delete dead duplicates; sidebar = all real
+  `<Link>`s; clean up home into a light dashboard.
+
+## Phase 1 — Shared kit (`app/components/layout/`)
+- [ ] `pageTheme.ts` — theme registry (hero gradient / step badge / focus ring / button gradient per color)
+- [ ] `Page.tsx` (outer flex column) · `PageHeader.tsx` (white bar) · `PageHero.tsx` (gradient card)
+- [ ] `PageContainer.tsx` (scroll + width tier) · `SectionCard.tsx` (numbered step card)
+- [ ] `SubmitButton.tsx` · `ErrorBanner.tsx` · `DomainWarning.tsx`
+- [ ] `AppShell.tsx` — SidebarContext provider + AppSidebar + gradient bg wrapper
+
+## Phase 2 — Shell + sidebar
+- [ ] Hoist `AppShell` into root `app/layout.tsx`; delete all 15 per-route `layout.tsx`
+- [ ] Rewrite `AppSidebar` to all real `<Link>`s (href per item); drop `activeTab`/`onTabChange`
+      + the giant if-chain; pathname-based `isActive`
+
+## Phase 3 — Convert tabs → routes (kit-based)
+- [ ] `/payment` `/mpt/create` `/mpt/authorize` `/mpt/set` `/mpt/destroy` `/config` `/keypair`
+      `/jwt-token` `/submitted-intents`
+- [ ] Delete dead tab components incl. legacy RequestsTab/TransfersTab/TransactionsTab
+- [ ] Home `/` → light dashboard/landing + relocated Notes
+
+## Phase 4 — Retrofit existing pages to the kit (correct width tier each)
+- [ ] Forms (3xl) · Detail (5xl) · Lists (7xl)
+
+## Phase 5 — Verify
+- [x] `npx tsc --noEmit` clean · `npm run build` clean (34 routes generated) · all 46 page.tsx use the kit
+
+## Review
+- **Kit** (`app/components/layout/`): `pageTheme.ts` (9 named themes, full literal Tailwind strings
+  for JIT), `Page`, `PageHeader` (white bar, owns the sidebar toggle, breadcrumbs + actions slot),
+  `PageHero` (themed gradient card), `PageContainer` (width tiers form/detail/list = 3xl/5xl/7xl),
+  `SectionCard`, `SubmitButton`, `ErrorBanner`, `DomainWarning`, `AppShell`, `index.ts` barrel.
+- **Shell**: `AppShell` hoisted into root `app/layout.tsx`; deleted all 15 byte-identical per-route
+  `layout.tsx`. Sidebar state is now app-wide (persists across navigation).
+- **Sidebar**: rewrote `AppSidebar` to all real `<Link>`s driven by one `NAV_ITEMS` table + a
+  longest-prefix `activeNavId(pathname)`; dropped `activeTab`/`onTabChange` + the ~250-line if-chain +
+  `?tab=` nav mode. Header links to `/`.
+- **Tabs → routes** (9 new): `/payment` `/mpt/{create,authorize,set,destroy}` `/config` `/keypair`
+  `/jwt-token` `/submitted-intents`. Home `/` is now a dashboard (themed hero + relocated Notes +
+  quick-link grid from NAV_ITEMS).
+- **Deleted**: 13 tab components (the 9 converted + legacy RequestsTab/TransfersTab/TransactionsTab,
+  + pre-existing-dead MPTPaymentTab). Detail-page migration orphaned `DomainHeader`/`TransactionHeader`
+  → deleted (orphaned BY this change).
+- **Retrofit**: every page → white-bar + themed hero + width tier. 12 forms (3xl), 12 detail (5xl,
+  incl. users/me which was the 7xl outlier), 11 lists (7xl, refresh/create moved into PageHeader
+  `actions`), batch (5xl).
+- **Verified**: `next build` ✓ (34 routes), `tsc --noEmit` ✓, no unused imports (heuristic), every
+  page.tsx imports the kit, `useSidebarContext` now used only by `PageHeader`.
+- **Left as-is**: `IntentsTab.tsx` — pre-existing dead code (orphaned before this task, unrelated);
+  flagged, not deleted.
+- **Tradeoff**: detail `[id]` pages narrowed 7xl→5xl per the chosen 3-tier scheme; a few data-dense
+  ones (transaction ledger data) are tighter than before. Per-page width tuning is a follow-up.
+- **Pending (manual, needs live tenant + browser)**: click through routes to confirm heroes/forms/
+  tables render and submit, and sidebar active-highlight is correct per route.
+
+---
+
 # Tickers: tab → route + create/update intents
 
 Convert `TickersTab` into a full `/tickers` route (list table, detail, create, update),
