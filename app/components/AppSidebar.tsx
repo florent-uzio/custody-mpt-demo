@@ -33,6 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "mpt-set", label: "MPT Set", icon: "⚙️", category: "XRPL", href: "/mpt/set" },
   { id: "mpt-destroy", label: "MPT Destroy", icon: "🗑️", category: "XRPL", href: "/mpt/destroy" },
   { id: "trustset", label: "TrustSet", icon: "🔗", category: "XRPL", href: "/trustset" },
+  { id: "accountset", label: "AccountSet", icon: "🔧", category: "XRPL", href: "/accountset" },
   { id: "clawback", label: "Clawback", icon: "↩️", category: "XRPL", href: "/clawback" },
   { id: "tickets", label: "Tickets", icon: "🎟️", category: "XRPL", href: "/tickets" },
   { id: "batch", label: "Batch", icon: "📦", category: "XRPL", href: "/batch" },

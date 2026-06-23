@@ -422,3 +422,46 @@ After Phase 4: `saveSubmittedIntent` is imported only by `useSubmitIntent` — n
 - Account mode resolves to the account's preferred r-address (shown under the dropdown for transparency); accounts lacking an activated address are listed but disabled.
 - Switching account → address mode keeps the resolved address pre-filled and editable.
 - Not yet exercised in a running browser (needs a configured domain + custody backend) — logic mirrors the proven `clawback` holder pattern.
+
+---
+
+# XRPL AccountSet — new route + page
+
+Add an **AccountSet** transaction under the XRPL sidebar section, mirroring the TrustSet page
+style. Use the SDK's `custody.xrpl.proposeIntent` helper (resolves domain/user/ledger context
+from the `Account` r-address internally) instead of the manual `buildProposeIntent` +
+`custody.intents.propose()` path used by older actions.
+
+## Decisions
+- **SDK call:** `sdk.xrpl.proposeIntent({ Account, operation: { type: "AccountSet", setFlag?, clearFlag?, transferRate? } }, { domainId, feePriority: "Low", description: "AccountSet" })`.
+- **Result shape:** the xrpl helper returns only `Core_IntentResponse` (no request envelope), so the
+  action returns `{ requestId, response, submitted }` — mirrors the existing `ProposeBatchResult`
+  precedent in `batch.ts`. `submitted` = the exact params passed to the SDK, for the JsonViewer panel.
+- **Flag type:** derive `AccountSetFlag` from SDK `CustodyAccountSet["setFlag"]` (reuse SDK types).
+- **Account input:** custody-account dropdown emitting the r-address (`useAccountsWithAddresses`),
+  since `proposeIntent` needs the XRPL `Account` address, not the custody UUID.
+- **Theme:** `teal` (unused in the XRPL section).
+- **Flags UX:** AccountSet sets/clears ONE flag each (single-select), unlike TrustSet's array.
+  Set Flag and Clear Flag dropdowns are mutually exclusive (can't set+clear the same flag).
+
+## Plan
+- [x] 1. Branch `feat/xrpl-accountset` from main → verify: `git branch --show-current`
+- [x] 2. `app/_actions/accountset.ts` — `accountSet(input)` via `sdk.xrpl.proposeIntent`; exports `AccountSetFlag`, `AccountSetInput`, `AccountSetResult`.
+- [x] 3. `app/components/AccountSet.types.ts` — `AccountSetFlagOption` metadata (label/description per asf flag), reusing `AccountSetFlag`.
+- [x] 4. `app/hooks/useSubmitAccountSet.ts` — TanStack `useMutation` wrapping the action.
+- [x] 5. `app/components/accountset/` — `AccountSection`, `FlagsSection`, `TransferRateSection`, `ConfigSummary` (each wraps kit `SectionCard`, theme teal).
+- [x] 6. `app/accountset/page.tsx` — compose sections (mirror `trustset/page.tsx`).
+- [x] 7. `AppSidebar.tsx` — add AccountSet nav item under XRPL.
+- [x] 8. Verify: `npx tsc --noEmit` clean + `npm run build` clean.
+
+## Review
+Branch `feat/xrpl-accountset` (main untouched).
+
+- **Action** `app/_actions/accountset.ts` — `accountSet` calls `sdk.xrpl.proposeIntent({ Account, operation }, { domainId, feePriority: "Low", description })`. The helper resolves domain/user/ledger context from the r-address internally, so none of the older `getAccountLedgerId` / `getCurrentUser` / `buildProposeIntent` plumbing is needed. Operation typed as `Extract<Core_XrplOperation, { type: "AccountSet" }>`; `AccountSetFlag` derived from `CustodyAccountSet["setFlag"]` — zero hand-rolled SDK shapes. Returns `{ requestId, response, submitted }` (the xrpl helper returns only `Core_IntentResponse`, so `submitted` echoes the exact params for the request panel — same precedent as `ProposeBatchResult` in `batch.ts`). Guards: `account`/`domainId` required, `setFlag !== clearFlag`.
+- **Types** `app/components/AccountSet.types.ts` — `ACCOUNT_SET_FLAGS` metadata (label + description for all 8 `asf*` flags) + `AccountSetFlagOption`, re-exporting the SDK-derived `AccountSetFlag`.
+- **Hook** `app/hooks/useSubmitAccountSet.ts` — one-line `useMutation` over the action (not `useSubmitIntent`, whose `ProposeIntentResult` contract doesn't fit the xrpl-helper return shape).
+- **Sub-components** `app/components/accountset/` — `AccountSection` (custody-account dropdown emitting the r-address via `useAccountsWithAddresses`; no-address accounts disabled), `FlagsSection` (Set/Clear flag dropdowns, mutually exclusive, descriptions shown), `TransferRateSection` (optional raw numeric), `ConfigSummary`. Each wraps the kit `SectionCard`, theme `teal`. All ≤ 91 lines.
+- **Page** `app/accountset/page.tsx` (101 lines) — mirrors `trustset/page.tsx`: `Page`/`PageHeader`/`PageContainer`/`PageHero`/`SubmitButton`/`ErrorBanner`/`DomainWarning`, `width="form"`, theme `teal`. Two `JsonViewer`s (Submitted Parameters + API Response).
+- **Nav** — added `{ id: "accountset", label: "AccountSet", icon: "🔧", category: "XRPL", href: "/accountset" }` after TrustSet. (🔧 chosen so it doesn't collide with mpt-set's ⚙️.)
+- **Verified**: `npx tsc --noEmit` clean; `npm run build` "Compiled successfully" with `/accountset` prerendered static (○). Reverted the build's incidental `next-env.d.ts` edit.
+- **Pending (manual, needs live tenant + browser)**: set a Default Domain ID, pick an account, set/clear a flag and/or transfer rate, submit, and confirm the proposed-intent JSON in the API Response panel.
