@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { JsonViewer } from "../components/JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
+import { useEndpoints } from "../hooks/useEndpoints";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { useSubmitPayment } from "../hooks/useSubmitPayment";
 import {
@@ -17,10 +18,11 @@ import {
 } from "../components/layout";
 
 type PaymentType = "XRP" | "IOU" | "MPT";
-type DestinationType = "Address" | "Account" | "Endpoint";
+type DestinationType = "Account" | "Address" | "Endpoint";
 
 export default function PaymentPage() {
   const { accounts, loading: accountsLoading } = useAccounts();
+  const { endpoints, loading: endpointsLoading } = useEndpoints();
   const { defaultDomainId } = useDefaultDomain();
   const { mutate, isPending, data: response, error } = useSubmitPayment();
 
@@ -29,7 +31,7 @@ export default function PaymentPage() {
 
   // Destination
   const [destinationType, setDestinationType] =
-    useState<DestinationType>("Address");
+    useState<DestinationType>("Account");
   const [destinationAddress, setDestinationAddress] = useState("");
   const [destinationAccountId, setDestinationAccountId] = useState("");
   const [destinationEndpointId, setDestinationEndpointId] = useState("");
@@ -156,7 +158,7 @@ export default function PaymentPage() {
                 Destination
               </label>
               <div className="flex gap-2 mb-2">
-                {(["Address", "Account", "Endpoint"] as DestinationType[]).map(
+                {(["Account", "Address", "Endpoint"] as DestinationType[]).map(
                   (type) => (
                     <button
                       key={type}
@@ -173,6 +175,32 @@ export default function PaymentPage() {
                   )
                 )}
               </div>
+              {destinationType === "Account" && (
+                <select
+                  value={destinationAccountId}
+                  onChange={(e) => setDestinationAccountId(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
+                  required
+                  disabled={accountsLoading}
+                >
+                  {accountsLoading ? (
+                    <option>Loading accounts...</option>
+                  ) : accounts.length === 0 ? (
+                    <option value="">No accounts found in this domain</option>
+                  ) : (
+                    <>
+                      <option value="" disabled>
+                        Select a destination account
+                      </option>
+                      {accounts.map((account) => (
+                        <option key={account.id} value={account.id}>
+                          {account.alias} ({account.id})
+                        </option>
+                      ))}
+                    </>
+                  )}
+                </select>
+              )}
               {destinationType === "Address" && (
                 <input
                   type="text"
@@ -183,25 +211,31 @@ export default function PaymentPage() {
                   required
                 />
               )}
-              {destinationType === "Account" && (
-                <input
-                  type="text"
-                  value={destinationAccountId}
-                  onChange={(e) => setDestinationAccountId(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                  placeholder="Account UUID"
-                  required
-                />
-              )}
               {destinationType === "Endpoint" && (
-                <input
-                  type="text"
+                <select
                   value={destinationEndpointId}
                   onChange={(e) => setDestinationEndpointId(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                  placeholder="Endpoint ID"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
                   required
-                />
+                  disabled={endpointsLoading}
+                >
+                  {endpointsLoading ? (
+                    <option>Loading endpoints...</option>
+                  ) : endpoints.length === 0 ? (
+                    <option value="">No endpoints found in this domain</option>
+                  ) : (
+                    <>
+                      <option value="" disabled>
+                        Select a destination endpoint
+                      </option>
+                      {endpoints.map((endpoint) => (
+                        <option key={endpoint.id} value={endpoint.id}>
+                          {endpoint.alias} — {endpoint.address}
+                        </option>
+                      ))}
+                    </>
+                  )}
+                </select>
               )}
             </div>
 
