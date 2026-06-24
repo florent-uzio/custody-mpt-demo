@@ -24,7 +24,14 @@ export default function TransactionDetailPage() {
   const transactionId = params.id as string;
   const domainId = searchParams.get("domainId") ?? "";
 
-  const { data: tx, isLoading, isError, error } = useTransaction(transactionId, domainId);
+  const {
+    data: tx,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useTransaction(transactionId, domainId);
 
   const processingStatus = tx?.processing?.status as ProcessingStatus | undefined;
   const cfg = getStatusConfig(processingStatus);
@@ -32,6 +39,29 @@ export default function TransactionDetailPage() {
   const shortId = transactionId
     ? `${transactionId.slice(0, 8)}…${transactionId.slice(-4)}`
     : "…";
+
+  const refreshAction = (
+    <button
+      onClick={() => refetch()}
+      disabled={isFetching}
+      className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 disabled:opacity-50"
+      title="Refresh"
+    >
+      <svg
+        className={`w-5 h-5 ${isFetching ? "animate-spin" : ""}`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+        />
+      </svg>
+    </button>
+  );
 
   return (
     <Page>
@@ -41,6 +71,7 @@ export default function TransactionDetailPage() {
           { label: "Transactions", href: "/transactions" },
           { label: shortId },
         ]}
+        actions={refreshAction}
       />
       <PageContainer width="detail">
         <PageHero
