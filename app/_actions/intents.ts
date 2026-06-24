@@ -8,16 +8,13 @@ import type {
 } from "@florent-uzio/custody";
 
 import {
-  getAccountLedgerId,
   getCurrentUser,
   getCustodySDK,
   proposeIntent,
+  proposeXrplTransaction,
   type ProposeIntentResult,
 } from "@/app/lib/custody";
-import {
-  buildProposeIntent,
-  buildTransactionOrderPayload,
-} from "@/app/lib/intent-builder";
+import { buildProposeIntent } from "@/app/lib/intent-builder";
 import type { IntentsCollection } from "@/app/intents/intents.types";
 
 export type PaymentType = "XRP" | "IOU" | "MPT";
@@ -179,29 +176,18 @@ export async function proposePayment(
   if (paymentType === "MPT" && !input.issuanceId)
     throw new Error("issuanceId is required for MPT payments");
 
-  const currentUser = await getCurrentUser(domainId);
-  const ledgerId = await getAccountLedgerId(domainId, accountId);
-
-  const request = buildProposeIntent({
-    author: { id: currentUser.userId, domainId: currentUser.domainId },
-    targetDomainId: currentUser.domainId,
-    payload: buildTransactionOrderPayload({
-      ledgerId,
-      accountId,
-      operation: {
-        // @ts-expect-error preserved from original route
-        destination: buildPaymentDestination(destinationType, input),
-        amount: buildPaymentAmount(paymentType, amount, input) as string,
-        type: "Payment",
-      },
-      description: description || "Payment",
-      customProperties: { property1: "flo" },
-    }),
+  return proposeXrplTransaction({
+    domainId,
+    accountId,
+    operation: {
+      // @ts-expect-error preserved from original route
+      destination: buildPaymentDestination(destinationType, input),
+      amount: buildPaymentAmount(paymentType, amount, input) as string,
+      type: "Payment",
+    },
     description: description || "Payment",
     customProperties: { property1: "flo" },
   });
-
-  return proposeIntent(request);
 }
 
 export async function proposeReleaseTransfers(

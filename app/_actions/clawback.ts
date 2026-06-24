@@ -4,15 +4,9 @@ import { convertStringToHex } from "xrpl";
 import type { Core_ProposeIntentBody } from "@florent-uzio/custody";
 
 import {
-  getAccountLedgerId,
-  getCurrentUser,
-  proposeIntent,
+  proposeXrplTransaction,
   type ProposeIntentResult,
 } from "@/app/lib/custody";
-import {
-  buildProposeIntent,
-  buildTransactionOrderPayload,
-} from "@/app/lib/intent-builder";
 
 // Derive the Clawback operation shape from the SDK rather than redeclaring it.
 type TxOrderPayload = Extract<
@@ -83,8 +77,6 @@ export async function clawback(
   const normalizedCurrency = normalizeCurrency(currency);
   validateHolder(holder);
 
-  const currentUser = await getCurrentUser(domainId);
-  const ledgerId = await getAccountLedgerId(domainId, accountId);
   const props = customProperties ?? { description: "Clawback" };
 
   const operation: ClawbackOperation = {
@@ -94,20 +86,12 @@ export async function clawback(
     value: String(value),
   };
 
-  const request = buildProposeIntent({
-    author: { id: currentUser.userId, domainId: currentUser.domainId },
-    targetDomainId: domainId,
-    payload: buildTransactionOrderPayload({
-      ledgerId,
-      accountId,
-      feePriority: "Low",
-      operation,
-      description: "Clawback",
-      customProperties: props,
-    }),
+  return proposeXrplTransaction({
+    domainId,
+    accountId,
+    feePriority: "Low",
+    operation,
     description: "Clawback",
     customProperties: props,
   });
-
-  return proposeIntent(request);
 }

@@ -1,15 +1,9 @@
 "use server";
 
 import {
-  getAccountLedgerId,
-  getCurrentUser,
-  proposeIntent,
+  proposeXrplTransaction,
   type ProposeIntentResult,
 } from "@/app/lib/custody";
-import {
-  buildProposeIntent,
-  buildTransactionOrderPayload,
-} from "@/app/lib/intent-builder";
 
 export type MptCreateInput = {
   domainId: string;
@@ -54,33 +48,24 @@ export async function mptCreate(input: MptCreateInput): Promise<ProposeIntentRes
   if (!accountId) throw new Error("accountId is required");
   if (!domainId) throw new Error("domainId is required");
 
-  const currentUser = await getCurrentUser(domainId);
-  const ledgerId = await getAccountLedgerId(domainId, accountId);
-
-  const request = buildProposeIntent({
-    author: { id: currentUser.userId, domainId },
-    targetDomainId: domainId,
-    payload: buildTransactionOrderPayload({
-      ledgerId,
-      accountId,
-      // SDK's flags union is stricter than the demo's free-form input;
-      // matching the original route's `body: any` posture.
-      operation: {
-        type: "MPTokenIssuanceCreate",
-        ...(assetScale !== undefined && { assetScale }),
-        ...(transferFee !== undefined && transferFee > 0 && { transferFee }),
-        ...(maximumAmount && { maximumAmount: String(maximumAmount) }),
-        ...(flags && flags.length > 0 && { flags }),
-        ...(metadata && { metadata }),
-      } as never,
-      description: "MPT Issuance Create",
-      customProperties: { property1: "mpt-create" },
-    }),
+  return proposeXrplTransaction({
+    domainId,
+    accountId,
+    // SDK's flags union is stricter than the demo's free-form input;
+    // matching the original route's `body: any` posture.
+    operation: {
+      type: "MPTokenIssuanceCreate",
+      ...(assetScale !== undefined && { assetScale }),
+      ...(transferFee !== undefined && transferFee > 0 && { transferFee }),
+      ...(maximumAmount && { maximumAmount: String(maximumAmount) }),
+      ...(flags && flags.length > 0 && { flags }),
+      ...(metadata && { metadata }),
+    } as never,
     description: "Create new MPT Issuance",
     customProperties: { property1: "mpt-issuance-create" },
+    payloadDescription: "MPT Issuance Create",
+    payloadCustomProperties: { property1: "mpt-create" },
   });
-
-  return proposeIntent(request);
 }
 
 export async function mptAuthorize(
@@ -91,28 +76,18 @@ export async function mptAuthorize(
   if (!issuanceId) throw new Error("issuanceId is required");
   if (!accountId) throw new Error("accountId is required");
 
-  const currentUser = await getCurrentUser(domainId);
-  const ledgerId = await getAccountLedgerId(domainId, accountId);
-
-  const request = buildProposeIntent({
-    author: { id: currentUser.userId, domainId: currentUser.domainId },
-    targetDomainId: currentUser.domainId,
-    payload: buildTransactionOrderPayload({
-      ledgerId,
-      accountId,
-      operation: {
-        type: "MPTokenAuthorize",
-        tokenIdentifier: { type: "MPTokenIssuanceId", issuanceId },
-        flags: [],
-      },
-      description: "Test MPT Authorize",
-      customProperties: { property1: "flo" },
-    }),
+  return proposeXrplTransaction({
+    domainId,
+    accountId,
+    operation: {
+      type: "MPTokenAuthorize",
+      tokenIdentifier: { type: "MPTokenIssuanceId", issuanceId },
+      flags: [],
+    },
     description: "Transfer order creation intent",
     customProperties: { property1: "flo" },
+    payloadDescription: "Test MPT Authorize",
   });
-
-  return proposeIntent(request);
 }
 
 export async function mptDestroy(input: MptDestroyInput): Promise<ProposeIntentResult> {
@@ -121,29 +96,18 @@ export async function mptDestroy(input: MptDestroyInput): Promise<ProposeIntentR
   if (!domainId) throw new Error("domainId is required");
   if (!issuanceId) throw new Error("issuanceId is required");
 
-  const [ledgerId, currentUser] = await Promise.all([
-    getAccountLedgerId(domainId, accountId),
-    getCurrentUser(domainId),
-  ]);
-
-  const request = buildProposeIntent({
-    author: { id: currentUser.userId, domainId },
-    targetDomainId: domainId,
-    payload: buildTransactionOrderPayload({
-      ledgerId,
-      accountId,
-      operation: {
-        type: "MPTokenIssuanceDestroy",
-        tokenIdentifier: { type: "MPTokenIssuanceId", issuanceId },
-      },
-      description: "MPT Issuance Destroy",
-      customProperties: { property1: "mpt-destroy" },
-    }),
+  return proposeXrplTransaction({
+    domainId,
+    accountId,
+    operation: {
+      type: "MPTokenIssuanceDestroy",
+      tokenIdentifier: { type: "MPTokenIssuanceId", issuanceId },
+    },
     description: "Destroy MPT Issuance",
     customProperties: { property1: "mpt-issuance-destroy" },
+    payloadDescription: "MPT Issuance Destroy",
+    payloadCustomProperties: { property1: "mpt-destroy" },
   });
-
-  return proposeIntent(request);
 }
 
 export async function mptSet(input: MptSetInput): Promise<ProposeIntentResult> {
@@ -156,29 +120,20 @@ export async function mptSet(input: MptSetInput): Promise<ProposeIntentResult> {
 
   const sdkFlags: ("tfMPTLock" | "tfMPTUnlock")[] =
     flags === 1 ? ["tfMPTLock"] : ["tfMPTUnlock"];
-  const [ledgerId, currentUser] = await Promise.all([
-    getAccountLedgerId(domainId, accountId),
-    getCurrentUser(domainId),
-  ]);
+  const label = flags === 1 ? "Lock" : "Unlock";
 
-  const request = buildProposeIntent({
-    author: { id: currentUser.userId, domainId },
-    targetDomainId: domainId,
-    payload: buildTransactionOrderPayload({
-      ledgerId,
-      accountId,
-      operation: {
-        type: "MPTokenIssuanceSet",
-        tokenIdentifier: { type: "MPTokenIssuanceId", issuanceId },
-        flags: sdkFlags,
-        ...(holder && { holder }),
-      } as never,
-      description: `MPT Issuance Set - ${flags === 1 ? "Lock" : "Unlock"}`,
-      customProperties: { property1: "mpt-set" },
-    }),
-    description: `Set MPT Issuance - ${flags === 1 ? "Lock" : "Unlock"}`,
+  return proposeXrplTransaction({
+    domainId,
+    accountId,
+    operation: {
+      type: "MPTokenIssuanceSet",
+      tokenIdentifier: { type: "MPTokenIssuanceId", issuanceId },
+      flags: sdkFlags,
+      ...(holder && { holder }),
+    } as never,
+    description: `Set MPT Issuance - ${label}`,
     customProperties: { property1: "mpt-issuance-set" },
+    payloadDescription: `MPT Issuance Set - ${label}`,
+    payloadCustomProperties: { property1: "mpt-set" },
   });
-
-  return proposeIntent(request);
 }
