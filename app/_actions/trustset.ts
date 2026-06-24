@@ -3,15 +3,9 @@
 import { convertStringToHex } from "xrpl";
 
 import {
-  getAccountLedgerId,
-  getCurrentUser,
-  proposeIntent,
+  proposeXrplTransaction,
   type ProposeIntentResult,
 } from "@/app/lib/custody";
-import {
-  buildProposeIntent,
-  buildTransactionOrderPayload,
-} from "@/app/lib/intent-builder";
 
 export type TrustSetInput = {
   domainId: string;
@@ -49,40 +43,29 @@ export async function trustSet(
   if (!currency || !issuer) throw new Error("currency and issuer are required");
   if (value === undefined || value === "") throw new Error("value is required");
 
-  const [ledgerId, currentUser] = await Promise.all([
-    getAccountLedgerId(domainId, accountId),
-    getCurrentUser(domainId),
-  ]);
   const trustlineProperties = customProperties || {
     description: "Create a Trustline",
   };
 
-  const request = buildProposeIntent({
-    author: { id: currentUser.userId, domainId },
-    targetDomainId: domainId,
-    payload: buildTransactionOrderPayload({
-      ledgerId,
-      accountId,
-      feePriority: "Low",
-      operation: {
-        type: "TrustSet",
-        flags: (flags || []) as never,
-        limitAmount: {
-          currency: {
-            type: "Currency",
-            code: toCurrencyHex(currency),
-            issuer,
-          },
-          value: String(value),
+  return proposeXrplTransaction({
+    domainId,
+    accountId,
+    feePriority: "Low",
+    operation: {
+      type: "TrustSet",
+      flags: (flags || []) as never,
+      limitAmount: {
+        currency: {
+          type: "Currency",
+          code: toCurrencyHex(currency),
+          issuer,
         },
-        ...(enableRippling !== undefined && { enableRippling }),
+        value: String(value),
       },
-      description: "TrustSet",
-      customProperties: trustlineProperties,
-    }),
+      ...(enableRippling !== undefined && { enableRippling }),
+    },
     description: "Create TrustSet",
     customProperties: trustlineProperties,
+    payloadDescription: "TrustSet",
   });
-
-  return proposeIntent(request);
 }

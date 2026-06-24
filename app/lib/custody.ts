@@ -5,6 +5,11 @@ import {
   type Core_ProposeIntentBody,
 } from "@florent-uzio/custody";
 import { getConfigValue } from "./config";
+import {
+  buildProposeIntent,
+  buildTransactionOrderPayload,
+  type BuildTransactionOrderArgs,
+} from "./intent-builder";
 
 export type ProposeIntentResult = {
   request: Core_ProposeIntentBody;
@@ -17,6 +22,60 @@ export async function proposeIntent(
 ): Promise<ProposeIntentResult> {
   const response = await getCustodySDK().intents.propose(request);
   return { request, response, requestId: response.requestId };
+}
+
+export type ProposeXrplTransactionArgs = {
+  domainId: string;
+  accountId: string;
+  operation: BuildTransactionOrderArgs["operation"];
+  feePriority?: BuildTransactionOrderArgs["feePriority"];
+  /** Request-level description (`request.description`). */
+  description?: string;
+  /** Request-level custom properties (`request.customProperties`). */
+  customProperties?: BuildTransactionOrderArgs["customProperties"];
+  /** Payload-level description; defaults to `description`. */
+  payloadDescription?: string;
+  /** Payload-level custom properties; defaults to `customProperties`. */
+  payloadCustomProperties?: BuildTransactionOrderArgs["customProperties"];
+};
+
+/**
+ * Shared builder for XRPL `v0_CreateTransactionOrder` intents. Resolves the
+ * current user + account ledger, assembles the propose envelope, and submits
+ * it — collapsing the boilerplate that every XRPL operation action repeated.
+ *
+ * Note: `author.domainId` and `targetDomainId` both use the input `domainId`;
+ * since `getCurrentUser(domainId)` returns the matching domain, that domain's
+ * id always equals the input `domainId`.
+ */
+export async function proposeXrplTransaction(
+  args: ProposeXrplTransactionArgs,
+): Promise<ProposeIntentResult> {
+  const { domainId, accountId, operation } = args;
+  if (!domainId) throw new Error("domainId is required");
+  if (!accountId) throw new Error("accountId is required");
+
+  const [currentUser, ledgerId] = await Promise.all([
+    getCurrentUser(domainId),
+    getAccountLedgerId(domainId, accountId),
+  ]);
+
+  const request = buildProposeIntent({
+    author: { id: currentUser.userId, domainId },
+    targetDomainId: domainId,
+    payload: buildTransactionOrderPayload({
+      ledgerId,
+      accountId,
+      feePriority: args.feePriority,
+      operation,
+      description: args.payloadDescription ?? args.description,
+      customProperties: args.payloadCustomProperties ?? args.customProperties,
+    }),
+    description: args.description,
+    customProperties: args.customProperties,
+  });
+
+  return proposeIntent(request);
 }
 
 let custodyInstance: RippleCustody | null = null;

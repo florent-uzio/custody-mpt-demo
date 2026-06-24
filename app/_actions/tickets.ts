@@ -1,15 +1,9 @@
 "use server";
 
 import {
-  getAccountLedgerId,
-  getCurrentUser,
-  proposeIntent,
+  proposeXrplTransaction,
   type ProposeIntentResult,
 } from "@/app/lib/custody";
-import {
-  buildProposeIntent,
-  buildTransactionOrderPayload,
-} from "@/app/lib/intent-builder";
 import {
   MAX_TICKET_COUNT,
   MIN_TICKET_COUNT,
@@ -33,32 +27,20 @@ export async function ticketCreate(
     );
   }
 
-  const [ledgerId, currentUser] = await Promise.all([
-    getAccountLedgerId(domainId, accountId),
-    getCurrentUser(domainId),
-  ]);
-
   const ticketProperties = customProperties ?? {
     description: "Create Tickets",
   };
 
-  const request = buildProposeIntent({
-    author: { id: currentUser.userId, domainId },
-    targetDomainId: domainId,
-    payload: buildTransactionOrderPayload({
-      ledgerId,
-      accountId,
-      feePriority: "Low",
-      operation: {
-        type: "TicketCreate",
-        ticketCount,
-      },
-      description: "TicketCreate",
-      customProperties: ticketProperties,
-    }),
+  return proposeXrplTransaction({
+    domainId,
+    accountId,
+    feePriority: "Low",
+    operation: {
+      type: "TicketCreate",
+      ticketCount,
+    },
     description: "Create Tickets",
     customProperties: ticketProperties,
+    payloadDescription: "TicketCreate",
   });
-
-  return proposeIntent(request);
 }
