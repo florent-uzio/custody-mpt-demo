@@ -39,7 +39,7 @@ export function UserEditForm({
     initial.loginIds ? initial.loginIds.map((l) => ({ ...l })) : [],
   );
 
-  const customRoleIsValid = /^[a-z0-9-]+$/.test(customRoleInput.trim());
+  const customRoleIsValid = /^[A-Za-z0-9-]+$/.test(customRoleInput.trim());
   const customRoles = useMemo(
     () =>
       selectedRoles.filter((r) => !AVAILABLE_ROLES.some((ar) => ar.id === r)),
@@ -55,8 +55,8 @@ export function UserEditForm({
   };
 
   const addCustomRole = (raw: string): string[] => {
-    const value = raw.toLowerCase().trim();
-    if (!value || !/^[a-z0-9-]+$/.test(value)) return selectedRoles;
+    const value = raw.trim();
+    if (!value || !/^[A-Za-z0-9-]+$/.test(value)) return selectedRoles;
     if (selectedRoles.includes(value)) {
       setCustomRoleInput("");
       return selectedRoles;
@@ -222,7 +222,7 @@ export function UserEditForm({
                   }
                 }}
                 placeholder="custom-role"
-                pattern="[a-z0-9\-]+"
+                pattern="[A-Za-z0-9\-]+"
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
               />
               <button
@@ -236,7 +236,7 @@ export function UserEditForm({
             </div>
             {customRoleInput.trim() && !customRoleIsValid && (
               <p className="mt-2 text-xs text-red-600">
-                Use lowercase letters, digits, and hyphens only.
+                Use letters, digits, and hyphens only.
               </p>
             )}
             {customRoles.length > 0 && (
