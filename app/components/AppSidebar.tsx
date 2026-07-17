@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { CopyButton } from "./CopyButton";
+import packageJson from "../../package.json";
+
+const CUSTODY_SDK_VERSION = packageJson.dependencies["@florent-uzio/custody"];
 
 export interface NavItem {
   id: string;
@@ -117,6 +120,9 @@ export function AppSidebar({ open, onOpenChange }: AppSidebarProps) {
               </h2>
               <p className="text-xs text-gray-500 group-hover:text-blue-600 transition-colors">
                 Operations Dashboard
+              </p>
+              <p className="text-xs italic text-gray-400">
+                custody.js {CUSTODY_SDK_VERSION}
               </p>
             </div>
           </Link>
