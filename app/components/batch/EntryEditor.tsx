@@ -1,18 +1,49 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { BatchEntryDraft } from "../../utils/batchSessionStorage";
+import type {
+  BatchEntryDraft,
+  BatchOperationDraft,
+} from "../../utils/batchSessionStorage";
 import { useWorkbench } from "./WorkbenchContext";
 import { AccountSelect } from "./AccountSelect";
+import { ConfidentialMPTForm } from "./ConfidentialMPTForm";
 import { PaymentForm } from "./PaymentForm";
 import { RawOpEditor } from "./RawOpEditor";
 import { TicketPickerSheet } from "./TicketPickerSheet";
+
+const OPERATION_KINDS: { kind: BatchOperationDraft["kind"]; label: string }[] = [
+  { kind: "payment", label: "Payment" },
+  { kind: "cmptConvert", label: "cMPT Convert" },
+  { kind: "cmptConvertBack", label: "cMPT Convert Back" },
+  { kind: "cmptMergeInbox", label: "cMPT Merge Inbox" },
+  { kind: "cmptSend", label: "cMPT Send" },
+  { kind: "raw", label: "Raw operation" },
+];
+
+/** A blank draft for a newly selected operation kind. */
+function emptyOperation(kind: BatchOperationDraft["kind"]): BatchOperationDraft {
+  if (kind === "payment") {
+    return {
+      kind: "payment",
+      payment: { paymentType: "XRP", destinationType: "Address", amount: "" },
+    };
+  }
+  if (kind === "raw") return { kind: "raw", json: "" };
+  return {
+    kind,
+    cmpt: { issuanceId: "", ...(kind === "cmptSend" && { destinationType: "Address" }) },
+  };
+}
 
 export function EntryEditor({ entry, index }: { entry: BatchEntryDraft; index: number }) {
   const { session, domainId, actions, updateEntry, removeEntry } = useWorkbench();
   const isSubmitter =
     !!entry.accountId && entry.accountId === session.submitterAccountId;
   const usesTicket = entry.sequencingType === "Ticket";
+  // Aliased so the discriminated-union narrowing below survives into the
+  // `onChange` closures.
+  const op = entry.operation;
   const [ticketSheetOpen, setTicketSheetOpen] = useState(false);
 
   // Tickets already assigned to other entries on the same address — a ticket can
@@ -148,45 +179,53 @@ export function EntryEditor({ entry, index }: { entry: BatchEntryDraft; index: n
         />
       )}
 
-      <div className="flex items-center gap-4">
-        {(["payment", "raw"] as const).map((kind) => (
-          <label key={kind} className="flex items-center gap-1.5 text-sm text-gray-700">
-            <input
-              type="radio"
-              checked={entry.operation.kind === kind}
-              onChange={() =>
-                updateEntry(entry.id, {
-                  operation:
-                    kind === "payment"
-                      ? {
-                          kind: "payment",
-                          payment: {
-                            paymentType: "XRP",
-                            destinationType: "Address",
-                            amount: "",
-                          },
-                        }
-                      : { kind: "raw", json: "" },
-                })
-              }
-            />
-            {kind === "payment" ? "Payment" : "Raw operation"}
-          </label>
-        ))}
+      <div>
+        <label className="block text-xs font-medium text-gray-500 mb-1">
+          Operation
+        </label>
+        <select
+          value={op.kind}
+          onChange={(e) =>
+            updateEntry(entry.id, {
+              operation: emptyOperation(
+                e.target.value as BatchOperationDraft["kind"],
+              ),
+            })
+          }
+          className="w-full sm:w-64 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+        >
+          {OPERATION_KINDS.map(({ kind, label }) => (
+            <option key={kind} value={kind}>
+              {label}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {entry.operation.kind === "payment" ? (
+      {op.kind === "payment" && (
         <PaymentForm
-          value={entry.operation.payment}
+          value={op.payment}
           onChange={(payment) =>
             updateEntry(entry.id, { operation: { kind: "payment", payment } })
           }
         />
-      ) : (
+      )}
+
+      {op.kind === "raw" && (
         <RawOpEditor
-          value={entry.operation.json}
+          value={op.json}
           onChange={(json) =>
             updateEntry(entry.id, { operation: { kind: "raw", json } })
+          }
+        />
+      )}
+
+      {op.kind !== "payment" && op.kind !== "raw" && (
+        <ConfidentialMPTForm
+          kind={op.kind}
+          value={op.cmpt}
+          onChange={(cmpt) =>
+            updateEntry(entry.id, { operation: { kind: op.kind, cmpt } })
           }
         />
       )}

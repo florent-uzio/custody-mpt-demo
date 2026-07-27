@@ -29,7 +29,15 @@ Pages are grouped the same way as the sidebar.
 - **Payment**, **TrustSet**, **AccountSet**, **Clawback**
 - **MPT Create / Authorize / Set / Destroy**
 - **Tickets**: Reserve sequence numbers with `TicketCreate`
-- **Batch**: Compose and submit a batch of inner transactions
+- **Batch**: Compose and submit a batch of inner transactions — typed Payment and
+  ConfidentialMPT operations, or raw xrpl.js JSON
+
+**Confidential MPT**
+- **cMPT Convert / Convert Back**: Move a balance between the public and confidential sides
+- **cMPT Merge Inbox**: Fold received confidential transfers into the spendable balance
+- **cMPT Send**: Confidential transfer — plaintext amount, or a pre-computed proof bundle
+- **cMPT Compute**: `initiateCmptCompute` / `getCmptComputeStatus`, each with an `…AndWait` variant
+- **Provision ElGamal**: `v0_ProvisionElGamalKeyPair` — the per-account, per-ledger prerequisite
 
 **Tools & setup**
 - **Keypair Generator** and **JWT Token** helpers
