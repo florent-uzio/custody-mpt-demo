@@ -105,18 +105,58 @@ changing `DEFAULT_LEDGER_ID` updates those pages without a reload.
 
 ## Project Structure
 
+The app uses the Next.js App Router. Every custody SDK call goes through a
+Server Action in `app/_actions/` — there are no `app/api/` routes.
+
 ```
 app/
-  ├── api/
-  │   └── requests/
-  │       └── state/
-  │           └── route.ts      # API route for request state queries
+  ├── _actions/                 # "use server" — the only place the custody SDK is called
+  │   ├── accounts.ts           #   one module per resource (accounts, intents,
+  │   ├── ledgers.ts            #   tickers, transactions, users, vaults, …)
+  │   ├── config.ts             #   runtime config read/write
+  │   └── …
+  ├── lib/                      # Isomorphic helpers, no React
+  │   ├── custody.ts            #   SDK singleton + resetCustodySDK()
+  │   ├── config.ts             #   config keys, .env + in-memory overrides
+  │   ├── ledgers.ts            #   ledger list / default resolution
+  │   ├── batch-builder.ts
+  │   ├── intent-builder.ts
+  │   └── token-amount.ts
+  ├── hooks/                    # react-query wrappers over the server actions
+  │   ├── useConfig.ts
+  │   ├── useLedgerConfig.ts
+  │   └── useSubmit*.ts         #   one mutation hook per intent type
   ├── components/
-  │   ├── JsonViewer.tsx        # Component for displaying JSON responses
-  │   └── RequestsTab.tsx       # Requests query tab
-  ├── layout.tsx                 # Root layout
-  ├── page.tsx                  # Main page component
-  └── globals.css                # Tailwind CSS styles
+  │   ├── layout/               #   Page kit: Page, PageHeader, PageHero,
+  │   │                         #   PageContainer, SectionCard, SubmitButton, …
+  │   ├── batch/                #   Feature-scoped component folders
+  │   ├── mpt-create/
+  │   ├── transaction/
+  │   ├── AppSidebar.tsx
+  │   ├── JsonViewer.tsx
+  │   └── CopyButton.tsx
+  ├── contexts/                 # DomainContext (default domain), SidebarContext
+  ├── providers/                # QueryProvider — react-query client + cache seeding
+  ├── utils/                    # batchSessionStorage.ts
+  │
+  │                             # Route groups (each a folder with page.tsx)
+  ├── accounts/                 #   list, [id], [id]/manifests, new
+  ├── domains/  users/          #   list, [id], new / invite, me
+  ├── intents/  requests/       #   list, [id]
+  ├── transactions/  transfers/ #   list, [id]
+  ├── tickers/                  #   list, [id], [id]/edit, new
+  ├── policies/  channels/      #   list, [id], [id]/edit, new
+  ├── mpt/                      #   authorize, create, destroy, set
+  ├── payment/  trustset/       #   XRPL operation forms
+  ├── accountset/  clawback/    #
+  ├── batch/  tickets/          #
+  ├── config/                   #   runtime configuration page
+  ├── genesis/  jwt-token/      #   tooling pages
+  ├── keypair/                  #
+  │
+  ├── layout.tsx                # Root layout — resolves ledger config server-side
+  ├── page.tsx                  # Dashboard
+  └── globals.css               # Tailwind CSS styles
 ```
 
 ## Technologies
