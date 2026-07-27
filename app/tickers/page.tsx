@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { GetTickersQueryParams, XrplLedgerId } from "@florent-uzio/custody";
 import { useTickersList } from "../hooks/useTickers";
+import { useLedgerConfig } from "../hooks/useLedgerConfig";
 import { TickersFilters } from "./components/TickersFilters";
 import { TickersTable } from "./components/TickersTable";
 import { JsonViewer } from "../components/JsonViewer";
@@ -21,8 +22,6 @@ type Kind = NonNullable<Params["kind"]>;
 type ValidationStatus = NonNullable<Params["validationStatus"]>;
 type LockStatus = NonNullable<Params["lock"]>[number];
 
-const DEFAULT_LEDGER_ID: XrplLedgerId = "xrpl-testnet-august-2024";
-
 function parseList(s: string): string[] {
   return s
     .split(",")
@@ -31,7 +30,11 @@ function parseList(s: string): string[] {
 }
 
 export default function TickersPage() {
-  const [ledgerId, setLedgerId] = useState<XrplLedgerId>(DEFAULT_LEDGER_ID);
+  const { defaultLedgerId } = useLedgerConfig();
+  // Undefined until the user picks one, so the configured default keeps
+  // applying if it changes on the Config page.
+  const [selectedLedgerId, setLedgerId] = useState<XrplLedgerId>();
+  const ledgerId = selectedLedgerId ?? defaultLedgerId;
   const [kind, setKind] = useState<Kind | undefined>(undefined);
   const [validationStatus, setValidationStatus] = useState<
     ValidationStatus | undefined

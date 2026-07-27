@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useDefaultDomain } from "../../contexts/DomainContext";
 import { CopyButton } from "../../components/CopyButton";
 import { useSubmitCreateAccount } from "../../hooks/useSubmitCreateAccount";
+import { useLedgerConfig } from "../../hooks/useLedgerConfig";
 import { listVaults } from "../../_actions/vaults";
 import {
   Page,
@@ -56,36 +57,63 @@ const KEY_STRATEGIES = [
   },
 ] as const;
 
-const AVAILABLE_LEDGERS = [
-  {
-    id: "xrpl-devnet",
+// Presentation for the ledgers we know about. Which cards actually render is
+// driven by XRPL_LEDGER_IDS — anything configured without an entry here falls
+// back to a generic card.
+const LEDGER_METADATA: Record<
+  string,
+  { label: string; description: string; network: string }
+> = {
+  "xrpl-devnet": {
     label: "XRPL Devnet",
     description: "XRP Ledger Dev Network",
     network: "devnet",
   },
-  {
-    id: "xrpl-repo-sandbox",
+  "xrpl-custody-devnet": {
+    label: "XRPL Custody Devnet",
+    description: "XRP Ledger Custody Dev Network",
+    network: "devnet",
+  },
+  "xrpl-repo-sandbox": {
     label: "XRPL Sandbox",
     description: "XRP Ledger Sandbox Network",
     network: "sandbox",
   },
-  {
-    id: "xrpl-testnet-august-2024",
+  "xrpl-testnet-august-2024": {
     label: "XRPL Testnet",
     description: "XRP Ledger Test Network",
     network: "testnet",
   },
-  {
-    id: "xrpl-mainnet",
+  xrpl: {
     label: "XRPL Mainnet",
     description: "XRP Ledger Main Network",
     network: "mainnet",
   },
-];
+  "xrpl-mainnet": {
+    label: "XRPL Mainnet",
+    description: "XRP Ledger Main Network",
+    network: "mainnet",
+  },
+};
 
 export default function NewAccountPage() {
   const { defaultDomainId } = useDefaultDomain();
+  const { ledgerIds, defaultLedgerId } = useLedgerConfig();
   const { mutate, isPending, data: response, error } = useSubmitCreateAccount();
+
+  // One card per configured ledger, in configured order.
+  const ledgerOptions = useMemo(
+    () =>
+      ledgerIds.map((id) => ({
+        id,
+        ...(LEDGER_METADATA[id] ?? {
+          label: id,
+          description: "Configured in XRPL_LEDGER_IDS",
+          network: "custom",
+        }),
+      })),
+    [ledgerIds],
+  );
 
   // Vaults state
   const [vaults, setVaults] = useState<Vault[]>([]);
@@ -99,7 +127,7 @@ export default function NewAccountPage() {
     "VaultSoft" | "VaultHard" | "Random"
   >("VaultSoft");
   const [selectedLedgers, setSelectedLedgers] = useState<string[]>([
-    "xrpl-devnet",
+    defaultLedgerId,
   ]);
   const [lock, setLock] = useState<"Unlocked" | "Locked">("Unlocked");
   const [description, setDescription] = useState("");
@@ -598,7 +626,7 @@ export default function NewAccountPage() {
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {AVAILABLE_LEDGERS.map((ledger) => (
+                {ledgerOptions.map((ledger) => (
                   <label
                     key={ledger.id}
                     className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
@@ -624,7 +652,9 @@ export default function NewAccountPage() {
                               ? "bg-green-100 text-green-700"
                               : ledger.network === "sandbox"
                                 ? "bg-blue-100 text-blue-700"
-                                : "bg-yellow-100 text-yellow-700"
+                                : ledger.network === "custom"
+                                  ? "bg-gray-100 text-gray-600"
+                                  : "bg-yellow-100 text-yellow-700"
                           }`}
                         >
                           {ledger.network}
@@ -681,12 +711,12 @@ export default function NewAccountPage() {
 
                 {/* Show custom ledgers added */}
                 {selectedLedgers.filter(
-                  (l) => !AVAILABLE_LEDGERS.find((al) => al.id === l),
+                  (l) => !ledgerOptions.find((al) => al.id === l),
                 ).length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {selectedLedgers
                       .filter(
-                        (l) => !AVAILABLE_LEDGERS.find((al) => al.id === l),
+                        (l) => !ledgerOptions.find((al) => al.id === l),
                       )
                       .map((ledgerId) => (
                         <span

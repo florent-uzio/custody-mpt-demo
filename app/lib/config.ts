@@ -3,7 +3,9 @@ export type ConfigKey =
   | "API_URL"
   | "PRIVATE_KEY"
   | "PUBLIC_KEY"
-  | "XRPL_WSS_URL";
+  | "XRPL_WSS_URL"
+  | "XRPL_LEDGER_IDS"
+  | "DEFAULT_LEDGER_ID";
 
 export const CONFIG_KEYS: ConfigKey[] = [
   "AUTH_URL",
@@ -11,6 +13,8 @@ export const CONFIG_KEYS: ConfigKey[] = [
   "PRIVATE_KEY",
   "PUBLIC_KEY",
   "XRPL_WSS_URL",
+  "XRPL_LEDGER_IDS",
+  "DEFAULT_LEDGER_ID",
 ];
 
 export interface ConfigEntry {

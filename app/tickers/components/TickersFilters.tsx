@@ -1,17 +1,11 @@
 import { GetTickersQueryParams, XrplLedgerId } from "@florent-uzio/custody";
+import { useLedgerConfig } from "../../hooks/useLedgerConfig";
 
 type Params = NonNullable<GetTickersQueryParams>;
 type SortBy = NonNullable<Params["sortBy"]>;
 type Kind = NonNullable<Params["kind"]>;
 type ValidationStatus = NonNullable<Params["validationStatus"]>;
 type LockStatus = NonNullable<Params["lock"]>[number];
-
-// Mirrors the transactions page ledger select (typed against the SDK union).
-const XRPL_LEDGER_IDS: readonly XrplLedgerId[] = [
-  "xrpl",
-  "xrpl-testnet-august-2024",
-  "xrpl-devnet",
-];
 
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "name", label: "Name" },
@@ -64,6 +58,8 @@ export function TickersFilters({
   limit,
   onLimitChange,
 }: Props) {
+  const { ledgerIds } = useLedgerConfig();
+
   function toggleLock(value: LockStatus) {
     onLockChange(
       lock.includes(value) ? lock.filter((l) => l !== value) : [...lock, value],
@@ -82,7 +78,7 @@ export function TickersFilters({
           onChange={(e) => onLedgerIdChange(e.target.value as XrplLedgerId)}
           className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          {XRPL_LEDGER_IDS.map((id) => (
+          {ledgerIds.map((id) => (
             <option key={id} value={id}>
               {id}
             </option>

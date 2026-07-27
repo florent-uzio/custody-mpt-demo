@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useConfig, useConfigMutation } from "../hooks/useConfig";
 import type { ConfigKey } from "../lib/config";
+import { BUILT_IN_XRPL_LEDGER_IDS, resolveLedgerConfig } from "../lib/ledgers";
 import {
   Page,
   PageHeader,
@@ -17,6 +18,8 @@ const FIELDS: {
   required: boolean;
   sensitive: boolean;
   description: string;
+  /** Renders a ledger dropdown instead of a free-text input. */
+  ledgerSelect?: boolean;
 }[] = [
   {
     key: "AUTH_URL",
@@ -54,6 +57,22 @@ const FIELDS: {
     description:
       "WebSocket URL of the XRPL node used to autofill Batch inner sequences (e.g. wss://s.devnet.rippletest.net:51233). Must point at the same network as the accounts you batch.",
   },
+  {
+    key: "XRPL_LEDGER_IDS",
+    label: "XRPL Ledger IDs",
+    required: false,
+    sensitive: false,
+    description: `Comma-separated list of ledger IDs offered in every ledger picker. Leave empty to use the built-in list (${BUILT_IN_XRPL_LEDGER_IDS.join(", ")}).`,
+  },
+  {
+    key: "DEFAULT_LEDGER_ID",
+    label: "Default Ledger ID",
+    required: false,
+    sensitive: false,
+    ledgerSelect: true,
+    description:
+      "Ledger preselected in the filters and forms across the app. Options track the list above as you edit it.",
+  },
 ];
 
 function SourceBadge({ source }: { source: "override" | "env" | "empty" }) {
@@ -76,7 +95,7 @@ function SourceBadge({ source }: { source: "override" | "env" | "empty" }) {
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded bg-gray-100 text-gray-500 border border-gray-200">
       <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-      Not set
+      Not set in .env
     </span>
   );
 }
@@ -91,6 +110,8 @@ export default function ConfigPage() {
     PRIVATE_KEY: "",
     PUBLIC_KEY: "",
     XRPL_WSS_URL: "",
+    XRPL_LEDGER_IDS: "",
+    DEFAULT_LEDGER_ID: "",
   });
   const [visibleFields, setVisibleFields] = useState<Set<ConfigKey>>(new Set());
   const [successMessage, setSuccessMessage] = useState("");
@@ -103,6 +124,8 @@ export default function ConfigPage() {
         PRIVATE_KEY: config.PRIVATE_KEY.value,
         PUBLIC_KEY: config.PUBLIC_KEY.value,
         XRPL_WSS_URL: config.XRPL_WSS_URL.value,
+        XRPL_LEDGER_IDS: config.XRPL_LEDGER_IDS.value,
+        DEFAULT_LEDGER_ID: config.DEFAULT_LEDGER_ID.value,
       });
     }
   }, [config]);
@@ -141,6 +164,13 @@ export default function ConfigPage() {
       return next;
     });
   };
+
+  // Options for the Default Ledger ID select track the list field as it's
+  // edited, so a newly typed ledger is selectable before saving.
+  const ledgerOptions = resolveLedgerConfig(
+    formValues.XRPL_LEDGER_IDS,
+    formValues.DEFAULT_LEDGER_ID,
+  ).ledgerIds;
 
   const hasOverrides =
     config &&
@@ -295,6 +325,27 @@ export default function ConfigPage() {
                           : undefined
                       }
                     />
+                  ) : field.ledgerSelect ? (
+                    <select
+                      id={`config-${field.key}`}
+                      value={formValues[field.key]}
+                      onChange={(e) =>
+                        setFormValues((prev) => ({
+                          ...prev,
+                          [field.key]: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors font-mono text-sm bg-white"
+                    >
+                      <option value="">
+                        (first in list — {ledgerOptions[0]})
+                      </option>
+                      {ledgerOptions.map((id) => (
+                        <option key={id} value={id}>
+                          {id}
+                        </option>
+                      ))}
+                    </select>
                   ) : (
                     <input
                       id={`config-${field.key}`}

@@ -465,3 +465,24 @@ Branch `feat/xrpl-accountset` (main untouched).
 - **Nav** — added `{ id: "accountset", label: "AccountSet", icon: "🔧", category: "XRPL", href: "/accountset" }` after TrustSet. (🔧 chosen so it doesn't collide with mpt-set's ⚙️.)
 - **Verified**: `npx tsc --noEmit` clean; `npm run build` "Compiled successfully" with `/accountset` prerendered static (○). Reverted the build's incidental `next-env.d.ts` edit.
 - **Pending (manual, needs live tenant + browser)**: set a Default Domain ID, pick an account, set/clear a flag and/or transfer rate, submit, and confirm the proposed-intent JSON in the API Response panel.
+
+---
+
+# Configurable ledger ID (`feat/configurable-ledger-id`)
+
+- [x] 1. Add `XRPL_LEDGER_IDS` + `DEFAULT_LEDGER_ID` config keys → verify: `getConfigSummary()` reports them.
+- [x] 2. Shared resolver in `app/lib/ledgers.ts` (built-in list incl. `xrpl-custody-devnet`) → verify: pure, isomorphic.
+- [x] 3. Server action + client hook, seeded from the root layout → verify: filters render the right ledger in SSR HTML.
+- [x] 4. Replace the three duplicated `XRPL_LEDGER_IDS` literals and every hardcoded default.
+- [x] 5. Config page: list text field + default dropdown.
+- [x] 6. `.env.example` documented.
+
+## Review
+
+- **Config** `app/lib/config.ts` — two new keys: `XRPL_LEDGER_IDS` (comma-separated picker options) and `DEFAULT_LEDGER_ID` (preselected value). Both flow through the existing override/env/empty machinery, so the Config page can override them at runtime.
+- **Resolver** `app/lib/ledgers.ts` — `BUILT_IN_XRPL_LEDGER_IDS` = `xrpl-testnet-august-2024, xrpl-devnet, xrpl-custody-devnet, xrpl`. Ordered so the fallback default (first entry) stays a test network, preserving the previous hardcoded default when nothing is configured. `resolveLedgerConfig(rawIds, rawDefault)` parses the list, falls back to built-ins when empty, and *prepends* a default that isn't in the list rather than silently resolving to a different ledger.
+- **Plumbing** `app/_actions/ledgers.ts` → `getLedgerConfig()`; `app/hooks/useLedgerConfig.ts` → `useLedgerConfig()` on query key `["ledger-config"]`. Deliberately separate from `getConfig` so the values reach every page without also shipping the key material. The root layout resolves it server-side and `QueryProvider` seeds the cache, so pickers are correct on the very first render (no flash, no throwaway fetch against the wrong ledger). `useConfigMutation` invalidates the key so Config-page saves propagate without a reload.
+- **Consumers** — deleted the three duplicated `XRPL_LEDGER_IDS` arrays (`TransactionsFilters`, `TickersFilters`, `TickerCreateForm`) and every hardcoded default. Pages hold `const [selectedLedgerId, setLedgerId] = useState<string>()` with `selectedLedgerId ?? defaultLedgerId`, so an unchosen filter keeps tracking the configured default. Also: `/accounts` prefills its Ledger ID filter, `/accounts/new` renders one card per configured ledger (curated label/description/badge where known, generic card otherwise) and preselects the default; the static "Ledger:" labels on `/payment` and `/mpt/authorize` now read the default.
+- **Verified** — `npx tsc --noEmit` introduces no new errors (the 7 in `app/requests/**` pre-date this branch; confirmed by stashing). `npm run build` compiles successfully. Dev-server smoke test: `/config /transactions /tickers /accounts /accounts/new /payment /mpt/authorize /tickers/new` all HTTP 200; `/transactions` renders all four options with `xrpl-testnet-august-2024` selected. Re-run with `XRPL_LEDGER_IDS="xrpl-custody-devnet,xrpl-devnet" DEFAULT_LEDGER_ID="xrpl-custody-devnet"` → the select showed exactly those two with `xrpl-custody-devnet` selected, and `/mpt/authorize` echoed it.
+- **Behaviour change to note** — `/accounts` previously listed accounts across all ledgers by default; it now filters to the default ledger (as requested). Its Ledger ID filter is a dropdown over the configured list; pick "All ledgers" for the old view.
+- **Pending (manual, browser)** — Config page: confirm the Default Ledger ID dropdown tracks edits to the list field live, and that saving updates the filters on other pages without a reload.

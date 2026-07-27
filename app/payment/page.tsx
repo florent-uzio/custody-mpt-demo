@@ -5,6 +5,7 @@ import { JsonViewer } from "../components/JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { useEndpoints } from "../hooks/useEndpoints";
 import { useDefaultDomain } from "../contexts/DomainContext";
+import { useLedgerConfig } from "../hooks/useLedgerConfig";
 import { useSubmitPayment } from "../hooks/useSubmitPayment";
 import {
   Page,
@@ -24,6 +25,7 @@ export default function PaymentPage() {
   const { accounts, loading: accountsLoading } = useAccounts();
   const { endpoints, loading: endpointsLoading } = useEndpoints();
   const { defaultDomainId } = useDefaultDomain();
+  const { defaultLedgerId } = useLedgerConfig();
   const { mutate, isPending, data: response, error } = useSubmitPayment();
 
   const [accountId, setAccountId] = useState("");
@@ -363,9 +365,7 @@ export default function PaymentPage() {
                 </div>
                 <div>
                   <span className="text-gray-600">Ledger:</span>
-                  <span className="ml-2 text-gray-800">
-                    xrpl-testnet-august-2024
-                  </span>
+                  <span className="ml-2 text-gray-800">{defaultLedgerId}</span>
                 </div>
                 <div>
                   <span className="text-gray-600">Fee Strategy:</span>
