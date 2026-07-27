@@ -95,7 +95,7 @@ function SourceBadge({ source }: { source: "override" | "env" | "empty" }) {
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded bg-gray-100 text-gray-500 border border-gray-200">
       <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-      Not set
+      Not set in .env
     </span>
   );
 }
