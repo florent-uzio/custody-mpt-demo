@@ -1,3 +1,107 @@
+# Confidential MPT (custody.js 2.13.0-beta.0)
+
+Branch: `feat/confidential-mpt`
+
+Four ConfidentialMPT XRPL operation pages, a `v0_ProvisionElGamalKeyPair` intent page,
+a cMPT-compute page (with/without wait), and first-class cMPT ops in the batch workbench.
+
+## Decisions (confirmed with user)
+
+1. **Send cryptographic fields** — plaintext `amount` by default (service derives the proofs);
+   an "Advanced" section accepts the full bundle. UI takes **hex** everywhere (what the compute
+   endpoint returns); the action converts the `cryptographicFields` members to base64 and leaves
+   the top-level `senderEncryptedBalance` as hex — matching the spec's per-field encoding.
+2. **Routes** — `/mpt/confidential/*` for the five cMPT pages, `/intents/provision-elgamal`
+   for the ElGamal intent. New "Confidential MPT" sidebar category.
+3. **Batch** — typed forms for all four cMPT operations alongside Payment/Raw.
+
+## Plan
+
+- [x] Branch from `main`, install `@florent-uzio/custody@2.13.0-beta.0`
+- [x] Map the SDK surface (`Core_XrplOperation_ConfidentialMPT*`, `Core_v0_ProvisionElGamalKeyPair`,
+      `accounts.initiateCmptCompute*`, `accounts.getCmptComputeStatus*`, the xrpl batch adapter)
+- [x] `app/lib/hex.ts` — `hexToBase64`, rejects odd-length / non-hex input
+- [x] `app/_actions/confidential-mpt.ts` — four `proposeXrplTransaction` actions
+- [x] `app/_actions/cmpt-compute.ts` — initiate / initiate+wait / status / status+wait
+- [x] `app/_actions/elgamal.ts` — `v0_ProvisionElGamalKeyPair` propose
+- [x] Hooks in `app/hooks/`
+- [x] Shared field components in `app/components/confidential-mpt/`
+- [x] Five pages under `app/mpt/confidential/*` + `app/intents/provision-elgamal/page.tsx`
+- [x] Batch: extend `BatchOperationDraft`, `operationToXrpl`, `EntryEditor`, new `ConfidentialMPTForm`
+- [x] Sidebar nav entries + README
+- [x] Verify: `tsc --noEmit`, dev-server route smoke test, adapter round-trip
+
+## Review
+
+### Files
+
+| Area | Files |
+| --- | --- |
+| Server actions | `app/_actions/{confidential-mpt,cmpt-compute,elgamal}.ts` |
+| Helper | `app/lib/hex.ts` |
+| Hooks | `app/hooks/{useSubmitConfidentialMPT,useCmptCompute,useProvisionElGamalKeyPair}.ts` |
+| Shared UI | `app/components/confidential-mpt/{Fields,ProofFields,ConvertPage}.tsx` |
+| Pages | `app/mpt/confidential/{convert,convert-back,merge-inbox,send,compute}/page.tsx`, `app/intents/provision-elgamal/page.tsx` |
+| Batch | `app/components/batch/ConfidentialMPTForm.tsx` + edits to `EntryEditor.tsx`, `batchSessionStorage.ts`, `batch-builder.ts`, `app/batch/page.tsx` |
+| Nav/docs | `app/components/AppSidebar.tsx`, `README.md` |
+
+Convert and Convert Back share `ConvertPage` (identical form, opposite direction) rather
+than duplicating ~110 lines across two routes.
+
+### Encoding — the one non-obvious call
+
+The spec is inconsistent. `Core_CmptCryptographicFields_*` members are `Format: base64`,
+but the sibling top-level `senderEncryptedBalance` on `Core_XrplOperation_ConfidentialMPTSend`
+is "Hex encoded string" — and `Core_ApiCmptComputeCryptographicFields_*` (the compute
+*response*) is hex throughout. So the UI takes hex everywhere, so a value copied off the
+compute page pastes straight into cMPT Send, and `proposeConfidentialMPTSend` converts only
+the `cryptographicFields` members. `hexToBase64` throws on odd-length / non-hex input rather
+than silently truncating.
+
+The batch path needs no conversion at all: `batchToCustodyBatchPayload` applies its own
+hex→base64 to the six Send proof fields, so `batch-builder.ts` emits the xrpl.js transaction
+with hex values and lets the adapter map them.
+
+### Known limitation (surfaced in the UI, not worked around)
+
+`batchToCustodyBatchPayload` drops plaintext `amount` on a `ConfidentialMPTSend` — the value
+only exists as ciphertext — and requires the full proof bundle. A *batched* Send therefore
+cannot use the amount-only mode the standalone Send page offers. `ConfidentialMPTForm` shows
+this as an inline amber note with a link to cMPT Compute, plus a "still required" list, rather
+than letting it fail at dry-run time.
+
+### Verification
+
+- `npx tsc --noEmit` — clean apart from the 7 pre-existing `app/requests/**` errors. Confirmed
+  pre-existing, not caused by the SDK bump: `Core_IntentAuthor` is byte-identical in 2.10.0 and
+  2.13.0-beta.0 (`{ subject }` | `{ id, domainId }`), and nothing on this branch touches
+  `app/requests`. **These errors fail `npm run build`** (Turbopack compiles fine — `✓ Compiled
+  successfully` — then the TypeScript step aborts). Pre-existing breakage on `main`; flagged,
+  not fixed, as it is outside this change's scope.
+- Dev server: all 7 routes (5 cMPT + provision-elgamal + batch) return **200** with a clean
+  dev log; asserted the Send page's Advanced section, the compute page's badge, and the batch
+  nav entry are present in the rendered HTML.
+- Adapter round-trip: fed a hand-built Batch (Convert + MergeInbox submitter ops, participant
+  Send) through `batchToCustodyBatchPayload` and confirmed the emitted payload —
+  `ConfidentialMPTConvert` with `amount`, `ConfidentialMPTMergeInbox` with no amount, and
+  `ConfidentialMPTSend` with `cryptographicFields: { type: "Send", … }` base64-encoded from
+  the hex inputs, correctly split into Submitter vs Participant operations.
+- No automated tests: the repo has no test runner configured (no `test` script, no
+  vitest/jest dependency), so adding one was out of scope.
+
+### Not wired
+
+`WaitForCmptComputeOptions.onStatusCheck` — a callback cannot cross the Server Action boundary,
+so the `…AndWait` variants report only the final status. `maxRetries` / `intervalMs` are exposed
+as inputs instead.
+
+### Pending (manual, needs a live tenant)
+
+Provision a key pair, run a Convert, run a compute, paste the bundle into cMPT Send, and submit
+a batch containing a cMPT Send.
+
+---
+
 # UI Consistency + Tabs → Routes (design-system kit)
 
 Branch: `feat/ui-consistency`. Bring uniform headers + widths to every page and convert the

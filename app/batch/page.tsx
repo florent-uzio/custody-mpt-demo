@@ -17,8 +17,11 @@ export default function BatchPage() {
           theme="amber"
           icon="📦"
           title="Batch"
-          description="Compose and submit a batch of inner transactions on the XRP Ledger."
-          badge={{ label: "Batch", note: "XRPL native batch transaction" }}
+          description="Compose and submit a batch of inner transactions on the XRP Ledger. Inner entries can be a typed Payment, any of the four ConfidentialMPT operations, or a raw xrpl.js transaction."
+          badge={{
+            label: "Batch",
+            note: "XRPL native batch transaction · Payment + ConfidentialMPT + raw",
+          }}
         />
         <BatchWorkbench />
       </PageContainer>

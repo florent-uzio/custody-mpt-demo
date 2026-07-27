@@ -12,6 +12,7 @@ import type {
   Core_BatchExecutionMode,
 } from "@florent-uzio/custody";
 import type {
+  BatchCmptDraft,
   BatchOperationDraft,
   BatchPaymentDraft,
 } from "../utils/batchSessionStorage";
@@ -71,6 +72,52 @@ function paymentAmount(p: BatchPaymentDraft): Payment["Amount"] {
   return p.amount; // XRP drops
 }
 
+/**
+ * xrpl.js 4.6 has no ConfidentialMPT transaction models, so these are built as
+ * plain objects and cast. `batchToCustodyBatchPayload` reads them structurally
+ * and applies its own hex→base64 conversion to the Send proof fields, so every
+ * value here stays hex.
+ */
+function cmptToXrpl(
+  address: string,
+  transactionType: string,
+  cmpt: BatchCmptDraft,
+): SubmittableTransaction {
+  const base: Record<string, unknown> = {
+    TransactionType: transactionType,
+    Account: address,
+    MPTokenIssuanceID: cmpt.issuanceId,
+  };
+
+  if (transactionType === "ConfidentialMPTSend") {
+    const p = cmpt.proofs ?? {};
+    Object.assign(base, {
+      Destination: cmpt.destinationAddress ?? "",
+      SenderEncryptedAmount: p.senderEncryptedAmount,
+      DestinationEncryptedAmount: p.destinationEncryptedAmount,
+      IssuerEncryptedAmount: p.issuerEncryptedAmount,
+      BalanceCommitment: p.balanceCommitment,
+      AmountCommitment: p.amountCommitment,
+      ZKProof: p.zkProof,
+      ...(p.auditorEncryptedAmount && {
+        AuditorEncryptedAmount: p.auditorEncryptedAmount,
+      }),
+    });
+  } else if (transactionType !== "ConfidentialMPTMergeInbox") {
+    base.MPTAmount = cmpt.amount ?? "";
+  }
+
+  return base as unknown as SubmittableTransaction;
+}
+
+/** Draft operation kind → xrpl.js `TransactionType`. */
+const CMPT_TRANSACTION_TYPE = {
+  cmptConvert: "ConfidentialMPTConvert",
+  cmptConvertBack: "ConfidentialMPTConvertBack",
+  cmptMergeInbox: "ConfidentialMPTMergeInbox",
+  cmptSend: "ConfidentialMPTSend",
+} as const;
+
 function operationToXrpl(
   address: string,
   op: BatchOperationDraft,
@@ -85,6 +132,9 @@ function operationToXrpl(
       ...(p.destinationTag != null && { DestinationTag: p.destinationTag }),
     };
     return payment;
+  }
+  if (op.kind !== "raw") {
+    return cmptToXrpl(address, CMPT_TRANSACTION_TYPE[op.kind], op.cmpt);
   }
   // Raw: an xrpl.js transaction as JSON; force the source Account.
   const parsed = JSON.parse(op.json) as Record<string, unknown>;

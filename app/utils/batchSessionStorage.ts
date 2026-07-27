@@ -5,6 +5,7 @@ import type {
   Core_BatchSigner,
 } from "@florent-uzio/custody";
 import type { BatchSignatureHandle } from "../_actions/batch";
+import type { CmptSendProofsHex } from "../_actions/confidential-mpt";
 
 // The workbench is a multi-step, async, multi-actor flow (dry-run → collect
 // signatures → propose) where signatures wait on out-of-band operator approval.
@@ -29,14 +30,41 @@ export type BatchPaymentDraft = {
   destinationTag?: number;
 };
 
+/** Inner ConfidentialMPT operation being constructed. */
+export type BatchCmptDraft = {
+  /** MPT issuance ID (hex). The batch adapter resolves tokens by issuance ID only. */
+  issuanceId: string;
+  /** Convert / ConvertBack only — plaintext amount. */
+  amount?: string;
+  /** Send only. */
+  destinationType?: "Address" | "Account";
+  destinationAddress?: string;
+  destinationAccountId?: string;
+  /**
+   * Send only — the proof bundle, hex, keyed exactly like `CmptSendProofsHex`.
+   * `batchToCustodyBatchPayload` base64-encodes these itself, so they stay hex
+   * all the way into the xrpl.js transaction.
+   */
+  proofs?: Partial<CmptSendProofsHex>;
+};
+
+/** The four ConfidentialMPT inner operations. */
+export type BatchCmptKind =
+  | "cmptConvert"
+  | "cmptConvertBack"
+  | "cmptMergeInbox"
+  | "cmptSend";
+
 /**
- * Inner operation: a typed Payment, or a raw-JSON xrpl transaction for the other
- * 11 `Core_BatchInnerOperation` types (Q4 — option B). The raw JSON is an xrpl.js
+ * Inner operation: a typed Payment, one of the four typed ConfidentialMPT
+ * operations, or a raw-JSON xrpl transaction for the remaining
+ * `Core_BatchInnerOperation` types (Q4 — option B). The raw JSON is an xrpl.js
  * transaction; the server sets its `Account` + inner-batch flag and runs it
- * through the same autofill + SDK-adapter pipeline as the typed Payment.
+ * through the same autofill + SDK-adapter pipeline as the typed operations.
  */
 export type BatchOperationDraft =
   | { kind: "payment"; payment: BatchPaymentDraft }
+  | { kind: BatchCmptKind; cmpt: BatchCmptDraft }
   | { kind: "raw"; json: string };
 
 /** One inner transaction in the batch. */
