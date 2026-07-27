@@ -4,12 +4,37 @@ A beautiful Next.js + React + TypeScript + Tailwind CSS application to showcase 
 
 ## Features
 
+Pages are grouped the same way as the sidebar.
+
+**General**
+- **Domains**: Browse domains and create new ones; set the default domain used across the app
+- **Accounts**: Filter and inspect custody accounts, view manifests, propose new accounts
+
+**Users**
+- **Users**: List, invite and edit users and their roles
+- **Me**: Inspect the currently authenticated user
+
+**Operations**
 - **Requests**: Query request state from the Custody system
-- **Intents**: View and manage intents (coming soon)
-- **Transactions**: Check transaction history (coming soon)
-- **Tickers**: View ticker information (coming soon)
-- **MPT Authorize**: Authorize MPT tokens (coming soon)
-- **MPT Payment**: Send MPT payments (coming soon)
+- **Transfers**: Browse transfers and their detail
+- **Transactions**: Browse on-ledger transactions, matched to the intent that created them
+- **Channels**: List, inspect and create notification channels
+- **Intents**: List intents and inspect their payloads
+- **Policies**: List, create and edit approval policies
+
+**Data**
+- **Tickers**: Filter tickers by ledger, kind and validation status; create and edit them
+
+**XRPL operations** — each proposes an intent and shows the request/response payloads
+- **Payment**, **TrustSet**, **AccountSet**, **Clawback**
+- **MPT Create / Authorize / Set / Destroy**
+- **Tickets**: Reserve sequence numbers with `TicketCreate`
+- **Batch**: Compose and submit a batch of inner transactions
+
+**Tools & setup**
+- **Keypair Generator** and **JWT Token** helpers
+- **Run Genesis**: Bootstrap a fresh environment
+- **Configuration**: Override SDK URLs, keys and ledger settings at runtime
 
 ## Why Next.js?
 
