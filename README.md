@@ -37,7 +37,13 @@ AUTH_URL=your_auth_url_here
 API_URL=your_api_url_here
 PRIVATE_KEY=your_private_key_here
 PUBLIC_KEY=your_public_key_here
+
+# Optional — see "Ledger configuration" below
+XRPL_LEDGER_IDS=xrpl-testnet-august-2024,xrpl-devnet,xrpl-custody-devnet,xrpl
+DEFAULT_LEDGER_ID=xrpl-testnet-august-2024
 ```
+
+See `.env.example` for the full list of supported variables.
 
 3. Start the development server:
 ```bash
@@ -45,6 +51,57 @@ npm run dev
 ```
 
 4. Open your browser to `http://localhost:3000`
+
+## Ledger configuration
+
+Which XRPL ledgers the app offers, and which one is preselected, is configurable
+rather than hardcoded. Two variables control it:
+
+| Variable | Purpose |
+| --- | --- |
+| `XRPL_LEDGER_IDS` | Comma-separated list of ledger IDs offered in every ledger picker |
+| `DEFAULT_LEDGER_ID` | The ledger preselected in filters and forms across the app |
+
+Both are optional. If `XRPL_LEDGER_IDS` is empty the app falls back to a built-in
+list:
+
+```
+xrpl-testnet-august-2024, xrpl-devnet, xrpl-custody-devnet, xrpl
+```
+
+If `DEFAULT_LEDGER_ID` is empty the first entry of the list is used. That list is
+ordered testnet-first on purpose, so an unconfigured install never defaults to
+mainnet. A `DEFAULT_LEDGER_ID` that isn't in `XRPL_LEDGER_IDS` is added to the
+front of the list rather than being ignored, so it still takes effect.
+
+### Adding a ledger
+
+Add its ID to `XRPL_LEDGER_IDS` and restart the dev server. No code change is
+needed — the ID appears in every picker automatically. On the account-creation
+page, ledgers the app has metadata for (a friendly name, description and network
+badge) render a curated card; anything else renders a generic card labelled with
+the raw ID.
+
+### Changing it at runtime
+
+Both values can also be set on the **Configuration** page (`/config`) without
+touching `.env` or restarting. Overrides live in server memory, apply immediately
+across the app, and are discarded when the server restarts. Each field shows
+whether its current value comes from a runtime override, from `.env`, or isn't
+set at all.
+
+### What it affects
+
+- `/transactions` and `/tickers` — Ledger filter options and initial selection
+- `/tickers/new` — Ledger dropdown on the create-ticker form
+- `/accounts` — Ledger ID filter dropdown, prefilled with the default (pick
+  **All ledgers** to search across all of them)
+- `/accounts/new` — one selectable card per configured ledger, with the default
+  preselected
+- `/payment` and `/mpt/authorize` — the ledger shown under "Fixed Configuration"
+
+A filter the user hasn't touched keeps tracking the configured default, so
+changing `DEFAULT_LEDGER_ID` updates those pages without a reload.
 
 ## Project Structure
 
