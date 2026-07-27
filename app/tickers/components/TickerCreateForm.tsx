@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { XrplLedgerId } from "@florent-uzio/custody";
 import type { ProposeCreateTickerInput } from "../../_actions/tickers";
+import { useLedgerConfig } from "../../hooks/useLedgerConfig";
 
 type LedgerDetails = ProposeCreateTickerInput["ledgerDetails"];
 type XrplDetails = Extract<LedgerDetails, { type: "XRPL" }>;
@@ -12,12 +13,6 @@ type PropertyType = XrplProperties["type"];
 type Kind = ProposeCreateTickerInput["kind"];
 
 export type TickerCreateResult = Omit<ProposeCreateTickerInput, "domainId">;
-
-const XRPL_LEDGER_IDS: readonly XrplLedgerId[] = [
-  "xrpl",
-  "xrpl-testnet-august-2024",
-  "xrpl-devnet",
-];
 
 const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
   { value: "FungibleToken", label: "Fungible Token (IOU)" },
@@ -40,9 +35,9 @@ export function TickerCreateForm({
   cancelHref,
   onSubmit,
 }: Props) {
-  const [ledgerId, setLedgerId] = useState<XrplLedgerId>(
-    "xrpl-testnet-august-2024",
-  );
+  const { ledgerIds, defaultLedgerId } = useLedgerConfig();
+  const [selectedLedgerId, setLedgerId] = useState<XrplLedgerId>();
+  const ledgerId = selectedLedgerId ?? defaultLedgerId;
   const [propertyType, setPropertyType] =
     useState<PropertyType>("FungibleToken");
   const [name, setName] = useState("");
@@ -112,7 +107,7 @@ export function TickerCreateForm({
             onChange={(e) => setLedgerId(e.target.value as XrplLedgerId)}
             className={`${inputCls} bg-white`}
           >
-            {XRPL_LEDGER_IDS.map((id) => (
+            {ledgerIds.map((id) => (
               <option key={id} value={id}>
                 {id}
               </option>

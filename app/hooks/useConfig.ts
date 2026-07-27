@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ConfigEntry, ConfigKey } from "@/app/lib/config";
 import { getConfig, resetConfig, updateConfig } from "../_actions/config";
+import { LEDGER_CONFIG_QUERY_KEY } from "./useLedgerConfig";
 
 type ConfigSummary = Record<ConfigKey, ConfigEntry>;
 
@@ -29,6 +30,7 @@ export function useConfigMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["config"] });
+      queryClient.invalidateQueries({ queryKey: LEDGER_CONFIG_QUERY_KEY });
     },
   });
 }

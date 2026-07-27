@@ -10,6 +10,7 @@ import {
 } from "./components/TransactionsTable";
 import { listTransactions } from "../_actions/transactions";
 import { listIntents } from "../_actions/intents";
+import { useLedgerConfig } from "../hooks/useLedgerConfig";
 import type { IntentsCollection } from "../intents/intents.types";
 import {
   Page,
@@ -18,8 +19,6 @@ import {
   PageHero,
   ErrorBanner,
 } from "../components/layout";
-
-const DEFAULT_LEDGER_ID = "xrpl-testnet-august-2024";
 
 interface TransactionItem {
   id: string;
@@ -53,9 +52,13 @@ interface TransactionsResponse {
 
 export default function TransactionsPage() {
   const { defaultDomainId } = useDefaultDomain();
+  const { defaultLedgerId } = useLedgerConfig();
 
   const [accountId, setAccountId] = useState("");
-  const [ledgerId, setLedgerId] = useState(DEFAULT_LEDGER_ID);
+  // Undefined until the user picks one, so the configured default keeps
+  // applying if it changes on the Config page.
+  const [selectedLedgerId, setLedgerId] = useState<string>();
+  const ledgerId = selectedLedgerId ?? defaultLedgerId;
   const [sortBy, setSortBy] = useState("registeredAt");
   const [limit, setLimit] = useState(20);
 

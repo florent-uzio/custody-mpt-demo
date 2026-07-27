@@ -4,6 +4,7 @@ import { useState } from "react";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useDefaultDomain } from "../../contexts/DomainContext";
+import { useLedgerConfig } from "../../hooks/useLedgerConfig";
 import { useSubmitMPTokenAuthorize } from "../../hooks/useSubmitMPTokenAuthorize";
 import {
   Page,
@@ -18,6 +19,7 @@ import {
 
 export default function MptAuthorizePage() {
   const { defaultDomainId } = useDefaultDomain();
+  const { defaultLedgerId } = useLedgerConfig();
   const { accounts, loading: accountsLoading } = useAccounts();
   const { mutate, isPending, data: response, error } = useSubmitMPTokenAuthorize();
   const [issuanceId, setIssuanceId] = useState("");
@@ -115,9 +117,7 @@ export default function MptAuthorizePage() {
                 </div>
                 <div>
                   <span className="text-gray-600">Ledger:</span>
-                  <span className="ml-2 text-gray-800">
-                    xrpl-testnet-august-2024
-                  </span>
+                  <span className="ml-2 text-gray-800">{defaultLedgerId}</span>
                 </div>
                 <div>
                   <span className="text-gray-600">Fee Strategy:</span>
