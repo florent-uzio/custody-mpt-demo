@@ -15,7 +15,7 @@ A beautiful Next.js + React + TypeScript + Tailwind CSS application to showcase 
 
 This app uses Next.js instead of a pure client-side framework because:
 - The Ripple Custody SDK requires Node.js crypto operations (key generation, signing)
-- Server-side API routes handle all custody SDK operations securely
+- Server Actions handle all custody SDK operations securely
 - No browser polyfills needed - everything runs natively on the server
 - Better security - private keys never leave the server
 
@@ -183,10 +183,15 @@ For more information about MPTokenAuthorize, see the [XRPL Documentation](https:
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 
-## API Routes
+## Server Actions
 
-All custody SDK operations are handled through Next.js API routes:
-- `/api/requests/state` - Query request state (POST)
+All custody SDK operations are handled through Next.js Server Actions in
+`app/_actions/`, one module per resource (`accounts.ts`, `intents.ts`,
+`tickers.ts`, `transactions.ts`, `users.ts`, …). There are no `app/api/` routes.
+
+Client components never import the SDK. They call the exported actions directly,
+usually through a react-query hook in `app/hooks/`, which keeps credentials and
+key material on the server.
 
 ## License
 
