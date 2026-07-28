@@ -11,6 +11,7 @@ import {
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useTickers } from "../../hooks/useTickers";
+import { keyEncodings } from "../../lib/key-encoding";
 import {
   Page,
   PageHeader,
@@ -102,6 +103,27 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+/** Compact label-above-value row, for the narrow identity rail. */
+function RailRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="py-2.5 border-b border-gray-50 last:border-0 last:pb-0 first:pt-0">
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+        {label}
+      </p>
+      <div className="text-sm text-gray-800 break-all">{value}</div>
+    </div>
+  );
+}
+
+function MonoCopy({ text }: { text: string }) {
+  return (
+    <div className="flex items-start gap-1.5">
+      <span className="font-mono text-xs break-all flex-1">{text}</span>
+      <CopyButton text={text} />
+    </div>
+  );
+}
+
 function InfoCard({
   title,
   icon,
@@ -120,6 +142,25 @@ function InfoCard({
         </h3>
       </div>
       <div>{children}</div>
+    </div>
+  );
+}
+
+function PublicKeyValue({
+  publicKey,
+}: {
+  publicKey: { type: string; value: string; chainCode?: string };
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-1.5">
+        <span className="font-mono text-xs break-all flex-1">{publicKey.value}</span>
+        <CopyButton text={publicKey.value} />
+      </div>
+      <p className="text-xs text-gray-400">
+        {publicKey.type}
+        {publicKey.chainCode && ` · chain code ${publicKey.chainCode}`}
+      </p>
     </div>
   );
 }
@@ -178,8 +219,15 @@ export default function AccountDetailPage() {
   const activatedLedgerId = account?.additionalDetails?.ledgers?.find((l) => l.status === "Activated")?.ledgerId;
   const displayLedgerId = account?.data.ledgerId ?? activatedLedgerId;
 
+  const providerDetails = account?.data.providerDetails;
+  const purposeKeys =
+    providerDetails && "purposeKeys" in providerDetails ? providerDetails.purposeKeys : undefined;
+
   const heroTitle = account?.data.alias ?? accountId;
   const heroDescription = account?.data.alias ? accountId : undefined;
+
+  /** Few enough addresses to show inline in the hero; more than that stays in the rail only. */
+  const heroAddresses = addresses.length <= 2 ? addresses : [];
 
   return (
     <Page>
@@ -209,7 +257,31 @@ export default function AccountDetailPage() {
           title={heroTitle}
           description={heroDescription ?? "Account detail"}
           badge={lockStatus ? { label: lockStatus } : undefined}
-        />
+        >
+          {/* With only one or two addresses, surface them here for quick copying. */}
+          {heroAddresses.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {heroAddresses.map((addr, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-1.5 bg-white/15 rounded-lg pl-3 pr-1 py-1.5 min-w-0"
+                >
+                  <div className="min-w-0">
+                    {addr.data.ledgerId && (
+                      <p className="text-[10px] uppercase tracking-wider text-white/60 leading-none mb-1">
+                        {addr.data.ledgerId}
+                      </p>
+                    )}
+                    <p className="font-mono text-xs text-white break-all leading-none">
+                      {addr.data.address}
+                    </p>
+                  </div>
+                  <CopyButton text={addr.data.address} tone="light" />
+                </div>
+              ))}
+            </div>
+          )}
+        </PageHero>
 
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -224,91 +296,77 @@ export default function AccountDetailPage() {
         {isError && <ErrorBanner error={error} />}
 
         {account && !isLoading && (
-          <div className="space-y-5">
-            {/* Summary bar */}
-              <div className="bg-white rounded-xl border border-indigo-100 shadow-sm p-5">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">Alias</p>
-                    <p className="text-sm font-semibold text-gray-800">
-                      {account.data.alias || <span className="text-gray-400 italic font-normal">No alias</span>}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">Ledger</p>
-                    <p className="text-sm font-mono text-gray-700 truncate">
-                      {displayLedgerId || <span className="text-gray-400 italic font-sans font-normal">—</span>}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">Lock</p>
-                    {lockStatus ? (
-                      <StatusBadge value={lockStatus} config={LOCK_CONFIG} />
-                    ) : (
-                      <span className="text-gray-400 text-sm italic">—</span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">Processing</p>
-                    {processingStatus ? (
-                      <StatusBadge value={processingStatus} config={PROCESSING_CONFIG} />
-                    ) : (
-                      <span className="text-gray-400 text-sm italic">—</span>
-                    )}
-                  </div>
-                </div>
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-5 items-start">
+            {/* Identity rail — short, scalar facts */}
+            <div className="space-y-5 lg:sticky lg:top-6">
+              <InfoCard title="Identity" icon="🪪">
+                <RailRow label="Account ID" value={<MonoCopy text={account.data.id} />} />
+                <RailRow label="Domain ID" value={<MonoCopy text={account.data.domainId} />} />
+                {displayLedgerId && (
+                  <RailRow label="Ledger" value={<span className="font-mono text-xs">{displayLedgerId}</span>} />
+                )}
+                {lockStatus && (
+                  <RailRow label="Lock" value={<StatusBadge value={lockStatus} config={LOCK_CONFIG} />} />
+                )}
+                {processingStatus && (
+                  <RailRow label="Processing" value={<StatusBadge value={processingStatus} config={PROCESSING_CONFIG} />} />
+                )}
+                {account.data.metadata?.createdAt && (
+                  <RailRow label="Created" value={formatDate(account.data.metadata.createdAt as string)} />
+                )}
+                {account.data.metadata?.lastModifiedAt && (
+                  <RailRow label="Modified" value={formatDate(account.data.metadata.lastModifiedAt as string)} />
+                )}
+                {account.data.metadata?.description && (
+                  <RailRow label="Description" value={account.data.metadata.description as string} />
+                )}
+              </InfoCard>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                {/* Account Details */}
-                <InfoCard title="Account Details" icon="🏦">
-                  <InfoRow
-                    label="Account ID"
-                    value={
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-xs break-all">{account.data.id}</span>
-                        <CopyButton text={account.data.id} />
-                      </div>
-                    }
-                  />
-                  <InfoRow
-                    label="Domain ID"
-                    value={
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-xs break-all">{account.data.domainId}</span>
-                        <CopyButton text={account.data.domainId} />
-                      </div>
-                    }
-                  />
-                  {displayLedgerId && (
-                    <InfoRow label="Ledger ID" value={<span className="font-mono text-xs">{displayLedgerId}</span>} />
-                  )}
-                  {lockStatus && (
-                    <InfoRow label="Lock Status" value={<StatusBadge value={lockStatus} config={LOCK_CONFIG} />} />
-                  )}
-                  {processingStatus && (
-                    <InfoRow label="Processing" value={<StatusBadge value={processingStatus} config={PROCESSING_CONFIG} />} />
-                  )}
-                  {account.data.metadata?.createdAt && (
-                    <InfoRow label="Created At" value={formatDate(account.data.metadata.createdAt as string)} />
-                  )}
-                  {account.data.metadata?.lastModifiedAt && (
-                    <InfoRow label="Modified At" value={formatDate(account.data.metadata.lastModifiedAt as string)} />
-                  )}
-                  {account.data.metadata?.description && (
-                    <InfoRow label="Description" value={account.data.metadata.description as string} />
-                  )}
+              <InfoCard title={`Addresses${addresses.length > 0 ? ` (${addresses.length})` : ""}`} icon="📍">
+                {addresses.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">No addresses found</p>
+                ) : (
+                  addresses.map((addr, idx) => (
+                    <div key={idx} className="py-2.5 border-b border-gray-50 last:border-0 last:pb-0 first:pt-0">
+                      <MonoCopy text={addr.data.address} />
+                      {addr.data.ledgerId && (
+                        <p className="text-xs text-gray-400 mt-1">{addr.data.ledgerId}</p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </InfoCard>
+
+              {account.additionalDetails?.ledgers && account.additionalDetails.ledgers.length > 0 && (
+                <InfoCard title={`Ledgers (${account.additionalDetails.ledgers.length})`} icon="🔗">
+                  {account.additionalDetails.ledgers.map((ledger, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between gap-2 py-2.5 border-b border-gray-50 last:border-0 last:pb-0 first:pt-0"
+                    >
+                      <span className="font-mono text-xs text-gray-700 truncate">{ledger.ledgerId}</span>
+                      {ledger.status && (
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                          {ledger.status}
+                        </span>
+                      )}
+                    </div>
+                  ))}
                 </InfoCard>
+              )}
+            </div>
 
-                {/* Balances */}
-                <InfoCard title={`Balances${balances.length > 0 ? ` (${balances.length})` : ""}`} icon="💰">
-                  {balances.length === 0 ? (
-                    <p className="text-sm text-gray-400 italic py-2">No balances found</p>
-                  ) : (
-                    balances.map((b, idx) => {
+            {/* Content column — tall, list-shaped data */}
+            <div className="space-y-5">
+              <InfoCard title={`Balances${balances.length > 0 ? ` (${balances.length})` : ""}`} icon="💰">
+                {balances.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">No balances found</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {balances.map((b, idx) => {
                       const ticker = tickersMap?.get(b.tickerId);
                       return (
-                        <div key={idx} className="border border-gray-200 rounded-lg p-4 mb-3 last:mb-0">
+                        <div key={idx} className="border border-gray-200 rounded-lg p-4">
                           <div className="flex items-center gap-2 mb-3 min-w-0">
                             <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                               <span className="text-sm font-semibold text-gray-900 truncate" title={ticker?.data.name ?? b.tickerId}>
@@ -343,58 +401,105 @@ export default function AccountDetailPage() {
                           </p>
                         </div>
                       );
-                    })
-                  )}
-                </InfoCard>
+                    })}
+                  </div>
+                )}
+              </InfoCard>
 
-                {/* Addresses */}
-                <InfoCard title="Addresses" icon="📍">
-                  {addresses.length === 0 ? (
-                    <p className="text-sm text-gray-400 italic py-2">No addresses found</p>
-                  ) : (
-                    addresses.map((addr, idx) => (
-                      <div key={idx} className="py-3 border-b border-gray-50 last:border-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-xs text-gray-700 break-all flex-1">{addr.data.address}</span>
-                          <CopyButton text={addr.data.address} />
+              {purposeKeys && purposeKeys.length > 0 && (
+                <InfoCard title={`Encryption Keys (${purposeKeys.length})`} icon="🔐">
+                  {purposeKeys.map((pk, idx) => {
+                    const { base64, hex } = keyEncodings(pk.publicKey);
+                    return (
+                      <div key={idx} className="py-3 border-b border-gray-50 last:border-0 last:pb-0 first:pt-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-purple-100 text-purple-800">
+                            {pk.purpose}
+                          </span>
+                          <span className="text-xs text-gray-400 font-mono truncate">{pk.ledgerId}</span>
                         </div>
-                        {addr.data.ledgerId && (
-                          <p className="text-xs text-gray-400 mt-1">Ledger: {addr.data.ledgerId}</p>
+                        {hex && (
+                          <>
+                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                              Hex <span className="normal-case font-normal">— use in MPT Set</span>
+                            </p>
+                            <MonoCopy text={hex} />
+                          </>
                         )}
+                        <p
+                          className={`text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ${
+                            hex ? "mt-2" : ""
+                          }`}
+                        >
+                          Base64
+                        </p>
+                        <MonoCopy text={base64} />
                       </div>
-                    ))
+                    );
+                  })}
+                </InfoCard>
+              )}
+
+              {providerDetails && (
+                <InfoCard title="Provider Details" icon="🔑">
+                  <InfoRow label="Type" value={providerDetails.type} />
+                  {providerDetails.type === "Vault" ? (
+                    <>
+                      <InfoRow label="Vault ID" value={<MonoCopy text={providerDetails.vaultId} />} />
+                      <InfoRow label="Key Strategy" value={providerDetails.keyStrategy} />
+                      <InfoRow label="Key Type" value={providerDetails.keyInformation.type} />
+                      {"derivationPath" in providerDetails.keyInformation && (
+                        <InfoRow
+                          label="Derivation Path"
+                          value={<span className="font-mono text-xs">{providerDetails.keyInformation.derivationPath}</span>}
+                        />
+                      )}
+                      {providerDetails.keyInformation.publicKey && (
+                        <InfoRow
+                          label="Public Key"
+                          value={<PublicKeyValue publicKey={providerDetails.keyInformation.publicKey} />}
+                        />
+                      )}
+                      {providerDetails.keys?.map((key) => (
+                        <InfoRow
+                          key={key.id}
+                          label={key.id}
+                          value={
+                            <div className="space-y-1">
+                              {key.publicKey && <PublicKeyValue publicKey={key.publicKey} />}
+                              {"derivationPath" in key && (
+                                <p className="text-xs text-gray-400 font-mono break-all">{key.derivationPath}</p>
+                              )}
+                            </div>
+                          }
+                        />
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      <InfoRow
+                        label="Provider ID"
+                        value={<span className="font-mono text-xs break-all">{providerDetails.providerId}</span>}
+                      />
+                      <InfoRow
+                        label="Location ID"
+                        value={<span className="font-mono text-xs break-all">{providerDetails.locationId}</span>}
+                      />
+                      {providerDetails.providerAccountId && (
+                        <InfoRow
+                          label="Provider Account ID"
+                          value={<span className="font-mono text-xs break-all">{providerDetails.providerAccountId}</span>}
+                        />
+                      )}
+                    </>
                   )}
                 </InfoCard>
-
-                {/* Provider Details */}
-                {account.data.providerDetails && Object.keys(account.data.providerDetails).length > 0 && (
-                  <InfoCard title="Provider Details" icon="🔑">
-                    {Object.entries(account.data.providerDetails).map(([key, val]) => (
-                      <InfoRow key={key} label={key} value={<span className="font-mono text-xs">{String(val)}</span>} />
-                    ))}
-                  </InfoCard>
-                )}
-
-                {/* Additional Ledgers */}
-                {account.additionalDetails?.ledgers && account.additionalDetails.ledgers.length > 0 && (
-                  <InfoCard title="Ledgers" icon="🔗">
-                    {account.additionalDetails.ledgers.map((ledger, idx) => (
-                      <div key={idx} className="py-3 border-b border-gray-50 last:border-0">
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-xs text-gray-700">{ledger.ledgerId}</span>
-                          {ledger.status && (
-                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{ledger.status}</span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </InfoCard>
-                )}
-              </div>
+              )}
 
               <JsonViewer data={account} title="Full Account (Raw)" />
             </div>
-          )}
+          </div>
+        )}
       </PageContainer>
     </Page>
   );
