@@ -35,6 +35,9 @@ const MPT_SET_FLAGS = [
   },
 ];
 
+/** A 33-byte compressed EC point, hex. Empty is valid — the fields are optional. */
+const isKeyInvalid = (key: string) => key !== "" && !/^[0-9A-Fa-f]{66}$/.test(key);
+
 export default function MptSetPage() {
   const { defaultDomainId } = useDefaultDomain();
   const { accounts, loading: accountsLoading } = useAccounts();
@@ -45,16 +48,25 @@ export default function MptSetPage() {
   const [holderAddress, setHolderAddress] = useState("");
   const [applyToAll, setApplyToAll] = useState(true);
   const [selectedFlag, setSelectedFlag] = useState<number | null>(null);
+  const [canHoldConfidential, setCanHoldConfidential] = useState(false);
+  const [issuerKey, setIssuerKey] = useState("");
+  const [auditorKey, setAuditorKey] = useState("");
+
+  const issuerKeyInvalid = isKeyInvalid(issuerKey);
+  const auditorKeyInvalid = isKeyInvalid(auditorKey);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!defaultDomainId || !selectedFlag) return;
+    if (!defaultDomainId) return;
     mutate({
       accountId,
       domainId: defaultDomainId,
       issuanceId,
-      holder: applyToAll ? undefined : holderAddress,
-      flags: selectedFlag as 1 | 2,
+      holder: selectedFlag && !applyToAll ? holderAddress : undefined,
+      ...(selectedFlag && { flags: selectedFlag as 1 | 2 }),
+      canHoldConfidentialBalance: canHoldConfidential,
+      issuerEncryptionKey: issuerKey || undefined,
+      auditorEncryptionKey: auditorKey || undefined,
     });
   };
 
@@ -63,14 +75,14 @@ export default function MptSetPage() {
       ? "🔒 Lock MPT Issuance"
       : selectedFlag === 2
       ? "🔓 Unlock MPT Issuance"
-      : "Set MPT Issuance";
+      : "⚙️ Update MPT Issuance";
 
   const pendingLabel =
     selectedFlag === 1
       ? "Locking MPT Issuance..."
       : selectedFlag === 2
       ? "Unlocking MPT Issuance..."
-      : "Processing...";
+      : "Updating MPT Issuance...";
 
   return (
     <Page>
@@ -80,10 +92,10 @@ export default function MptSetPage() {
           theme="violet"
           icon="⚙️"
           title="MPT Set"
-          description="Update mutable properties of a Multi-Purpose Token (MPT) issuance, including locking or unlocking tokens globally or for individual holders."
+          description="Update mutable properties of a Multi-Purpose Token (MPT) issuance — lock or unlock tokens globally or per holder, enable confidential balances, and register the XLS-96 encryption keys."
           badge={{
-            label: "Lock/Unlock",
-            note: "Control token balances and access",
+            label: "Lock/Unlock · Confidential",
+            note: "Control token balances, access and confidentiality",
           }}
         />
 
@@ -193,10 +205,44 @@ export default function MptSetPage() {
                   </div>
                 </label>
               ))}
+
+              <label
+                className={`md:col-span-2 flex items-start gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all ${
+                  selectedFlag === null
+                    ? "border-violet-500 bg-violet-50"
+                    : "border-gray-200 hover:border-gray-300 bg-white"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="flag"
+                  checked={selectedFlag === null}
+                  onChange={() => {
+                    setSelectedFlag(null);
+                    setApplyToAll(true);
+                    setHolderAddress("");
+                  }}
+                  className="mt-1 w-5 h-5 text-violet-600 border-gray-300 focus:ring-violet-500"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-2xl">⚙️</span>
+                    <span className="font-semibold text-gray-900">
+                      No lock action
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Send the transaction without tfMPTLock or tfMPTUnlock — for
+                    enabling confidential balances or registering encryption keys
+                    only
+                  </p>
+                </div>
+              </label>
             </div>
           </SectionCard>
 
-          {/* Scope Selection */}
+          {/* Scope Selection — only meaningful alongside a lock/unlock action */}
+          {selectedFlag !== null && (
           <SectionCard step={4} title="Scope">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -278,13 +324,134 @@ export default function MptSetPage() {
               )}
             </div>
           </SectionCard>
+          )}
+
+          {/* Confidential Balances — XLS-96 §12 */}
+          <SectionCard step={5} title="Confidential Balances">
+            <div className="space-y-5">
+              <label
+                className={`flex items-start gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all ${
+                  canHoldConfidential
+                    ? "border-violet-500 bg-violet-50"
+                    : "border-gray-200 hover:border-gray-300 bg-white"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={canHoldConfidential}
+                  onChange={(e) => setCanHoldConfidential(e.target.checked)}
+                  className="mt-1 w-5 h-5 rounded text-violet-600 border-gray-300 focus:ring-violet-500"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-2xl">🛡️</span>
+                    <span className="font-semibold text-gray-900">
+                      tmfMPTSetCanHoldConfidentialBalance
+                    </span>
+                    <span className="text-xs text-gray-400 font-mono bg-gray-100 px-2 py-0.5 rounded">
+                      0x40
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Sets <code>lsfMPTCanHoldConfidentialBalance</code> on the
+                    issuance. Rejected if{" "}
+                    <code>lsmfMPTCannotEnableCanHoldConfidentialBalance</code> was
+                    set at creation.
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Sent to the custody API as{" "}
+                    <code>mutableFlags: [&quot;MPTSetCanConfidentialAmount&quot;]</code>
+                    , its enum name for this flag.
+                  </p>
+                </div>
+              </label>
+
+              <div>
+                <label
+                  htmlFor="issuerKey"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Issuer Encryption Key
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    id="issuerKey"
+                    value={issuerKey}
+                    onChange={(e) => {
+                      setIssuerKey(e.target.value);
+                      // An auditor key alone is invalid — drop it with the issuer key.
+                      if (!e.target.value) setAuditorKey("");
+                    }}
+                    className={`flex-1 px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-colors font-mono text-sm ${
+                      issuerKeyInvalid
+                        ? "border-red-400 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300 focus:ring-violet-500 focus:border-violet-500"
+                    }`}
+                    placeholder="02A1B2… (66 hex characters)"
+                  />
+                  {issuerKey && <CopyButton text={issuerKey} />}
+                </div>
+                <p
+                  className={`mt-2 text-xs ${
+                    issuerKeyInvalid ? "text-red-600" : "text-gray-500"
+                  }`}
+                >
+                  {issuerKeyInvalid
+                    ? `Must be 66 hex characters (33 bytes) — got ${issuerKey.length}`
+                    : "33-byte EC-ElGamal public key for the issuer's mirror balances. Write-once — re-setting it fails with tecNO_PERMISSION."}
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="auditorKey"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Auditor Encryption Key
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    id="auditorKey"
+                    value={auditorKey}
+                    onChange={(e) => setAuditorKey(e.target.value)}
+                    disabled={!issuerKey}
+                    className={`flex-1 px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-colors font-mono text-sm disabled:bg-gray-100 disabled:text-gray-400 ${
+                      auditorKeyInvalid
+                        ? "border-red-400 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300 focus:ring-violet-500 focus:border-violet-500"
+                    }`}
+                    placeholder="03C4D5… (66 hex characters)"
+                  />
+                  {auditorKey && <CopyButton text={auditorKey} />}
+                </div>
+                <p
+                  className={`mt-2 text-xs ${
+                    auditorKeyInvalid ? "text-red-600" : "text-gray-500"
+                  }`}
+                >
+                  {auditorKeyInvalid
+                    ? `Must be 66 hex characters (33 bytes) — got ${auditorKey.length}`
+                    : "33-byte EC-ElGamal public key for regulatory oversight. Requires an issuer key — an auditor key alone is temMALFORMED."}
+                </p>
+              </div>
+
+              <p className="text-xs text-gray-500">
+                Keys can be registered in the same transaction that enables the
+                flag. Uploading keys once{" "}
+                <code>ConfidentialOutstandingAmount</code> exists fails with
+                tecNO_PERMISSION.
+              </p>
+            </div>
+          </SectionCard>
 
           {/* Configuration Summary */}
           <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
             <h4 className="font-medium text-gray-700 mb-3 text-sm">
               Configuration Summary
             </h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
               <div>
                 <span className="text-gray-500 block text-xs">Domain ID</span>
                 <span className="font-mono text-xs text-gray-800 truncate block">
@@ -298,19 +465,30 @@ export default function MptSetPage() {
                     ? "Lock"
                     : selectedFlag === 2
                     ? "Unlock"
-                    : "Not selected"}
+                    : "None"}
                 </span>
               </div>
               <div>
                 <span className="text-gray-500 block text-xs">Scope</span>
                 <span className="font-mono text-gray-800">
-                  {applyToAll ? "All Holders" : "Specific Holder"}
+                  {selectedFlag === null
+                    ? "—"
+                    : applyToAll
+                    ? "All Holders"
+                    : "Specific Holder"}
                 </span>
               </div>
               <div>
                 <span className="text-gray-500 block text-xs">Flag Value</span>
                 <span className="font-mono text-gray-800">
                   {selectedFlag || "—"}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500 block text-xs">Confidential</span>
+                <span className="font-mono text-gray-800">
+                  {canHoldConfidential ? "Enabled" : "Off"}
+                  {issuerKey && ` · ${auditorKey ? "2 keys" : "1 key"}`}
                 </span>
               </div>
             </div>
@@ -324,8 +502,11 @@ export default function MptSetPage() {
               isPending ||
               !defaultDomainId ||
               accounts.length === 0 ||
-              !selectedFlag ||
-              (!applyToAll && !holderAddress)
+              // Nothing to set: no lock action, no flag, no issuer key
+              (!selectedFlag && !canHoldConfidential && !issuerKey) ||
+              (selectedFlag !== null && !applyToAll && !holderAddress) ||
+              issuerKeyInvalid ||
+              auditorKeyInvalid
             }
           >
             {submitLabel}

@@ -31,9 +31,26 @@ export type MptSetInput = {
   domainId: string;
   accountId: string;
   issuanceId: string;
-  flags: 1 | 2;
+  /** tfMPTLock (1) or tfMPTUnlock (2). Omitted for a keys-only / flag-only set. */
+  flags?: 1 | 2;
   holder?: string;
+  /**
+   * XLS-96 §12: enables confidential balances on the issuance. The spec calls
+   * this `tmfMPTSetCanHoldConfidentialBalance`; the custody API's mutable-flag
+   * enum still uses the earlier draft name `MPTSetCanConfidentialAmount`.
+   */
+  canHoldConfidentialBalance?: boolean;
+  /** 33-byte EC-ElGamal public key, hex (66 chars). */
+  issuerEncryptionKey?: string;
+  /** 33-byte EC-ElGamal public key, hex (66 chars). Requires the issuer key. */
+  auditorEncryptionKey?: string;
 };
+
+/** The custody API's spelling of `tmfMPTSetCanHoldConfidentialBalance`. */
+const MUTABLE_FLAG_CAN_HOLD_CONFIDENTIAL = "MPTSetCanConfidentialAmount";
+
+/** 33-byte compressed EC point. */
+const ENCRYPTION_KEY_RE = /^[0-9A-Fa-f]{66}$/;
 
 export async function mptCreate(input: MptCreateInput): Promise<ProposeIntentResult> {
   const {
@@ -111,16 +128,39 @@ export async function mptDestroy(input: MptDestroyInput): Promise<ProposeIntentR
 }
 
 export async function mptSet(input: MptSetInput): Promise<ProposeIntentResult> {
-  const { domainId, accountId, issuanceId, flags, holder } = input;
+  const {
+    domainId,
+    accountId,
+    issuanceId,
+    flags,
+    holder,
+    canHoldConfidentialBalance,
+    issuerEncryptionKey,
+    auditorEncryptionKey,
+  } = input;
   if (!accountId) throw new Error("accountId is required");
   if (!domainId) throw new Error("domainId is required");
   if (!issuanceId) throw new Error("issuanceId is required");
-  if (flags !== 1 && flags !== 2)
+  if (flags !== undefined && flags !== 1 && flags !== 2)
     throw new Error("flags must be 1 (Lock) or 2 (Unlock)");
+  if (!flags && !canHoldConfidentialBalance && !issuerEncryptionKey)
+    throw new Error(
+      "Nothing to set: choose Lock/Unlock, enable confidential balances, or provide an issuer encryption key",
+    );
+  for (const [name, key] of [
+    ["issuerEncryptionKey", issuerEncryptionKey],
+    ["auditorEncryptionKey", auditorEncryptionKey],
+  ] as const) {
+    if (key && !ENCRYPTION_KEY_RE.test(key))
+      throw new Error(`${name} must be a 33-byte hex public key (66 hex characters)`);
+  }
+  // XLS-96 §12: an auditor key without an issuer key is temMALFORMED.
+  if (auditorEncryptionKey && !issuerEncryptionKey)
+    throw new Error("auditorEncryptionKey requires issuerEncryptionKey");
 
   const sdkFlags: ("tfMPTLock" | "tfMPTUnlock")[] =
-    flags === 1 ? ["tfMPTLock"] : ["tfMPTUnlock"];
-  const label = flags === 1 ? "Lock" : "Unlock";
+    flags === 1 ? ["tfMPTLock"] : flags === 2 ? ["tfMPTUnlock"] : [];
+  const label = flags === 1 ? "Lock" : flags === 2 ? "Unlock" : "Confidential";
 
   return proposeXrplTransaction({
     domainId,
@@ -130,6 +170,11 @@ export async function mptSet(input: MptSetInput): Promise<ProposeIntentResult> {
       tokenIdentifier: { type: "MPTokenIssuanceId", issuanceId },
       flags: sdkFlags,
       ...(holder && { holder }),
+      ...(canHoldConfidentialBalance && {
+        mutableFlags: [MUTABLE_FLAG_CAN_HOLD_CONFIDENTIAL],
+      }),
+      ...(issuerEncryptionKey && { issuerEncryptionKey }),
+      ...(auditorEncryptionKey && { auditorEncryptionKey }),
     } as never,
     description: `Set MPT Issuance - ${label}`,
     customProperties: { property1: "mpt-issuance-set" },
