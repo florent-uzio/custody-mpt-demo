@@ -124,6 +124,25 @@ function InfoCard({
   );
 }
 
+function PublicKeyValue({
+  publicKey,
+}: {
+  publicKey: { type: string; value: string; chainCode?: string };
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-1.5">
+        <span className="font-mono text-xs break-all flex-1">{publicKey.value}</span>
+        <CopyButton text={publicKey.value} />
+      </div>
+      <p className="text-xs text-gray-400">
+        {publicKey.type}
+        {publicKey.chainCode && ` · chain code ${publicKey.chainCode}`}
+      </p>
+    </div>
+  );
+}
+
 function StatusBadge({
   value,
   config,
@@ -177,6 +196,10 @@ export default function AccountDetailPage() {
   const processingStatus = account?.additionalDetails?.processing?.status;
   const activatedLedgerId = account?.additionalDetails?.ledgers?.find((l) => l.status === "Activated")?.ledgerId;
   const displayLedgerId = account?.data.ledgerId ?? activatedLedgerId;
+
+  const providerDetails = account?.data.providerDetails;
+  const purposeKeys =
+    providerDetails && "purposeKeys" in providerDetails ? providerDetails.purposeKeys : undefined;
 
   const heroTitle = account?.data.alias ?? accountId;
   const heroDescription = account?.data.alias ? accountId : undefined;
@@ -367,10 +390,86 @@ export default function AccountDetailPage() {
                 </InfoCard>
 
                 {/* Provider Details */}
-                {account.data.providerDetails && Object.keys(account.data.providerDetails).length > 0 && (
+                {providerDetails && (
                   <InfoCard title="Provider Details" icon="🔑">
-                    {Object.entries(account.data.providerDetails).map(([key, val]) => (
-                      <InfoRow key={key} label={key} value={<span className="font-mono text-xs">{String(val)}</span>} />
+                    <InfoRow label="Type" value={providerDetails.type} />
+                    {providerDetails.type === "Vault" ? (
+                      <>
+                        <InfoRow
+                          label="Vault ID"
+                          value={
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-xs break-all">{providerDetails.vaultId}</span>
+                              <CopyButton text={providerDetails.vaultId} />
+                            </div>
+                          }
+                        />
+                        <InfoRow label="Key Strategy" value={providerDetails.keyStrategy} />
+                        <InfoRow label="Key Type" value={providerDetails.keyInformation.type} />
+                        {"derivationPath" in providerDetails.keyInformation && (
+                          <InfoRow
+                            label="Derivation Path"
+                            value={<span className="font-mono text-xs">{providerDetails.keyInformation.derivationPath}</span>}
+                          />
+                        )}
+                        {providerDetails.keyInformation.publicKey && (
+                          <InfoRow
+                            label="Public Key"
+                            value={<PublicKeyValue publicKey={providerDetails.keyInformation.publicKey} />}
+                          />
+                        )}
+                        {providerDetails.keys?.map((key) => (
+                          <InfoRow
+                            key={key.id}
+                            label={key.id}
+                            value={
+                              <div className="space-y-1">
+                                {key.publicKey && <PublicKeyValue publicKey={key.publicKey} />}
+                                {"derivationPath" in key && (
+                                  <p className="text-xs text-gray-400 font-mono break-all">{key.derivationPath}</p>
+                                )}
+                              </div>
+                            }
+                          />
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        <InfoRow
+                          label="Provider ID"
+                          value={<span className="font-mono text-xs break-all">{providerDetails.providerId}</span>}
+                        />
+                        <InfoRow
+                          label="Location ID"
+                          value={<span className="font-mono text-xs break-all">{providerDetails.locationId}</span>}
+                        />
+                        {providerDetails.providerAccountId && (
+                          <InfoRow
+                            label="Provider Account ID"
+                            value={<span className="font-mono text-xs break-all">{providerDetails.providerAccountId}</span>}
+                          />
+                        )}
+                      </>
+                    )}
+                  </InfoCard>
+                )}
+
+                {/* Encryption Keys */}
+                {purposeKeys && purposeKeys.length > 0 && (
+                  <InfoCard title="Encryption Keys" icon="🔐">
+                    {purposeKeys.map((pk, idx) => (
+                      <div key={idx} className="py-3 border-b border-gray-50 last:border-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-purple-100 text-purple-800">
+                            {pk.purpose}
+                          </span>
+                          <span className="text-xs text-gray-400 font-mono truncate">{pk.ledgerId}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-xs text-gray-700 break-all flex-1">{pk.publicKey}</span>
+                          <CopyButton text={pk.publicKey} />
+                        </div>
+                      </div>
                     ))}
                   </InfoCard>
                 )}
