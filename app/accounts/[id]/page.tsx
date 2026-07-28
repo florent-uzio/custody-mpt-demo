@@ -11,6 +11,7 @@ import {
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useTickers } from "../../hooks/useTickers";
+import { keyEncodings } from "../../lib/key-encoding";
 import {
   Page,
   PageHeader,
@@ -407,17 +408,35 @@ export default function AccountDetailPage() {
 
               {purposeKeys && purposeKeys.length > 0 && (
                 <InfoCard title={`Encryption Keys (${purposeKeys.length})`} icon="🔐">
-                  {purposeKeys.map((pk, idx) => (
-                    <div key={idx} className="py-3 border-b border-gray-50 last:border-0 last:pb-0 first:pt-0">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-purple-100 text-purple-800">
-                          {pk.purpose}
-                        </span>
-                        <span className="text-xs text-gray-400 font-mono truncate">{pk.ledgerId}</span>
+                  {purposeKeys.map((pk, idx) => {
+                    const { base64, hex } = keyEncodings(pk.publicKey);
+                    return (
+                      <div key={idx} className="py-3 border-b border-gray-50 last:border-0 last:pb-0 first:pt-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-purple-100 text-purple-800">
+                            {pk.purpose}
+                          </span>
+                          <span className="text-xs text-gray-400 font-mono truncate">{pk.ledgerId}</span>
+                        </div>
+                        {hex && (
+                          <>
+                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                              Hex <span className="normal-case font-normal">— use in MPT Set</span>
+                            </p>
+                            <MonoCopy text={hex} />
+                          </>
+                        )}
+                        <p
+                          className={`text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ${
+                            hex ? "mt-2" : ""
+                          }`}
+                        >
+                          Base64
+                        </p>
+                        <MonoCopy text={base64} />
                       </div>
-                      <MonoCopy text={pk.publicKey} />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </InfoCard>
               )}
 

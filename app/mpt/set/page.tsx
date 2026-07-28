@@ -6,6 +6,7 @@ import { useAccounts } from "../../hooks/useAccounts";
 import { useDefaultDomain } from "../../contexts/DomainContext";
 import { CopyButton } from "../../components/CopyButton";
 import { useSubmitMPTokenSet } from "../../hooks/useSubmitMPTokenSet";
+import { useElGamalKeys, type ElGamalKey } from "../../hooks/useElGamalKeys";
 import {
   Page,
   PageHeader,
@@ -35,12 +36,98 @@ const MPT_SET_FLAGS = [
   },
 ];
 
-/** A 33-byte compressed EC point, hex. Empty is valid — the fields are optional. */
-const isKeyInvalid = (key: string) => key !== "" && !/^[0-9A-Fa-f]{66}$/.test(key);
+/**
+ * An encryption key input that can be filled from any account's ElGamal purpose key
+ * or typed freely — the dropdown just writes into the same text field, so a picked
+ * key stays editable and a pasted one still shows which account it came from.
+ */
+function EncryptionKeyField({
+  id,
+  label,
+  value,
+  onChange,
+  keys,
+  keysLoading,
+  placeholder,
+  highlightAccountId,
+  help,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  keys: ElGamalKey[];
+  keysLoading: boolean;
+  placeholder: string;
+  /** Account whose key to float to the top — the issuer selected in step 1. */
+  highlightAccountId?: string;
+  help: React.ReactNode;
+}) {
+  // Keys without a hex form can't be sent, so they aren't offered.
+  const options = keys
+    .filter((k) => k.hex)
+    .sort((a, b) =>
+      a.accountId === highlightAccountId ? -1 : b.accountId === highlightAccountId ? 1 : 0,
+    );
+
+  const optionId = (k: ElGamalKey) => `${k.accountId}:${k.ledgerId}`;
+  const matched = options.find((k) => k.hex === value.trim().toUpperCase());
+
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+      </label>
+
+      <select
+        aria-label={`${label} — pick from an account`}
+        value={matched ? optionId(matched) : ""}
+        onChange={(e) => {
+          const picked = options.find((k) => optionId(k) === e.target.value);
+          onChange(picked?.hex ?? "");
+        }}
+        className="w-full mb-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors bg-white text-sm"
+        disabled={keysLoading}
+      >
+        <option value="">
+          {keysLoading
+            ? "Loading account keys…"
+            : options.length === 0
+            ? "No ElGamal keys found — enter one below"
+            : "Enter manually below, or pick an account key…"}
+        </option>
+        {options.map((k) => (
+          <option key={optionId(k)} value={optionId(k)}>
+            {k.alias}
+            {k.accountId === highlightAccountId ? " (selected issuer)" : ""} · {k.ledgerId} ·{" "}
+            {k.hex!.slice(0, 10)}…
+          </option>
+        ))}
+      </select>
+
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors font-mono text-sm"
+          placeholder={placeholder}
+        />
+        {value && <CopyButton text={value} />}
+      </div>
+      <p className="mt-2 text-xs text-gray-500">
+        {matched ? `From ${matched.alias} · ${matched.ledgerId}. ` : ""}
+        {help}
+      </p>
+    </div>
+  );
+}
 
 export default function MptSetPage() {
   const { defaultDomainId } = useDefaultDomain();
   const { accounts, loading: accountsLoading } = useAccounts();
+  const { keys: elGamalKeys, loading: elGamalKeysLoading } = useElGamalKeys();
   const { mutate, isPending, data: response, error } = useSubmitMPTokenSet();
 
   const [accountId, setAccountId] = useState("");
@@ -51,9 +138,6 @@ export default function MptSetPage() {
   const [canHoldConfidential, setCanHoldConfidential] = useState(false);
   const [issuerKey, setIssuerKey] = useState("");
   const [auditorKey, setAuditorKey] = useState("");
-
-  const issuerKeyInvalid = isKeyInvalid(issuerKey);
-  const auditorKeyInvalid = isKeyInvalid(auditorKey);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -366,76 +450,38 @@ export default function MptSetPage() {
                 </div>
               </label>
 
-              <div>
-                <label
-                  htmlFor="issuerKey"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Issuer Encryption Key
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    id="issuerKey"
-                    value={issuerKey}
-                    onChange={(e) => {
-                      setIssuerKey(e.target.value);
-                      // An auditor key alone is invalid — drop it with the issuer key.
-                      if (!e.target.value) setAuditorKey("");
-                    }}
-                    className={`flex-1 px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-colors font-mono text-sm ${
-                      issuerKeyInvalid
-                        ? "border-red-400 focus:ring-red-500 focus:border-red-500"
-                        : "border-gray-300 focus:ring-violet-500 focus:border-violet-500"
-                    }`}
-                    placeholder="02A1B2… (66 hex characters)"
-                  />
-                  {issuerKey && <CopyButton text={issuerKey} />}
-                </div>
-                <p
-                  className={`mt-2 text-xs ${
-                    issuerKeyInvalid ? "text-red-600" : "text-gray-500"
-                  }`}
-                >
-                  {issuerKeyInvalid
-                    ? `Must be 66 hex characters (33 bytes) — got ${issuerKey.length}`
-                    : "33-byte EC-ElGamal public key for the issuer's mirror balances. Write-once — re-setting it fails with tecNO_PERMISSION."}
-                </p>
-              </div>
+              <EncryptionKeyField
+                id="issuerKey"
+                label="Issuer Encryption Key"
+                value={issuerKey}
+                onChange={setIssuerKey}
+                keys={elGamalKeys}
+                keysLoading={elGamalKeysLoading}
+                placeholder="02A1B2… (hex)"
+                highlightAccountId={accountId}
+                help={
+                  <>
+                    Hex-encoded EC-ElGamal public key for the issuer&apos;s mirror
+                    balances. Write-once — re-setting it fails with tecNO_PERMISSION.
+                  </>
+                }
+              />
 
-              <div>
-                <label
-                  htmlFor="auditorKey"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Auditor Encryption Key
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    id="auditorKey"
-                    value={auditorKey}
-                    onChange={(e) => setAuditorKey(e.target.value)}
-                    disabled={!issuerKey}
-                    className={`flex-1 px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-colors font-mono text-sm disabled:bg-gray-100 disabled:text-gray-400 ${
-                      auditorKeyInvalid
-                        ? "border-red-400 focus:ring-red-500 focus:border-red-500"
-                        : "border-gray-300 focus:ring-violet-500 focus:border-violet-500"
-                    }`}
-                    placeholder="03C4D5… (66 hex characters)"
-                  />
-                  {auditorKey && <CopyButton text={auditorKey} />}
-                </div>
-                <p
-                  className={`mt-2 text-xs ${
-                    auditorKeyInvalid ? "text-red-600" : "text-gray-500"
-                  }`}
-                >
-                  {auditorKeyInvalid
-                    ? `Must be 66 hex characters (33 bytes) — got ${auditorKey.length}`
-                    : "33-byte EC-ElGamal public key for regulatory oversight. Requires an issuer key — an auditor key alone is temMALFORMED."}
-                </p>
-              </div>
+              <EncryptionKeyField
+                id="auditorKey"
+                label="Auditor Encryption Key"
+                value={auditorKey}
+                onChange={setAuditorKey}
+                keys={elGamalKeys}
+                keysLoading={elGamalKeysLoading}
+                placeholder="03C4D5… (hex)"
+                help={
+                  <>
+                    Hex-encoded EC-ElGamal public key for regulatory oversight.
+                    Requires an issuer key — an auditor key alone is temMALFORMED.
+                  </>
+                }
+              />
 
               <p className="text-xs text-gray-500">
                 Keys can be registered in the same transaction that enables the
@@ -502,11 +548,9 @@ export default function MptSetPage() {
               isPending ||
               !defaultDomainId ||
               accounts.length === 0 ||
-              // Nothing to set: no lock action, no flag, no issuer key
-              (!selectedFlag && !canHoldConfidential && !issuerKey) ||
-              (selectedFlag !== null && !applyToAll && !holderAddress) ||
-              issuerKeyInvalid ||
-              auditorKeyInvalid
+              // Nothing to set: no lock action, no flag, no keys
+              (!selectedFlag && !canHoldConfidential && !issuerKey && !auditorKey) ||
+              (selectedFlag !== null && !applyToAll && !holderAddress)
             }
           >
             {submitLabel}
