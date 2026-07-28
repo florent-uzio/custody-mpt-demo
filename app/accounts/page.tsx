@@ -22,7 +22,8 @@ interface AccountFilters {
   limit: string;
   sortBy: string;
   sortOrder: string;
-  ledgerId: string;
+  /** `undefined` follows the configured default ledger; `""` means all ledgers. */
+  ledgerId?: string;
   alias: string;
   vaultId: string;
   createdBy: string;
@@ -102,7 +103,7 @@ const EMPTY_FILTERS: AccountFilters = {
   limit: "",
   sortBy: "",
   sortOrder: "",
-  ledgerId: "",
+  ledgerId: undefined,
   alias: "",
   vaultId: "",
   createdBy: "",
@@ -118,12 +119,12 @@ const EMPTY_FILTERS: AccountFilters = {
 export default function AccountsPage() {
   const { defaultDomainId } = useDefaultDomain();
   const { ledgerIds, defaultLedgerId } = useLedgerConfig();
-  const initialFilters: AccountFilters = {
-    ...EMPTY_FILTERS,
-    ledgerId: defaultLedgerId,
-  };
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<AccountFilters>(initialFilters);
+  const [filters, setFilters] = useState<AccountFilters>(EMPTY_FILTERS);
+
+  // Until the picker is touched, follow the configured default so a change on
+  // the Config page is picked up instead of being frozen at first render.
+  const ledgerId = filters.ledgerId ?? defaultLedgerId;
 
   const setField = <K extends keyof AccountFilters>(
     k: K,
@@ -147,7 +148,7 @@ export default function AccountsPage() {
     if (filters.limit) f.limit = parseInt(filters.limit, 10);
     if (filters.sortBy) f.sortBy = filters.sortBy;
     if (filters.sortOrder) f.sortOrder = filters.sortOrder;
-    if (filters.ledgerId) f.ledgerId = filters.ledgerId;
+    if (ledgerId) f.ledgerId = ledgerId;
     if (filters.alias) f.alias = filters.alias;
     if (filters.vaultId) f.vaultId = filters.vaultId;
     if (filters.createdBy) f.createdBy = filters.createdBy;
@@ -170,9 +171,13 @@ export default function AccountsPage() {
     return f;
   };
 
+  // Key off the built filters, not the raw form state, so the effective ledger
+  // id is part of the key even while it is following the configured default.
+  const actionFilters = buildActionFilters();
+
   const { data, isLoading, isError, error, isFetching, refetch } = useQuery({
-    queryKey: ["accounts", defaultDomainId, filters],
-    queryFn: () => listAccounts(defaultDomainId!, buildActionFilters()),
+    queryKey: ["accounts", defaultDomainId, actionFilters],
+    queryFn: () => listAccounts(defaultDomainId!, actionFilters),
     enabled: !!defaultDomainId,
     staleTime: 60_000,
   });
@@ -184,7 +189,7 @@ export default function AccountsPage() {
     filters.limit,
     filters.sortBy,
     filters.sortOrder,
-    filters.ledgerId,
+    ledgerId,
     filters.alias,
     filters.vaultId,
     filters.createdBy,
@@ -304,7 +309,7 @@ export default function AccountsPage() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setFilters(initialFilters)}
+                  onClick={() => setFilters(EMPTY_FILTERS)}
                   className="text-xs text-gray-500 hover:text-gray-700 underline"
                 >
                   Reset all
@@ -330,7 +335,7 @@ export default function AccountsPage() {
                     Ledger ID
                   </label>
                   <select
-                    value={filters.ledgerId}
+                    value={ledgerId}
                     onChange={(e) => setField("ledgerId", e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                   >
