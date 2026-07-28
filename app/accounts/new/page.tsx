@@ -126,9 +126,10 @@ export default function NewAccountPage() {
   const [keyStrategy, setKeyStrategy] = useState<
     "VaultSoft" | "VaultHard" | "Random"
   >("VaultSoft");
-  const [selectedLedgers, setSelectedLedgers] = useState<string[]>([
-    defaultLedgerId,
-  ]);
+  // Undefined until the user touches the ledger cards, so a Config page change
+  // to the default ledger is picked up instead of being frozen at first render.
+  const [touchedLedgers, setSelectedLedgers] = useState<string[]>();
+  const selectedLedgers = touchedLedgers ?? [defaultLedgerId];
   const [lock, setLock] = useState<"Unlocked" | "Locked">("Unlocked");
   const [description, setDescription] = useState("");
 
@@ -160,10 +161,10 @@ export default function NewAccountPage() {
   const selectedVault = vaults.find((v) => v.data.id === vaultId);
 
   const handleLedgerToggle = (ledgerId: string) => {
-    setSelectedLedgers((prev) =>
-      prev.includes(ledgerId)
-        ? prev.filter((l) => l !== ledgerId)
-        : [...prev, ledgerId],
+    setSelectedLedgers(
+      selectedLedgers.includes(ledgerId)
+        ? selectedLedgers.filter((l) => l !== ledgerId)
+        : [...selectedLedgers, ledgerId],
     );
   };
 
