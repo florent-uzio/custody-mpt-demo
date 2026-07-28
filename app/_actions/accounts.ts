@@ -54,7 +54,6 @@ function buildAccountQueryParams(filters: AccountFilters): AccountQueryParams {
   if (filters.sortBy) q.sortBy = filters.sortBy as AccountQueryParams["sortBy"];
   if (filters.sortOrder)
     q.sortOrder = filters.sortOrder as AccountQueryParams["sortOrder"];
-  if (filters.ledgerId) q.ledgerId = filters.ledgerId;
   if (filters.alias) q.alias = filters.alias;
   if (filters.vaultId) q["providerDetails.vaultId"] = filters.vaultId;
   if (filters.createdBy) q["metadata.createdBy"] = filters.createdBy;
@@ -68,8 +67,16 @@ function buildAccountQueryParams(filters: AccountFilters): AccountQueryParams {
   if (filters.processingStatus)
     q["additionalDetails.processingStatus"] =
       filters.processingStatus as AccountQueryParams["additionalDetails.processingStatus"];
-  if (filters.additionalLedgerIds?.length)
-    q["additionalDetails.ledgers.ledgerId"] = filters.additionalLedgerIds;
+  // The API's top-level `ledgerId` param matches an account's *default* ledger,
+  // which this app never sets (create only sends `ledgerIds`), so filtering on
+  // it matches nothing. The ledgers an account actually lives on live in
+  // `additionalDetails.ledgers`, so both ledger filters target that param.
+  const ledgerIds = [
+    ...(filters.ledgerId ? [filters.ledgerId] : []),
+    ...(filters.additionalLedgerIds ?? []),
+  ];
+  if (ledgerIds.length)
+    q["additionalDetails.ledgers.ledgerId"] = [...new Set(ledgerIds)];
   if (filters.additionalLedgerStatuses?.length)
     q["additionalDetails.ledgers.status"] =
       filters.additionalLedgerStatuses as AccountQueryParams["additionalDetails.ledgers.status"];
