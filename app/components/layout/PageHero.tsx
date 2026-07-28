@@ -8,6 +8,8 @@ interface PageHeroProps {
   description: React.ReactNode;
   /** Optional pill + trailing note rendered under the description. */
   badge?: { label: string; note?: React.ReactNode };
+  /** Optional extra content rendered under the description, above the badge. */
+  children?: React.ReactNode;
 }
 
 /**
@@ -21,6 +23,7 @@ export function PageHero({
   title,
   description,
   badge,
+  children,
 }: PageHeroProps) {
   return (
     <div
@@ -33,6 +36,7 @@ export function PageHero({
         <h2 className="text-2xl font-bold">{title}</h2>
       </div>
       <p className="text-white/90 text-sm">{description}</p>
+      {children}
       {badge && (
         <div className="mt-4 flex items-center gap-2 text-xs">
           <span className="px-2 py-1 bg-white/20 rounded-full">

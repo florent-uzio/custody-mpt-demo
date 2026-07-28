@@ -5,10 +5,17 @@ import { useState } from "react";
 interface CopyButtonProps {
   text: string;
   className?: string;
+  /** Use "light" on dark or theme-colored surfaces (e.g. inside PageHero). */
+  tone?: "dark" | "light";
 }
 
-export function CopyButton({ text, className = "" }: CopyButtonProps) {
+export function CopyButton({
+  text,
+  className = "",
+  tone = "dark",
+}: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
+  const light = tone === "light";
 
   const handleCopy = async () => {
     try {
@@ -23,12 +30,12 @@ export function CopyButton({ text, className = "" }: CopyButtonProps) {
   return (
     <button
       onClick={handleCopy}
-      className={`p-1 rounded hover:bg-gray-100 transition-colors ${className}`}
+      className={`p-1 rounded transition-colors ${light ? "hover:bg-white/20" : "hover:bg-gray-100"} ${className}`}
       title={copied ? "Copied!" : "Copy to clipboard"}
     >
       {copied ? (
         <svg
-          className="w-4 h-4 text-green-600"
+          className={`w-4 h-4 ${light ? "text-green-300" : "text-green-600"}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -42,7 +49,7 @@ export function CopyButton({ text, className = "" }: CopyButtonProps) {
         </svg>
       ) : (
         <svg
-          className="w-4 h-4 text-gray-400 hover:text-gray-600"
+          className={`w-4 h-4 ${light ? "text-white/70 hover:text-white" : "text-gray-400 hover:text-gray-600"}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
