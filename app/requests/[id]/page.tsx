@@ -6,6 +6,7 @@ import { type Core_RequestState } from "@florent-uzio/custody";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
 import { getRequestState } from "../../_actions/requests";
+import { requesterDomainId, requesterId } from "../requester";
 import {
   Page,
   PageHeader,
@@ -121,6 +122,9 @@ export default function RequestDetailPage() {
 
   const status = request?.status ?? "";
   const cfg = STATUS_CONFIG[status] ?? DEFAULT_CONFIG;
+
+  const requesterIdentity = requesterId(request?.requester);
+  const requesterDomain = requesterDomainId(request?.requester);
 
   const shortId = requestId
     ? `${requestId.slice(0, 8)}…${requestId.slice(-4)}`
@@ -286,27 +290,27 @@ export default function RequestDetailPage() {
                 <InfoRow
                   label="User ID"
                   value={
-                    request.requester?.id ? (
+                    requesterIdentity ? (
                       <div className="flex items-center gap-1.5">
                         <span className="font-mono text-xs">
-                          {request.requester.id}
+                          {requesterIdentity}
                         </span>
-                        <CopyButton text={request.requester.id} />
+                        <CopyButton text={requesterIdentity} />
                       </div>
                     ) : (
                       <span className="text-gray-300 italic">—</span>
                     )
                   }
                 />
-                {request.requester?.domainId && (
+                {requesterDomain && (
                   <InfoRow
                     label="Domain ID"
                     value={
                       <div className="flex items-center gap-1.5">
                         <span className="font-mono text-xs">
-                          {request.requester.domainId}
+                          {requesterDomain}
                         </span>
-                        <CopyButton text={request.requester.domainId} />
+                        <CopyButton text={requesterDomain} />
                       </div>
                     }
                   />
