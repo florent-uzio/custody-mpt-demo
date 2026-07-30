@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { EDS_Channel } from "@florent-uzio/custody";
@@ -108,17 +108,6 @@ export default function ChannelDetailPage() {
     staleTime: 30_000,
   });
 
-  useEffect(() => {
-    if (!editMode && channel) {
-      setEditName(channel.name ?? "");
-      setEditStatus(channel.status === "DISABLED" ? "DISABLED" : "ACTIVE");
-      setEditMaxRetries(
-        channel.maxRetries !== undefined ? String(channel.maxRetries) : "",
-      );
-      setEditEventTypes(channel.supportedEventTypes ?? []);
-    }
-  }, [channel, editMode]);
-
   const updateMutation = useMutation({
     mutationFn: () => {
       const maxRetriesNum = editMaxRetries.trim()
@@ -172,15 +161,24 @@ export default function ChannelDetailPage() {
     setEditEventTypeInput("");
   };
 
+  /** Load the edit fields from the fetched channel. */
+  const seedEditFields = () => {
+    if (!channel) return;
+    setEditName(channel.name ?? "");
+    setEditStatus(channel.status === "DISABLED" ? "DISABLED" : "ACTIVE");
+    setEditMaxRetries(
+      channel.maxRetries !== undefined ? String(channel.maxRetries) : "",
+    );
+    setEditEventTypes(channel.supportedEventTypes ?? []);
+  };
+
+  const startEdit = () => {
+    seedEditFields();
+    setEditMode(true);
+  };
+
   const cancelEdit = () => {
-    if (channel) {
-      setEditName(channel.name ?? "");
-      setEditStatus(channel.status === "DISABLED" ? "DISABLED" : "ACTIVE");
-      setEditMaxRetries(
-        channel.maxRetries !== undefined ? String(channel.maxRetries) : "",
-      );
-      setEditEventTypes(channel.supportedEventTypes ?? []);
-    }
+    seedEditFields();
     updateMutation.reset();
     setEditMode(false);
   };
@@ -259,7 +257,7 @@ export default function ChannelDetailPage() {
                 {!editMode && (
                   <>
                     <button
-                      onClick={() => setEditMode(true)}
+                      onClick={startEdit}
                       className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors shadow-sm"
                     >
                       <svg

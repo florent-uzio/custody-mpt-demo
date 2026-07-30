@@ -6,6 +6,7 @@ import Link from "next/link";
 import { type Core_RequestState } from "@florent-uzio/custody";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { CopyButton } from "../components/CopyButton";
+import { requesterId } from "./requester";
 import {
   listUserRequestStates,
   listUserRequestStatesInDomain,
@@ -282,7 +283,7 @@ export default function RequestsPage() {
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell">
                           <span className="font-mono text-xs text-gray-500">
-                            {truncateId(item.requester?.id ?? "—")}
+                            {truncateId(requesterId(item.requester) ?? "—")}
                           </span>
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell text-xs text-gray-500 whitespace-nowrap">

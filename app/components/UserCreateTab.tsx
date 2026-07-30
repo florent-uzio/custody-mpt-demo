@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { JsonViewer } from "./JsonViewer";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { CopyButton } from "./CopyButton";
@@ -21,12 +21,10 @@ export function UserCreateTab() {
     limit: 100,
   });
 
-  const [domainId, setDomainId] = useState("");
-  // Default to the current domain once it has loaded from localStorage,
-  // unless the user has already picked one.
-  useEffect(() => {
-    if (defaultDomainId) setDomainId((cur) => cur || defaultDomainId);
-  }, [defaultDomainId]);
+  // "" means the user hasn't picked one, so fall back to the current domain
+  // (which itself only resolves once localStorage has been read).
+  const [pickedDomainId, setPickedDomainId] = useState("");
+  const domainId = pickedDomainId || defaultDomainId;
 
   const domainOptions = useMemo(() => {
     const opts = (domainsData?.items ?? []).map(({ data }) => ({
@@ -138,7 +136,7 @@ export function UserCreateTab() {
               <select
                 id="domainId"
                 value={domainId}
-                onChange={(e) => setDomainId(e.target.value)}
+                onChange={(e) => setPickedDomainId(e.target.value)}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-colors bg-white"
                 required
               >
