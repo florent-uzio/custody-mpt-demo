@@ -50,7 +50,12 @@ This app uses Next.js instead of a pure client-side framework because:
 - The Ripple Custody SDK requires Node.js crypto operations (key generation, signing)
 - Server Actions handle all custody SDK operations securely
 - No browser polyfills needed - everything runs natively on the server
-- Better security - private keys never leave the server
+- Better security - the configured signing key (`PRIVATE_KEY`) stays on the
+  server: it is only ever read inside Server Actions, and the Configuration
+  page treats it as write-only — you can set or clear it, but its current value
+  is never sent to the browser. The one deliberate exception is the **Keypair
+  Generator**, which exists to hand you a freshly generated private key; that
+  key is not the app's credential and is never stored server-side.
 
 ## Prerequisites
 
