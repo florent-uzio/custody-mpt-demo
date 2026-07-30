@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useConfig, useConfigMutation } from "../hooks/useConfig";
-import type { ConfigEntry, ConfigKey } from "../lib/config";
+import { SECRET_KEYS, type ConfigEntry, type ConfigKey } from "../lib/config";
 import { BUILT_IN_XRPL_LEDGER_IDS, resolveLedgerConfig } from "../lib/ledgers";
 import {
   Page,
@@ -75,12 +75,24 @@ const FIELDS: {
   },
 ];
 
+/**
+ * Values the fields show before the user edits anything. Secret keys are
+ * write-only — the summary carries no value for them, so they start empty.
+ */
 function blankFormValues(
   config: Record<ConfigKey, ConfigEntry> | undefined,
 ): Record<ConfigKey, string> {
   return Object.fromEntries(
     FIELDS.map(({ key }) => [key, config?.[key].value ?? ""]),
   ) as Record<ConfigKey, string>;
+}
+
+/** Placeholder telling the user what the current (unreadable) secret state is. */
+function secretPlaceholder(entry: ConfigEntry | undefined): string {
+  if (entry?.source === "override")
+    return "Override set — enter a new value to replace it";
+  if (entry?.source === "env") return "Set in .env — enter a value to override";
+  return "Not set";
 }
 
 function SourceBadge({ source }: { source: "override" | "env" | "empty" }) {
@@ -122,13 +134,39 @@ export default function ConfigPage() {
 
   const handleSave = () => {
     setSuccessMessage("");
-    mutation.mutate(formValues, {
+    // Secret fields are write-only, so an empty one means "leave unchanged"
+    // rather than "clear" — only send a secret the user actually typed into.
+    // Clearing a secret override goes through its "Clear override" button.
+    const payload = Object.fromEntries(
+      Object.entries(formValues).filter(
+        ([key, value]) => !SECRET_KEYS.has(key as ConfigKey) || value !== "",
+      ),
+    ) as Partial<Record<ConfigKey, string>>;
+
+    mutation.mutate(payload, {
       onSuccess: () => {
         // Drop the edits so the fields track the refetched config again.
         setEdits({});
         setSuccessMessage("Configuration saved. SDK will use the new values.");
       },
     });
+  };
+
+  const handleClearSecret = (key: ConfigKey) => {
+    setSuccessMessage("");
+    mutation.mutate(
+      { [key]: "" },
+      {
+        onSuccess: () => {
+          setEdits((prev) => {
+            const next = { ...prev };
+            delete next[key];
+            return next;
+          });
+          setSuccessMessage(`${key} override cleared.`);
+        },
+      },
+    );
   };
 
   const handleReset = () => {
@@ -308,7 +346,7 @@ export default function ConfigPage() {
                       }
                       rows={3}
                       className="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors font-mono text-sm resize-y bg-white"
-                      placeholder={`Enter ${field.label.toLowerCase()}...`}
+                      placeholder={secretPlaceholder(entry)}
                       style={
                         !isVisible
                           ? {
@@ -401,11 +439,31 @@ export default function ConfigPage() {
                   )}
                 </div>
 
-                {entry?.source === "override" && entry.hasEnvFallback && (
-                  <p className="mt-1.5 text-xs text-blue-600">
-                    Overriding .env value. Clear this field and save to restore
-                    the default.
-                  </p>
+                {field.sensitive ? (
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <p className="text-xs text-gray-500">
+                      Write-only — the current value is never sent to the
+                      browser.
+                    </p>
+                    {entry?.source === "override" && (
+                      <button
+                        type="button"
+                        onClick={() => handleClearSecret(field.key)}
+                        disabled={mutation.isPending}
+                        className="text-xs font-medium text-blue-600 hover:text-blue-800 underline disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Clear override
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  entry?.source === "override" &&
+                  entry.hasEnvFallback && (
+                    <p className="mt-1.5 text-xs text-blue-600">
+                      Overriding .env value. Clear this field and save to restore
+                      the default.
+                    </p>
+                  )
                 )}
               </div>
             );
