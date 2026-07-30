@@ -30,3 +30,10 @@ dist-ssr
 
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# Per-branch working notes: an append-only log whose value expires on merge, so
+# it conflicts across concurrent branches and swamps diffs. The durable prose
+# belongs in the commit message and PR body instead.
+# tasks/lessons.md is deliberately NOT ignored — it is a standing instruction
+# file like CLAUDE.md, and agents are told to read it at session start.
+tasks/todo.md
