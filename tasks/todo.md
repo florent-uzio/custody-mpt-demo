@@ -610,3 +610,32 @@ Branch `feat/xrpl-accountset` (main untouched).
 - **Verified** — `npx tsc --noEmit` yields only the 7 pre-existing `app/requests/**` errors (confirmed by stashing); no xrpl 4→5 type breakage in `batch-builder.ts`, `_actions/batch.ts`, `_actions/trustset.ts`, `_actions/clawback.ts`. `next build` reaches "Compiled successfully in 4.6s" (bundling with xrpl 5 is fine) then fails on those same pre-existing errors. Dev server: `/mpt/set` → 200, HTML contains the flag checkbox and both key fields. `npm run lint` is broken on `main` (`next lint` was removed in Next 16) — untouched.
 - **Not done (deliberate)** — `app/lib/batch-builder.ts:75` still hand-rolls ConfidentialMPT transactions as cast plain objects; xrpl 5 now has real models for them, but replacing that is out of scope for this branch.
 - **Pending (manual, needs live tenant)** — submit one confidential-enable intent and confirm the backend accepts `mutableFlags: ["MPTSetCanConfidentialAmount"]` and which ledger flag it encodes to.
+
+---
+
+# Bind dev/start to loopback (`chore/bind-dev-loopback`)
+
+Supersedes plan 003 (operator gate), which was implemented, verified, then
+rejected as disproportionate for a local-only tool — see `plans/README.md`.
+
+- [x] 1. Branch from `main` → verify: clean tree at `a4b4f16`.
+- [x] 2. `-H 127.0.0.1` on the `dev` and `start` scripts → verify: banner shows
+      `127.0.0.1`, `lsof` shows the socket bound to `127.0.0.1:PORT` only (it
+      was `*:PORT` before), loopback → 200, LAN IP → connection refused.
+- [x] 3. README note on why, and how to opt out for one run → verify: reads correctly.
+
+## Review
+
+- **The actual exposure** was that `next dev` listens on every interface, so
+  anyone on the same LAN could reach an app whose every Server Action runs with
+  the custody operator key. Confirmed from the dev banner, which advertised
+  `Network: http://192.168.100.164:3111`.
+- **Not** a real exposure, contra plan 003: cross-origin drive-by POSTs. Server
+  Actions require the `Next-Action` header, so a cross-site request is
+  preflighted and blocked, and Next verifies the Origin/Host pair.
+- `start` got the same flag as `dev` — a local `npm run start` has exactly the
+  same property, and leaving it off would have been an inconsistency waiting to
+  bite.
+- **Known limit**: this protects nothing if the app is ever hosted anywhere
+  others can reach. Recorded in `plans/README.md`, along with the commit that
+  holds the full gate implementation (`bb0893a`) if that day comes.
