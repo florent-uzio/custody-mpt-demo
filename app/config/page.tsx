@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useConfig, useConfigMutation } from "../hooks/useConfig";
-import type { ConfigKey } from "../lib/config";
+import type { ConfigEntry, ConfigKey } from "../lib/config";
 import { BUILT_IN_XRPL_LEDGER_IDS, resolveLedgerConfig } from "../lib/ledgers";
 import {
   Page,
@@ -75,6 +75,14 @@ const FIELDS: {
   },
 ];
 
+function blankFormValues(
+  config: Record<ConfigKey, ConfigEntry> | undefined,
+): Record<ConfigKey, string> {
+  return Object.fromEntries(
+    FIELDS.map(({ key }) => [key, config?.[key].value ?? ""]),
+  ) as Record<ConfigKey, string>;
+}
+
 function SourceBadge({ source }: { source: "override" | "env" | "empty" }) {
   if (source === "override") {
     return (
@@ -104,36 +112,20 @@ export default function ConfigPage() {
   const { data: config, isLoading, error } = useConfig();
   const mutation = useConfigMutation();
 
-  const [formValues, setFormValues] = useState<Record<ConfigKey, string>>({
-    AUTH_URL: "",
-    API_URL: "",
-    PRIVATE_KEY: "",
-    PUBLIC_KEY: "",
-    XRPL_WSS_URL: "",
-    XRPL_LEDGER_IDS: "",
-    DEFAULT_LEDGER_ID: "",
-  });
   const [visibleFields, setVisibleFields] = useState<Set<ConfigKey>>(new Set());
   const [successMessage, setSuccessMessage] = useState("");
 
-  useEffect(() => {
-    if (config) {
-      setFormValues({
-        AUTH_URL: config.AUTH_URL.value,
-        API_URL: config.API_URL.value,
-        PRIVATE_KEY: config.PRIVATE_KEY.value,
-        PUBLIC_KEY: config.PUBLIC_KEY.value,
-        XRPL_WSS_URL: config.XRPL_WSS_URL.value,
-        XRPL_LEDGER_IDS: config.XRPL_LEDGER_IDS.value,
-        DEFAULT_LEDGER_ID: config.DEFAULT_LEDGER_ID.value,
-      });
-    }
-  }, [config]);
+  // Only the keys the user has typed into are held in state; everything else is
+  // read straight from the fetched config, so there is nothing to sync on load.
+  const [edits, setEdits] = useState<Partial<Record<ConfigKey, string>>>({});
+  const formValues = { ...blankFormValues(config), ...edits };
 
   const handleSave = () => {
     setSuccessMessage("");
     mutation.mutate(formValues, {
       onSuccess: () => {
+        // Drop the edits so the fields track the refetched config again.
+        setEdits({});
         setSuccessMessage("Configuration saved. SDK will use the new values.");
       },
     });
@@ -145,6 +137,7 @@ export default function ConfigPage() {
       { reset: true },
       {
         onSuccess: () => {
+          setEdits({});
           setSuccessMessage(
             "All overrides cleared. SDK will use .env defaults.",
           );
@@ -308,7 +301,7 @@ export default function ConfigPage() {
                       id={`config-${field.key}`}
                       value={formValues[field.key]}
                       onChange={(e) =>
-                        setFormValues((prev) => ({
+                        setEdits((prev) => ({
                           ...prev,
                           [field.key]: e.target.value,
                         }))
@@ -330,7 +323,7 @@ export default function ConfigPage() {
                       id={`config-${field.key}`}
                       value={formValues[field.key]}
                       onChange={(e) =>
-                        setFormValues((prev) => ({
+                        setEdits((prev) => ({
                           ...prev,
                           [field.key]: e.target.value,
                         }))
@@ -352,7 +345,7 @@ export default function ConfigPage() {
                       type="text"
                       value={formValues[field.key]}
                       onChange={(e) =>
-                        setFormValues((prev) => ({
+                        setEdits((prev) => ({
                           ...prev,
                           [field.key]: e.target.value,
                         }))

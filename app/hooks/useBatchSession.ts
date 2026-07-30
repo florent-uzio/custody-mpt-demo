@@ -14,6 +14,7 @@ import {
   loadBatchSession,
   saveBatchSession,
 } from "../utils/batchSessionStorage";
+import { useHydrated } from "./useHydrated";
 import type { BatchBuildInput } from "../lib/batch-builder";
 import type { AutofillBatchResult } from "../_actions/batch";
 
@@ -51,14 +52,13 @@ function upsertSignatureState(
  * staleness signal) and non-draft mutators (dry-run / signatures / propose).
  */
 export function useBatchSession() {
-  const [session, setSession] = useState<BatchSession>(createBatchSession);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const stored = loadBatchSession();
-    if (stored) setSession(stored);
-    setReady(true);
-  }, []);
+  // Read localStorage in the initializer, but report `ready` only once hydration
+  // is done — consumers gate on it, so the stored session never reaches the
+  // hydration render and can't cause a markup mismatch.
+  const [session, setSession] = useState<BatchSession>(
+    () => loadBatchSession() ?? createBatchSession(),
+  );
+  const ready = useHydrated();
 
   useEffect(() => {
     if (ready) saveBatchSession(session);
