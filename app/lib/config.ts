@@ -17,8 +17,20 @@ export const CONFIG_KEYS: ConfigKey[] = [
   "DEFAULT_LEDGER_ID",
 ];
 
+/**
+ * Keys whose value must never cross the server→client boundary. They are
+ * write-only: the config summary reports where they come from, not what they
+ * are. Classify every new key here at the moment it is added.
+ */
+export const SECRET_KEYS: ReadonlySet<ConfigKey> = new Set([
+  "PRIVATE_KEY",
+  "PUBLIC_KEY",
+]);
+
 export interface ConfigEntry {
-  value: string;
+  /** Absent for secret keys — they are write-only. */
+  value?: string;
+  secret: boolean;
   source: "override" | "env" | "empty";
   hasEnvFallback: boolean;
 }
@@ -44,14 +56,15 @@ export function getConfigSummary(): Record<ConfigKey, ConfigEntry> {
     const override = overrides.get(key);
     const envValue = process.env[key] ?? "";
     const hasEnvFallback = envValue !== "";
+    const secret = SECRET_KEYS.has(key);
 
-    if (override !== undefined) {
-      result[key] = { value: override, source: "override", hasEnvFallback };
-    } else if (hasEnvFallback) {
-      result[key] = { value: envValue, source: "env", hasEnvFallback };
-    } else {
-      result[key] = { value: "", source: "empty", hasEnvFallback: false };
-    }
+    const source =
+      override !== undefined ? "override" : hasEnvFallback ? "env" : "empty";
+    const value = override !== undefined ? override : envValue;
+
+    result[key] = secret
+      ? { secret, source, hasEnvFallback }
+      : { value, secret, source, hasEnvFallback };
   }
 
   return result;

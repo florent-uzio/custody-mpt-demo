@@ -8,13 +8,13 @@ Domain language for this codebase. Terms named here should be used consistently 
 
 A proposal submitted to the Ripple Custody system that, once approved by policy, becomes a transaction on a ledger. The custody SDK exposes proposal calls (e.g. `proposePayment`, `proposeTrustSet`) that return a `requestId` identifying the proposal's request lifecycle.
 
-The closed set of intent types currently used in this app lives in `app/utils/intentStorage.ts` (`SubmittedIntent.type`):
+**Intent type** — the payload discriminant, typed by the SDK as `Core_IntentType` (the `v0_*` union). The set this app actually builds is the `v0_*` literals appearing in `app/_actions/`, currently: `v0_CreateAccount`, `v0_CreateDomain`, `v0_CreatePolicy`, `v0_CreateTicker`, `v0_CreateTransactionOrder`, `v0_CreateUser`, `v0_LockTicker`, `v0_ProvisionElGamalKeyPair`, `v0_ReleaseQuarantinedTransfers`, `v0_UnlockTicker`, `v0_UpdatePolicy`, `v0_UpdateTicker`, `v0_UpdateUser`. Treat `app/_actions/` as the source of truth rather than this list.
 
-`MPTAuthorize`, `MPTIssuanceCreate`, `MPTIssuanceSet`, `MPTIssuanceDestroy`, `CreateUser`, `CreateAccount`, `Payment`, `TrustSet`, `Batch`.
+Note that ledger-level operations are **not** distinct intent types: a Payment, TrustSet, MPToken* or [Batch](#batch-xls-56) is proposed as a `v0_CreateTransactionOrder` carrying that transaction as its payload. So the UI's vocabulary ("submit a payment") and the intent vocabulary (`v0_CreateTransactionOrder`) sit at different altitudes on purpose.
 
-`Batch` records only the final `proposeBatch` intent (see [Batch](#batch-xls-56)). The intermediate per-participant raw-sign intents are *not* recorded here — they live in the workbench's own persisted session, which exposes their `requestId`s for approval but keeps them out of the global submitted-intents list.
+**Submitted intent** — an intent the UI has proposed, identified by the `requestId` its propose call returned. There is no local record of these: the server-backed `/intents` and `/requests` lists are the record, and `requestId` is what resolves a submission to its resulting `intentId`. (A `localStorage`-backed submitted-intents list and its `/submitted-intents` page existed until `3c852a7`; both were removed as redundant with `/intents`.)
 
-**Submitted intent** — an intent that the UI has proposed and recorded locally (currently in `localStorage`, see `app/utils/intentStorage.ts`). The local record links a UI submission to its server-side `requestId` so the UI can later resolve it to the resulting `intentId`.
+For a Batch, only the final `proposeBatch` intent reaches that server-side list. The intermediate per-participant raw-sign intents live in the workbench's own persisted session (`app/utils/batchSessionStorage.ts`), which exposes their `requestId`s for approval without surfacing them as batch intents.
 
 **Submission** — the act of proposing an intent. The UI verb is *submit*; the SDK verb is *propose*. They refer to the same operation from different sides of the seam: `useSubmitIntent` in the UI calls a `propose*` server action which calls the SDK.
 

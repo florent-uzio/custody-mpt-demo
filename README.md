@@ -50,11 +50,16 @@ This app uses Next.js instead of a pure client-side framework because:
 - The Ripple Custody SDK requires Node.js crypto operations (key generation, signing)
 - Server Actions handle all custody SDK operations securely
 - No browser polyfills needed - everything runs natively on the server
-- Better security - private keys never leave the server
+- Better security - the configured signing key (`PRIVATE_KEY`) stays on the
+  server: it is only ever read inside Server Actions, and the Configuration
+  page treats it as write-only — you can set or clear it, but its current value
+  is never sent to the browser. The one deliberate exception is the **Keypair
+  Generator**, which exists to hand you a freshly generated private key; that
+  key is not the app's credential and is never stored server-side.
 
 ## Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 20.9+ and npm (required by Next 16; CI runs Node 22)
 - Ripple Custody API credentials
 
 ## Setup
@@ -64,7 +69,7 @@ This app uses Next.js instead of a pure client-side framework because:
 npm install
 ```
 
-2. Create a `.env.local` file in the root directory with your Ripple Custody credentials:
+2. Create a `.env` file in the root directory with your Ripple Custody credentials:
 ```env
 AUTH_URL=your_auth_url_here
 API_URL=your_api_url_here
@@ -76,7 +81,10 @@ XRPL_LEDGER_IDS=xrpl-testnet-august-2024,xrpl-devnet,xrpl-custody-devnet,xrpl
 DEFAULT_LEDGER_ID=xrpl-testnet-august-2024
 ```
 
-See `.env.example` for the full list of supported variables.
+See `.env.example` for the full list of supported variables. Next also loads
+`.env.local` (and it takes precedence over `.env`), but the rest of this README
+and the Configuration page both refer to `.env` — stick to `.env` to avoid a
+stale `.env.local` silently shadowing it. Both are gitignored.
 
 3. Start the development server:
 ```bash

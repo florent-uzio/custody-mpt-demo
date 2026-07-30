@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { CopyButton } from "../components/CopyButton";
+import { useEffect, useState } from "react";
 import { JsonViewer } from "../components/JsonViewer";
 import { useCurrentToken } from "../hooks/useCurrentToken";
 import {
@@ -12,41 +11,6 @@ import {
   SectionCard,
   ErrorBanner,
 } from "../components/layout";
-
-type DecodedJwt = {
-  header: unknown;
-  payload: unknown;
-  signature: string;
-} | null;
-
-function base64UrlDecode(input: string): string {
-  const padded = input.replace(/-/g, "+").replace(/_/g, "/");
-  const padding = padded.length % 4 === 0 ? "" : "=".repeat(4 - (padded.length % 4));
-  if (typeof atob === "function") {
-    return decodeURIComponent(
-      atob(padded + padding)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join(""),
-    );
-  }
-  return Buffer.from(padded + padding, "base64").toString("utf-8");
-}
-
-function decodeJwt(token: string | null): DecodedJwt {
-  if (!token) return null;
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
-  try {
-    return {
-      header: JSON.parse(base64UrlDecode(parts[0])),
-      payload: JSON.parse(base64UrlDecode(parts[1])),
-      signature: parts[2],
-    };
-  } catch {
-    return null;
-  }
-}
 
 function formatRemaining(ms: number): string {
   if (ms <= 0) return "Expired";
@@ -68,9 +32,10 @@ export default function JwtTokenPage() {
     return () => clearInterval(id);
   }, []);
 
-  const token = data?.token ?? null;
+  const hasToken = data?.hasToken ?? false;
   const expiration = data?.expiration ?? null;
-  const decoded = useMemo(() => decodeJwt(token), [token]);
+  const claims = data?.claims ?? null;
+  const header = data?.header ?? null;
 
   const expirationDate = expiration ? new Date(expiration * 1000) : null;
   const remainingMs = expiration ? expiration * 1000 - now : null;
@@ -84,10 +49,10 @@ export default function JwtTokenPage() {
           theme="indigo"
           icon="🎫"
           title="JWT Token"
-          description="The current JWT used by the Custody SDK to authenticate API requests. Sourced from rippleCustody.auth.getCurrentToken()."
+          description="The claims of the JWT the Custody SDK uses to authenticate API requests. The token is decoded on the server — the raw credential never reaches the browser."
           badge={{
             label: "Read-only",
-            note: "Inspect · Decode · Copy",
+            note: "Claims only · Token stays server-side",
           }}
         />
 
@@ -111,7 +76,7 @@ export default function JwtTokenPage() {
             </div>
           )}
 
-          {!isLoading && !token && !error && (
+          {!isLoading && !hasToken && !error && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-yellow-800">
                 No token available. The SDK has not authenticated yet — check that
@@ -120,7 +85,7 @@ export default function JwtTokenPage() {
             </div>
           )}
 
-          {token && (
+          {hasToken && (
             <>
               {/* Status / Expiration card */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
@@ -168,24 +133,15 @@ export default function JwtTokenPage() {
                 </div>
               </div>
 
-              {/* Raw token */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Raw Token
-                  </label>
-                  <CopyButton text={token} />
-                </div>
-                <div className="bg-gray-50 rounded-lg p-3 font-mono text-xs text-gray-800 break-all border border-gray-200 max-h-48 overflow-y-auto">
-                  {token}
-                </div>
-              </div>
-
               {/* Decoded */}
-              {decoded ? (
+              {claims ? (
                 <div className="space-y-4">
-                  <JsonViewer data={decoded.header} title="Header" />
-                  <JsonViewer data={decoded.payload} title="Payload" />
+                  <JsonViewer data={header} title="Header" />
+                  <JsonViewer data={claims} title="Payload" />
+                  <p className="text-xs text-gray-500">
+                    The raw token is not shown or copyable — it stays on the
+                    server and is only decoded for display.
+                  </p>
                 </div>
               ) : (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
