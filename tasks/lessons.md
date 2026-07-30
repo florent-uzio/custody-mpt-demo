@@ -57,3 +57,26 @@
 - **Rule**: For ANY non-trivial task, write a plan to `tasks/todo.md` BEFORE starting. Update checkboxes as you go. Add a review section when done.
 - **Rule**: After ANY user correction, update `tasks/lessons.md` immediately.
 - **Rule**: The tasks/ directory is not optional — it is part of the definition of done.
+
+## Judgement
+
+### Challenge a plan's threat model before executing it
+- **Mistake**: Executed plan 003 (operator password + `requireOperator()` on all
+  78 server actions, an `/unlock` page, a global redirect) end-to-end, then had
+  to revert the whole thing when the user asked whether it was needed at all for
+  a local-only demo app.
+- **What was wrong**: The plan asserted "reaching the app equals holding the
+  operator key" and I verified the *code* claims (no middleware, no identity
+  reads — all true) without pricing the *risk*. Cross-origin POSTs to a local
+  dev server were never really open (Server Actions need the `Next-Action`
+  header → preflighted; Next checks Origin/Host). The only real exposure was
+  `next dev` binding all interfaces — fixed by `-H 127.0.0.1`, one line.
+- **Rule**: Before a large mechanical security change, ask "what is the cheapest
+  change that closes the actual exposure?" A 1-line config fix that gets 90% of
+  the benefit beats 78 call sites plus a permanent rule that every new action
+  must remember a guard.
+- **Rule**: State the cost/benefit *before* implementing, not after. For this
+  repo specifically: it is a local-only internal tool. Weigh proposals against
+  that, not against a production threat model.
+- **Rule**: A written plan is an input, not an authority. Executing it faithfully
+  is not the same as it being the right thing to do.

@@ -93,6 +93,13 @@ npm run dev
 
 4. Open your browser to `http://localhost:3000`
 
+Both `dev` and `start` bind to `127.0.0.1` rather than every interface. This is
+deliberate: the server holds the custody operator key and every Server Action
+runs with it, so a default `next dev` — which listens on the LAN — hands that
+key to anyone on the same network. Nothing gates the actions, so loopback-only
+is what keeps them yours. If you genuinely need to reach the app from another
+device, pass `-H 0.0.0.0` for that one run and understand what you are exposing.
+
 ## Ledger configuration
 
 Which XRPL ledgers the app offers, and which one is preselected, is configurable
