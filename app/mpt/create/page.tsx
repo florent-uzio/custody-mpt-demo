@@ -35,6 +35,7 @@ export default function MptCreatePage() {
     "tfMPTCanTrade",
   ]);
   const [metadataHex, setMetadataHex] = useState("");
+  const [sortFlags, setSortFlags] = useState(true);
 
   const handleFlagToggle = (flag: MPTFlag) => {
     setSelectedFlags((prev) =>
@@ -53,6 +54,7 @@ export default function MptCreatePage() {
       transferFee,
       maximumAmount: maximumAmount || undefined,
       flags: selectedFlags,
+      sortFlags,
       metadata: {
         type: "HexEncodedMetadata",
         value: metadataHex,
@@ -97,6 +99,8 @@ export default function MptCreatePage() {
           <TokenFlagsSection
             selectedFlags={selectedFlags}
             onToggle={handleFlagToggle}
+            sortFlags={sortFlags}
+            onSortFlagsChange={setSortFlags}
           />
 
           <MetadataSection onMetadataHexChange={setMetadataHex} />

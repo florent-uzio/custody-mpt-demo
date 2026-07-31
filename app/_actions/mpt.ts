@@ -13,6 +13,12 @@ export type MptCreateInput = {
   maximumAmount?: string | number;
   flags?: string[];
   metadata?: Record<string, unknown>;
+  /**
+   * Reorder `flags` into {@link FLAG_WIRE_ORDER} before signing, working around
+   * the backend signature bug documented there. Exposed so the UI can toggle it
+   * and show the raw backend behaviour. Defaults to `true`.
+   */
+  sortFlags?: boolean;
 };
 
 export type MptAuthorizeInput = {
@@ -49,6 +55,38 @@ export type MptSetInput = {
 /** The custody API's spelling of `tmfMPTSetCanHoldConfidentialBalance`. */
 const MUTABLE_FLAG_CAN_HOLD_CONFIDENTIAL = "MPTSetCanConfidentialAmount";
 
+/**
+ * Order the custody API re-emits `MPTokenIssuanceCreate.flags` in.
+ *
+ * The API deserializes `flags` into an unordered set and re-serializes that set
+ * when it verifies the request-body signature — but the SDK signs the canonical
+ * JSON of what it *sent*, and JCS canonicalization preserves array order (it
+ * only sorts object keys). Up to 4 flags the set keeps insertion order, so any
+ * order verifies; at 5+ it becomes hash-ordered and re-emits this fixed order,
+ * so anything else fails with `401 InvalidSignatureError`.
+ *
+ * Sending flags pre-sorted into that order makes the signed bytes match. This
+ * is a workaround for a backend bug (the signature should be verified over the
+ * received bytes); it can break if the backend's set implementation changes.
+ */
+const FLAG_WIRE_ORDER = [
+  "tfMPTCanTransfer",
+  "tfMPTCanLock",
+  "tfMPTRequireAuth",
+  "tfMPTCanTrade",
+  "tfMPTCanClawback",
+  "tfMPTCanEscrow",
+];
+
+/** Sorts known flags into {@link FLAG_WIRE_ORDER}; unknown ones keep their order at the end. */
+function sortFlagsForWire(flags: string[]): string[] {
+  const rank = (f: string) => {
+    const i = FLAG_WIRE_ORDER.indexOf(f);
+    return i === -1 ? FLAG_WIRE_ORDER.length : i;
+  };
+  return [...flags].sort((a, b) => rank(a) - rank(b));
+}
+
 /** 33-byte compressed EC point. */
 const ENCRYPTION_KEY_RE = /^[0-9A-Fa-f]{66}$/;
 
@@ -61,6 +99,7 @@ export async function mptCreate(input: MptCreateInput): Promise<ProposeIntentRes
     maximumAmount,
     flags,
     metadata,
+    sortFlags = true,
   } = input;
   if (!accountId) throw new Error("accountId is required");
   if (!domainId) throw new Error("domainId is required");
@@ -75,7 +114,10 @@ export async function mptCreate(input: MptCreateInput): Promise<ProposeIntentRes
       ...(assetScale !== undefined && { assetScale }),
       ...(transferFee !== undefined && transferFee > 0 && { transferFee }),
       ...(maximumAmount && { maximumAmount: String(maximumAmount) }),
-      ...(flags && flags.length > 0 && { flags }),
+      ...(flags &&
+        flags.length > 0 && {
+          flags: sortFlags ? sortFlagsForWire(flags) : flags,
+        }),
       ...(metadata && { metadata }),
     } as never,
     description: "Create new MPT Issuance",

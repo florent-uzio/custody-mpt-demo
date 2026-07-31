@@ -18,4 +18,6 @@ export type MetadataMode = "structured" | "raw";
 export type MPTCreatePayload = {
   accountId: string;
   domainId: string;
+  /** Reorder flags into the order the backend re-serializes them in. */
+  sortFlags: boolean;
 } & Omit<CustodyMpTokenIssuanceCreate, "Account">;
