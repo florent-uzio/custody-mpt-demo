@@ -1,15 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { listAccounts } from "../_actions/accounts";
 import { useDefaultDomain } from "../contexts/DomainContext";
-import { keyEncodings } from "../lib/key-encoding";
 
 export interface ElGamalKey {
   accountId: string;
   alias: string;
   ledgerId: string;
-  /** Hex form — what MPT Set sends. Null if the value decoded as neither hex nor base64. */
-  hex: string | null;
-  base64: string;
+  /** The key exactly as the accounts API returns it (base64) — what MPT Set sends. */
+  publicKey: string;
 }
 
 /**
@@ -33,7 +31,7 @@ export function useElGamalKeys() {
             accountId: item.data.id,
             alias: item.data.alias || item.data.id,
             ledgerId: pk.ledgerId,
-            ...keyEncodings(pk.publicKey),
+            publicKey: pk.publicKey,
           }));
       });
     },

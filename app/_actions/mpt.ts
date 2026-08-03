@@ -46,9 +46,9 @@ export type MptSetInput = {
    * enum still uses the earlier draft name `MPTSetCanConfidentialAmount`.
    */
   canHoldConfidentialBalance?: boolean;
-  /** 33-byte EC-ElGamal public key, hex (66 chars). */
+  /** 33-byte EC-ElGamal public key, base64 (44 chars), as the accounts API returns it. */
   issuerEncryptionKey?: string;
-  /** 33-byte EC-ElGamal public key, hex (66 chars). Requires the issuer key. */
+  /** 33-byte EC-ElGamal public key, base64 (44 chars). Requires the issuer key. */
   auditorEncryptionKey?: string;
 };
 
@@ -87,8 +87,8 @@ function sortFlagsForWire(flags: string[]): string[] {
   return [...flags].sort((a, b) => rank(a) - rank(b));
 }
 
-/** 33-byte compressed EC point. */
-const ENCRYPTION_KEY_RE = /^[0-9A-Fa-f]{66}$/;
+/** 33-byte compressed EC point, base64 — the form the accounts API returns. */
+const ENCRYPTION_KEY_RE = /^[A-Za-z0-9+/]{44}$/;
 
 export async function mptCreate(input: MptCreateInput): Promise<ProposeIntentResult> {
   const {
@@ -194,7 +194,9 @@ export async function mptSet(input: MptSetInput): Promise<ProposeIntentResult> {
     ["auditorEncryptionKey", auditorEncryptionKey],
   ] as const) {
     if (key && !ENCRYPTION_KEY_RE.test(key))
-      throw new Error(`${name} must be a 33-byte hex public key (66 hex characters)`);
+      throw new Error(
+        `${name} must be a 33-byte base64 public key (44 characters), as returned by the accounts API`,
+      );
   }
   // XLS-96 §12: an auditor key without an issuer key is temMALFORMED.
   if (auditorEncryptionKey && !issuerEncryptionKey)
