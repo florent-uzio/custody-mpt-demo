@@ -37,7 +37,8 @@ const MPT_SET_FLAGS = [
 ];
 
 /**
- * An encryption key input that can be filled from any account's ElGamal purpose key
+ * An encryption key input that can be filled from any account's ElGamal purpose key,
+ * carrying the key exactly as the accounts API returns it (base64),
  * or typed freely — the dropdown just writes into the same text field, so a picked
  * key stays editable and a pasted one still shows which account it came from.
  */
@@ -63,15 +64,12 @@ function EncryptionKeyField({
   highlightAccountId?: string;
   help: React.ReactNode;
 }) {
-  // Keys without a hex form can't be sent, so they aren't offered.
-  const options = keys
-    .filter((k) => k.hex)
-    .sort((a, b) =>
-      a.accountId === highlightAccountId ? -1 : b.accountId === highlightAccountId ? 1 : 0,
-    );
+  const options = [...keys].sort((a, b) =>
+    a.accountId === highlightAccountId ? -1 : b.accountId === highlightAccountId ? 1 : 0,
+  );
 
   const optionId = (k: ElGamalKey) => `${k.accountId}:${k.ledgerId}`;
-  const matched = options.find((k) => k.hex === value.trim().toUpperCase());
+  const matched = options.find((k) => k.publicKey === value.trim());
 
   return (
     <div>
@@ -84,7 +82,7 @@ function EncryptionKeyField({
         value={matched ? optionId(matched) : ""}
         onChange={(e) => {
           const picked = options.find((k) => optionId(k) === e.target.value);
-          onChange(picked?.hex ?? "");
+          onChange(picked?.publicKey ?? "");
         }}
         className="w-full mb-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-colors bg-white text-sm"
         disabled={keysLoading}
@@ -100,7 +98,7 @@ function EncryptionKeyField({
           <option key={optionId(k)} value={optionId(k)}>
             {k.alias}
             {k.accountId === highlightAccountId ? " (selected issuer)" : ""} · {k.ledgerId} ·{" "}
-            {k.hex!.slice(0, 10)}…
+            {k.publicKey.slice(0, 10)}…
           </option>
         ))}
       </select>
@@ -457,12 +455,13 @@ export default function MptSetPage() {
                 onChange={setIssuerKey}
                 keys={elGamalKeys}
                 keysLoading={elGamalKeysLoading}
-                placeholder="02A1B2… (hex)"
+                placeholder="A9QqJDVu6fXveaITgwIqfUwp7w7I1Nf78kC5eTwlTNkj"
                 highlightAccountId={accountId}
                 help={
                   <>
-                    Hex-encoded EC-ElGamal public key for the issuer&apos;s mirror
-                    balances. Write-once — re-setting it fails with tecNO_PERMISSION.
+                    EC-ElGamal public key for the issuer&apos;s mirror balances, in
+                    the base64 form the accounts API returns. Write-once —
+                    re-setting it fails with tecNO_PERMISSION.
                   </>
                 }
               />
@@ -474,11 +473,11 @@ export default function MptSetPage() {
                 onChange={setAuditorKey}
                 keys={elGamalKeys}
                 keysLoading={elGamalKeysLoading}
-                placeholder="03C4D5… (hex)"
+                placeholder="AjaWq5N8Nse5Th4dRnW6mLPvXAZoBcxIsIYy1FfnPS6O"
                 help={
                   <>
-                    Hex-encoded EC-ElGamal public key for regulatory oversight.
-                    Requires an issuer key — an auditor key alone is temMALFORMED.
+                    EC-ElGamal public key for regulatory oversight, in the base64
+                    form the accounts API returns. Requires an issuer key — an auditor key alone is temMALFORMED.
                   </>
                 }
               />
