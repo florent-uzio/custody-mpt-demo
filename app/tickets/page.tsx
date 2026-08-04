@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DEFAULT_MAXIMUM_FEE, type MaximumFee } from "../lib/maximum-fee";
 import { JsonViewer } from "../components/JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { useSubmitTicketCreate } from "../hooks/useSubmitTicketCreate";
@@ -15,6 +16,7 @@ import {
   PageContainer,
   PageHero,
   SectionCard,
+  MaximumFeeSection,
   SubmitButton,
   ErrorBanner,
   DomainWarning,
@@ -27,6 +29,7 @@ export default function TicketsPage() {
 
   const [accountId, setAccountId] = useState("");
   const [ticketCount, setTicketCount] = useState(1);
+  const [maximumFee, setMaximumFee] = useState<MaximumFee>(DEFAULT_MAXIMUM_FEE);
 
   const countValid =
     Number.isInteger(ticketCount) &&
@@ -41,6 +44,7 @@ export default function TicketsPage() {
       accountId,
       domainId: defaultDomainId,
       ticketCount,
+      maximumFee,
     });
   };
 
@@ -124,6 +128,13 @@ export default function TicketsPage() {
               </p>
             )}
           </SectionCard>
+
+          <MaximumFeeSection
+            step={3}
+            theme="blue"
+            value={maximumFee}
+            onChange={setMaximumFee}
+          />
 
           {/* Summary */}
           <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">

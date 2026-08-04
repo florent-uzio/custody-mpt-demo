@@ -7,6 +7,7 @@ import {
   proposeXrplTransaction,
   type ProposeIntentResult,
 } from "@/app/lib/custody";
+import type { MaximumFee } from "@/app/lib/maximum-fee";
 
 // Derive the Clawback operation shape from the SDK rather than redeclaring it.
 type TxOrderPayload = Extract<
@@ -28,6 +29,8 @@ export type ClawbackInput = {
   holder: ClawbackHolder;
   value: string;
   customProperties?: Record<string, string>;
+  /** Cap on the fee this transaction may burn. Omit for the default; `null` to send no cap. */
+  maximumFee?: MaximumFee;
 };
 
 /** XRPL currency codes longer than 3 chars must be sent as 40-char hex. */
@@ -67,8 +70,15 @@ function validateHolder(holder: ClawbackHolder): void {
 export async function clawback(
   input: ClawbackInput,
 ): Promise<ProposeIntentResult> {
-  const { domainId, accountId, currency, holder, value, customProperties } =
-    input;
+  const {
+    domainId,
+    accountId,
+    currency,
+    holder,
+    value,
+    customProperties,
+    maximumFee,
+  } = input;
 
   if (!domainId) throw new Error("domainId is required");
   if (!accountId) throw new Error("accountId is required");
@@ -90,6 +100,7 @@ export async function clawback(
     domainId,
     accountId,
     feePriority: "Low",
+    maximumFee,
     operation,
     description: "Clawback",
     customProperties: props,

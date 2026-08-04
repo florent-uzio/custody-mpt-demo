@@ -6,23 +6,23 @@ import { useAccountsWithAddresses } from "../../hooks/useAccountsWithAddresses";
 import type { AccountWithAddress } from "../../_actions/accounts";
 
 interface Props {
-  /** Called with the selected account's resolved r-address (or "" if none). */
-  onChange: (address: string) => void;
+  /** Called with the selected custody account's id (or "" if none). */
+  onChange: (accountId: string) => void;
 }
 
 const accountLabel = (a: AccountWithAddress) =>
   a.address ? `${a.alias} — ${a.address}` : `${a.alias} (no address yet)`;
 
 /** Step 1 — pick the custody account whose settings the AccountSet modifies.
- *  Emits the account's XRPL r-address (what `xrpl.proposeIntent` expects).
- *  Accounts without an activated address are listed but disabled. */
+ *  Accounts without an activated address are listed but disabled: an account
+ *  that has never been activated on a ledger cannot submit a transaction. */
 export function AccountSection({ onChange }: Props) {
   const { accounts, loading } = useAccountsWithAddresses();
   const [selectedId, setSelectedId] = useState("");
 
   const handleChange = (id: string) => {
     setSelectedId(id);
-    onChange(accounts.find((a) => a.id === id)?.address ?? "");
+    onChange(id);
   };
 
   return (

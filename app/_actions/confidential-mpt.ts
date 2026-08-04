@@ -6,6 +6,7 @@ import {
   type ProposeIntentResult,
 } from "@/app/lib/custody";
 import { hexToBase64 } from "@/app/lib/hex";
+import type { MaximumFee } from "@/app/lib/maximum-fee";
 
 type ConvertOp = Extract<Core_XrplOperation, { type: "ConfidentialMPTConvert" }>;
 type ConvertBackOp = Extract<
@@ -43,12 +44,16 @@ export type CmptConvertInput = {
   accountId: string;
   tokenIdentifier: CmptTokenIdentifier;
   amount: string;
+  /** Cap on the fee this transaction may burn. Omit for the default; `null` to send no cap. */
+  maximumFee?: MaximumFee;
 };
 
 export type CmptMergeInboxInput = {
   domainId: string;
   accountId: string;
   tokenIdentifier: CmptTokenIdentifier;
+  /** Cap on the fee this transaction may burn. Omit for the default; `null` to send no cap. */
+  maximumFee?: MaximumFee;
 };
 
 export type CmptSendInput = {
@@ -63,6 +68,8 @@ export type CmptSendInput = {
   senderEncryptedBalanceVersion?: number;
   /** Hex proof bundle from a cMPT compute; converted to base64 here. */
   proofs?: CmptSendProofsHex;
+  /** Cap on the fee this transaction may burn. Omit for the default; `null` to send no cap. */
+  maximumFee?: MaximumFee;
 };
 
 function requireIds(domainId: string, accountId: string): void {
@@ -81,7 +88,7 @@ function requireTokenIdentifier(tokenIdentifier: CmptTokenIdentifier): void {
 export async function proposeConfidentialMPTConvert(
   input: CmptConvertInput,
 ): Promise<ProposeIntentResult> {
-  const { domainId, accountId, tokenIdentifier, amount } = input;
+  const { domainId, accountId, tokenIdentifier, amount, maximumFee } = input;
   requireIds(domainId, accountId);
   requireTokenIdentifier(tokenIdentifier);
   if (!amount) throw new Error("amount is required");
@@ -95,6 +102,7 @@ export async function proposeConfidentialMPTConvert(
   return proposeXrplTransaction({
     domainId,
     accountId,
+    maximumFee,
     operation,
     description: "Convert MPT to confidential balance",
     customProperties: { property1: "cmpt-convert" },
@@ -105,7 +113,7 @@ export async function proposeConfidentialMPTConvert(
 export async function proposeConfidentialMPTConvertBack(
   input: CmptConvertInput,
 ): Promise<ProposeIntentResult> {
-  const { domainId, accountId, tokenIdentifier, amount } = input;
+  const { domainId, accountId, tokenIdentifier, amount, maximumFee } = input;
   requireIds(domainId, accountId);
   requireTokenIdentifier(tokenIdentifier);
   if (!amount) throw new Error("amount is required");
@@ -119,6 +127,7 @@ export async function proposeConfidentialMPTConvertBack(
   return proposeXrplTransaction({
     domainId,
     accountId,
+    maximumFee,
     operation,
     description: "Convert confidential balance back to public MPT",
     customProperties: { property1: "cmpt-convert-back" },
@@ -129,7 +138,7 @@ export async function proposeConfidentialMPTConvertBack(
 export async function proposeConfidentialMPTMergeInbox(
   input: CmptMergeInboxInput,
 ): Promise<ProposeIntentResult> {
-  const { domainId, accountId, tokenIdentifier } = input;
+  const { domainId, accountId, tokenIdentifier, maximumFee } = input;
   requireIds(domainId, accountId);
   requireTokenIdentifier(tokenIdentifier);
 
@@ -141,6 +150,7 @@ export async function proposeConfidentialMPTMergeInbox(
   return proposeXrplTransaction({
     domainId,
     accountId,
+    maximumFee,
     operation,
     description: "Merge confidential MPT inbox into the spendable balance",
     customProperties: { property1: "cmpt-merge-inbox" },
@@ -160,6 +170,7 @@ export async function proposeConfidentialMPTSend(
     senderEncryptedBalance,
     senderEncryptedBalanceVersion,
     proofs,
+    maximumFee,
   } = input;
   requireIds(domainId, accountId);
   requireTokenIdentifier(tokenIdentifier);
@@ -196,6 +207,7 @@ export async function proposeConfidentialMPTSend(
   return proposeXrplTransaction({
     domainId,
     accountId,
+    maximumFee,
     operation,
     description: "Confidential MPT transfer",
     customProperties: { property1: "cmpt-send" },

@@ -10,6 +10,7 @@ import {
   buildTransactionOrderPayload,
   type BuildTransactionOrderArgs,
 } from "./intent-builder";
+import { isValidMaximumFee, type MaximumFee } from "./maximum-fee";
 
 export type ProposeIntentResult = {
   request: Core_ProposeIntentBody;
@@ -29,6 +30,8 @@ export type ProposeXrplTransactionArgs = {
   accountId: string;
   operation: BuildTransactionOrderArgs["operation"];
   feePriority?: BuildTransactionOrderArgs["feePriority"];
+  /** See {@link MaximumFee}: omitted → default, drops string → sent, `null` → omitted from the order. */
+  maximumFee?: MaximumFee;
   /** Request-level description (`request.description`). */
   description?: string;
   /** Request-level custom properties (`request.customProperties`). */
@@ -51,9 +54,11 @@ export type ProposeXrplTransactionArgs = {
 export async function proposeXrplTransaction(
   args: ProposeXrplTransactionArgs,
 ): Promise<ProposeIntentResult> {
-  const { domainId, accountId, operation } = args;
+  const { domainId, accountId, operation, maximumFee } = args;
   if (!domainId) throw new Error("domainId is required");
   if (!accountId) throw new Error("accountId is required");
+  if (typeof maximumFee === "string" && !isValidMaximumFee(maximumFee))
+    throw new Error("maximumFee must be a positive whole number of drops");
 
   const [currentUser, ledgerId] = await Promise.all([
     getCurrentUser(domainId),
@@ -67,6 +72,7 @@ export async function proposeXrplTransaction(
       ledgerId,
       accountId,
       feePriority: args.feePriority,
+      maximumFee,
       operation,
       description: args.payloadDescription ?? args.description,
       customProperties: args.payloadCustomProperties ?? args.customProperties,

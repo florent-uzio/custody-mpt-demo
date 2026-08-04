@@ -4,6 +4,7 @@ import {
   proposeXrplTransaction,
   type ProposeIntentResult,
 } from "@/app/lib/custody";
+import type { MaximumFee } from "@/app/lib/maximum-fee";
 
 export type MptCreateInput = {
   domainId: string;
@@ -19,18 +20,24 @@ export type MptCreateInput = {
    * and show the raw backend behaviour. Defaults to `true`.
    */
   sortFlags?: boolean;
+  /** Cap on the fee this transaction may burn. Omit for the default; `null` to send no cap. */
+  maximumFee?: MaximumFee;
 };
 
 export type MptAuthorizeInput = {
   domainId: string;
   accountId: string;
   issuanceId: string;
+  /** Cap on the fee this transaction may burn. Omit for the default; `null` to send no cap. */
+  maximumFee?: MaximumFee;
 };
 
 export type MptDestroyInput = {
   domainId: string;
   accountId: string;
   issuanceId: string;
+  /** Cap on the fee this transaction may burn. Omit for the default; `null` to send no cap. */
+  maximumFee?: MaximumFee;
 };
 
 export type MptSetInput = {
@@ -50,6 +57,8 @@ export type MptSetInput = {
   issuerEncryptionKey?: string;
   /** 33-byte EC-ElGamal public key, base64 (44 chars). Requires the issuer key. */
   auditorEncryptionKey?: string;
+  /** Cap on the fee this transaction may burn. Omit for the default; `null` to send no cap. */
+  maximumFee?: MaximumFee;
 };
 
 /** The custody API's spelling of `tmfMPTSetCanHoldConfidentialBalance`. */
@@ -100,6 +109,7 @@ export async function mptCreate(input: MptCreateInput): Promise<ProposeIntentRes
     flags,
     metadata,
     sortFlags = true,
+    maximumFee,
   } = input;
   if (!accountId) throw new Error("accountId is required");
   if (!domainId) throw new Error("domainId is required");
@@ -107,6 +117,7 @@ export async function mptCreate(input: MptCreateInput): Promise<ProposeIntentRes
   return proposeXrplTransaction({
     domainId,
     accountId,
+    maximumFee,
     // SDK's flags union is stricter than the demo's free-form input;
     // matching the original route's `body: any` posture.
     operation: {
@@ -130,7 +141,7 @@ export async function mptCreate(input: MptCreateInput): Promise<ProposeIntentRes
 export async function mptAuthorize(
   input: MptAuthorizeInput,
 ): Promise<ProposeIntentResult> {
-  const { domainId, accountId, issuanceId } = input;
+  const { domainId, accountId, issuanceId, maximumFee } = input;
   if (!domainId) throw new Error("domainId is required");
   if (!issuanceId) throw new Error("issuanceId is required");
   if (!accountId) throw new Error("accountId is required");
@@ -138,6 +149,7 @@ export async function mptAuthorize(
   return proposeXrplTransaction({
     domainId,
     accountId,
+    maximumFee,
     operation: {
       type: "MPTokenAuthorize",
       tokenIdentifier: { type: "MPTokenIssuanceId", issuanceId },
@@ -150,7 +162,7 @@ export async function mptAuthorize(
 }
 
 export async function mptDestroy(input: MptDestroyInput): Promise<ProposeIntentResult> {
-  const { domainId, accountId, issuanceId } = input;
+  const { domainId, accountId, issuanceId, maximumFee } = input;
   if (!accountId) throw new Error("accountId is required");
   if (!domainId) throw new Error("domainId is required");
   if (!issuanceId) throw new Error("issuanceId is required");
@@ -158,6 +170,7 @@ export async function mptDestroy(input: MptDestroyInput): Promise<ProposeIntentR
   return proposeXrplTransaction({
     domainId,
     accountId,
+    maximumFee,
     operation: {
       type: "MPTokenIssuanceDestroy",
       tokenIdentifier: { type: "MPTokenIssuanceId", issuanceId },
@@ -179,6 +192,7 @@ export async function mptSet(input: MptSetInput): Promise<ProposeIntentResult> {
     canHoldConfidentialBalance,
     issuerEncryptionKey,
     auditorEncryptionKey,
+    maximumFee,
   } = input;
   if (!accountId) throw new Error("accountId is required");
   if (!domainId) throw new Error("domainId is required");
@@ -209,6 +223,7 @@ export async function mptSet(input: MptSetInput): Promise<ProposeIntentResult> {
   return proposeXrplTransaction({
     domainId,
     accountId,
+    maximumFee,
     operation: {
       type: "MPTokenIssuanceSet",
       tokenIdentifier: { type: "MPTokenIssuanceId", issuanceId },

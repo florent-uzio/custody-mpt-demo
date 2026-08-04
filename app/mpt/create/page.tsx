@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import {
+  DEFAULT_MAXIMUM_FEE,
+  type MaximumFee,
+} from "../../lib/maximum-fee";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useSubmitMPTokenCreate } from "../../hooks/useSubmitMPTokenCreate";
@@ -16,6 +20,7 @@ import {
   PageHeader,
   PageContainer,
   PageHero,
+  MaximumFeeSection,
   SubmitButton,
   ErrorBanner,
   DomainWarning,
@@ -36,6 +41,7 @@ export default function MptCreatePage() {
   ]);
   const [metadataHex, setMetadataHex] = useState("");
   const [sortFlags, setSortFlags] = useState(true);
+  const [maximumFee, setMaximumFee] = useState<MaximumFee>(DEFAULT_MAXIMUM_FEE);
 
   const handleFlagToggle = (flag: MPTFlag) => {
     setSelectedFlags((prev) =>
@@ -59,6 +65,7 @@ export default function MptCreatePage() {
         type: "HexEncodedMetadata",
         value: metadataHex,
       },
+      maximumFee,
     });
   };
 
@@ -104,6 +111,13 @@ export default function MptCreatePage() {
           />
 
           <MetadataSection onMetadataHexChange={setMetadataHex} />
+
+          <MaximumFeeSection
+            step={5}
+            theme="amber"
+            value={maximumFee}
+            onChange={setMaximumFee}
+          />
 
           <ConfigSummary
             domainId={defaultDomainId}

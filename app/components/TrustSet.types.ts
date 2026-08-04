@@ -1,3 +1,5 @@
+import type { MaximumFee } from "@/app/lib/maximum-fee";
+
 export type TrustSetFlag = "tfSetFreeze" | "tfClearFreeze" | "tfSetfAuth";
 
 export interface TrustSetFlagOption {
@@ -15,4 +17,6 @@ export interface TrustSetPayload {
   flags: TrustSetFlag[];
   enableRippling: boolean;
   customProperties: Record<string, string>;
+  /** Cap on the fee this transaction may burn. Omit for the default; `null` to send no cap. */
+  maximumFee?: MaximumFee;
 }

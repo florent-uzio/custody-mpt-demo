@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import {
+  DEFAULT_MAXIMUM_FEE,
+  type MaximumFee,
+} from "../../../lib/maximum-fee";
 import { JsonViewer } from "../../../components/JsonViewer";
 import { useDefaultDomain } from "../../../contexts/DomainContext";
 import { useSubmitConfidentialMPTMergeInbox } from "../../../hooks/useSubmitConfidentialMPT";
@@ -11,6 +15,7 @@ import {
   PageContainer,
   PageHero,
   SectionCard,
+  MaximumFeeSection,
   SubmitButton,
   ErrorBanner,
   DomainWarning,
@@ -30,11 +35,12 @@ export default function ConfidentialMptMergeInboxPage() {
     type: "MPTokenIssuanceId",
     issuanceId: "",
   });
+  const [maximumFee, setMaximumFee] = useState<MaximumFee>(DEFAULT_MAXIMUM_FEE);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!defaultDomainId) return;
-    mutate({ domainId: defaultDomainId, accountId, tokenIdentifier });
+    mutate({ domainId: defaultDomainId, accountId, tokenIdentifier, maximumFee });
   };
 
   return (
@@ -59,29 +65,38 @@ export default function ConfidentialMptMergeInboxPage() {
           <DomainWarning action="submitting a ConfidentialMPTMergeInbox" />
         )}
 
-        <SectionCard step={1} theme="teal" title="Merge inbox details">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <AccountField
-              value={accountId}
-              onChange={setAccountId}
-              help="The account whose confidential inbox is merged."
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <SectionCard step={1} theme="teal" title="Merge inbox details">
+            <div className="space-y-4">
+              <AccountField
+                value={accountId}
+                onChange={setAccountId}
+                help="The account whose confidential inbox is merged."
+              />
 
-            <TokenIdentifierField
-              value={tokenIdentifier}
-              onChange={setTokenIdentifier}
-            />
+              <TokenIdentifierField
+                value={tokenIdentifier}
+                onChange={setTokenIdentifier}
+              />
+            </div>
+          </SectionCard>
 
-            <SubmitButton
-              theme="teal"
-              pending={isPending}
-              disabled={!defaultDomainId || isPending}
-              pendingLabel="Proposing intent…"
-            >
-              Propose ConfidentialMPTMergeInbox intent
-            </SubmitButton>
-          </form>
-        </SectionCard>
+          <MaximumFeeSection
+            step={2}
+            theme="teal"
+            value={maximumFee}
+            onChange={setMaximumFee}
+          />
+
+          <SubmitButton
+            theme="teal"
+            pending={isPending}
+            disabled={!defaultDomainId || isPending}
+            pendingLabel="Proposing intent…"
+          >
+            Propose ConfidentialMPTMergeInbox intent
+          </SubmitButton>
+        </form>
 
         <ErrorBanner error={error} />
 

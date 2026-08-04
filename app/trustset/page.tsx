@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DEFAULT_MAXIMUM_FEE, type MaximumFee } from "../lib/maximum-fee";
 import { JsonViewer } from "../components/JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { useSubmitTrustSet } from "../hooks/useSubmitTrustSet";
@@ -21,6 +22,7 @@ import {
   PageHeader,
   PageContainer,
   PageHero,
+  MaximumFeeSection,
   SubmitButton,
   ErrorBanner,
   DomainWarning,
@@ -41,6 +43,7 @@ export default function TrustSetPage() {
   const [customProperties, setCustomProperties] = useState<
     Record<string, string>
   >({ description: "Create a Trustline" });
+  const [maximumFee, setMaximumFee] = useState<MaximumFee>(DEFAULT_MAXIMUM_FEE);
 
   const handleFlagToggle = (flag: TrustSetFlag) => {
     setSelectedFlags((prev) =>
@@ -63,6 +66,7 @@ export default function TrustSetPage() {
       flags: selectedFlags,
       enableRippling,
       customProperties,
+      maximumFee,
     });
   };
 
@@ -112,6 +116,13 @@ export default function TrustSetPage() {
           <CustomPropertiesSection
             customProperties={customProperties}
             onChange={setCustomProperties}
+          />
+
+          <MaximumFeeSection
+            step={6}
+            theme="emerald"
+            value={maximumFee}
+            onChange={setMaximumFee}
           />
 
           <ConfigSummary
