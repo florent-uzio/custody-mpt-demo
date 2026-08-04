@@ -5,6 +5,7 @@ import type {
   Core_IntentResponse,
   Core_TrustedIntent,
   Core_GetIntentsQueryParams,
+  CustodyPayment,
 } from "@florent-uzio/custody";
 
 import {
@@ -119,7 +120,7 @@ export async function approveIntent(
 function buildPaymentDestination(
   destinationType: DestinationType,
   input: ProposePaymentInput,
-) {
+): CustodyPayment["destination"] {
   if (destinationType === "Account") {
     return { accountId: input.destinationAccountId as string, type: "Account" };
   }
@@ -132,25 +133,30 @@ function buildPaymentDestination(
   return { address: input.destinationAddress as string, type: "Address" };
 }
 
-function buildPaymentAmount(
+/**
+ * The custody API takes `amount` as a bare string and describes the asset in a
+ * separate discriminated `currency` object — it does not accept rippled's
+ * `{ value, currency, issuer }` / `{ value, mpt_issuance_id }` amount objects.
+ * Omitted entirely for XRP.
+ */
+function buildPaymentCurrency(
   paymentType: PaymentType,
-  amount: string,
   input: ProposePaymentInput,
-): unknown {
+): CustodyPayment["currency"] {
   if (paymentType === "IOU") {
     return {
-      value: amount,
-      currency: input.currency as string,
+      type: "Currency",
+      code: input.currency as string,
       issuer: input.issuer as string,
     };
   }
   if (paymentType === "MPT") {
     return {
-      value: amount,
-      mpt_issuance_id: input.issuanceId as string,
+      type: "MultiPurposeToken",
+      issuanceId: input.issuanceId as string,
     };
   }
-  return amount;
+  return undefined;
 }
 
 export async function proposePayment(
@@ -180,14 +186,16 @@ export async function proposePayment(
   if (paymentType === "MPT" && !input.issuanceId)
     throw new Error("issuanceId is required for MPT payments");
 
+  const currency = buildPaymentCurrency(paymentType, input);
+
   return proposeXrplTransaction({
     domainId,
     accountId,
     maximumFee,
     operation: {
-      // @ts-expect-error preserved from original route
       destination: buildPaymentDestination(destinationType, input),
-      amount: buildPaymentAmount(paymentType, amount, input) as string,
+      amount,
+      ...(currency && { currency }),
       type: "Payment",
     },
     description: description || "Payment",
