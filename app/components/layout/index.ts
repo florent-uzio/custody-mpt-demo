@@ -3,6 +3,7 @@ export { PageHeader, type Breadcrumb } from "./PageHeader";
 export { PageHero } from "./PageHero";
 export { PageContainer, type PageWidth } from "./PageContainer";
 export { SectionCard } from "./SectionCard";
+export { MaximumFeeSection } from "./MaximumFeeSection";
 export { SubmitButton } from "./SubmitButton";
 export { ErrorBanner } from "./ErrorBanner";
 export { DomainWarning } from "./DomainWarning";

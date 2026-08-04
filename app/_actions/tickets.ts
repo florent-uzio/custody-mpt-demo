@@ -13,7 +13,8 @@ import {
 export async function ticketCreate(
   input: TicketCreatePayload,
 ): Promise<ProposeIntentResult> {
-  const { domainId, accountId, ticketCount, customProperties } = input;
+  const { domainId, accountId, ticketCount, customProperties, maximumFee } =
+    input;
 
   if (!domainId) throw new Error("domainId is required");
   if (!accountId) throw new Error("accountId is required");
@@ -35,6 +36,7 @@ export async function ticketCreate(
     domainId,
     accountId,
     feePriority: "Low",
+    maximumFee,
     operation: {
       type: "TicketCreate",
       ticketCount,

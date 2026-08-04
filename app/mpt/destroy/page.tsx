@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import {
+  DEFAULT_MAXIMUM_FEE,
+  type MaximumFee,
+} from "../../lib/maximum-fee";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useDefaultDomain } from "../../contexts/DomainContext";
@@ -12,6 +16,7 @@ import {
   PageContainer,
   PageHero,
   SectionCard,
+  MaximumFeeSection,
   SubmitButton,
   ErrorBanner,
   DomainWarning,
@@ -25,11 +30,12 @@ export default function MptDestroyPage() {
   const [accountId, setAccountId] = useState("");
   const [issuanceId, setIssuanceId] = useState("");
   const [confirmDestroy, setConfirmDestroy] = useState(false);
+  const [maximumFee, setMaximumFee] = useState<MaximumFee>(DEFAULT_MAXIMUM_FEE);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!defaultDomainId) return;
-    mutate({ accountId, domainId: defaultDomainId, issuanceId });
+    mutate({ accountId, domainId: defaultDomainId, issuanceId, maximumFee });
   };
 
   return (
@@ -89,7 +95,7 @@ export default function MptDestroyPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <SectionCard step={1} title="Issuer Account">
+          <SectionCard step={1} theme="rose" title="Issuer Account">
             <div>
               <label
                 htmlFor="accountId"
@@ -128,7 +134,7 @@ export default function MptDestroyPage() {
             </div>
           </SectionCard>
 
-          <SectionCard step={2} title="MPT Issuance to Destroy">
+          <SectionCard step={2} theme="rose" title="MPT Issuance to Destroy">
             <div>
               <label
                 htmlFor="issuanceId"
@@ -154,7 +160,7 @@ export default function MptDestroyPage() {
             </div>
           </SectionCard>
 
-          <SectionCard step={3} title="Confirmation">
+          <SectionCard step={3} theme="rose" title="Confirmation">
             <div className="space-y-4">
               <label className="flex items-start gap-3 cursor-pointer group">
                 <input
@@ -198,6 +204,13 @@ export default function MptDestroyPage() {
               )}
             </div>
           </SectionCard>
+
+          <MaximumFeeSection
+            step={4}
+            theme="rose"
+            value={maximumFee}
+            onChange={setMaximumFee}
+          />
 
           {/* Configuration Summary */}
           <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">

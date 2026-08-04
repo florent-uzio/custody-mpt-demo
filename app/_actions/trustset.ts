@@ -6,6 +6,7 @@ import {
   proposeXrplTransaction,
   type ProposeIntentResult,
 } from "@/app/lib/custody";
+import type { MaximumFee } from "@/app/lib/maximum-fee";
 
 export type TrustSetInput = {
   domainId: string;
@@ -16,6 +17,8 @@ export type TrustSetInput = {
   flags?: string[];
   enableRippling?: boolean;
   customProperties?: Record<string, string>;
+  /** Cap on the fee this transaction may burn. Omit for the default; `null` to send no cap. */
+  maximumFee?: MaximumFee;
 };
 
 function toCurrencyHex(currency: string): string {
@@ -36,6 +39,7 @@ export async function trustSet(
     flags,
     enableRippling,
     customProperties,
+    maximumFee,
   } = input;
 
   if (!accountId) throw new Error("accountId is required");
@@ -51,6 +55,7 @@ export async function trustSet(
     domainId,
     accountId,
     feePriority: "Low",
+    maximumFee,
     operation: {
       type: "TrustSet",
       flags: (flags || []) as never,

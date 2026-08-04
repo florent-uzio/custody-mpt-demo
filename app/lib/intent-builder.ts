@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import type { Core_ProposeIntentBody } from "@florent-uzio/custody";
+import { DEFAULT_MAXIMUM_FEE, type MaximumFee } from "./maximum-fee";
 
 type ProposeRequest = Core_ProposeIntentBody["request"];
 type Author = ProposeRequest["author"];
@@ -50,11 +51,15 @@ export type BuildTransactionOrderArgs = {
   description?: string;
   customProperties?: StringsMap;
   feePriority?: FeePriority;
+  maximumFee?: MaximumFee;
 };
 
 export function buildTransactionOrderPayload(
   args: BuildTransactionOrderArgs,
 ): TransactionOrderPayload {
+  const maximumFee =
+    args.maximumFee === undefined ? DEFAULT_MAXIMUM_FEE : args.maximumFee;
+
   return {
     id: uuidv4(),
     ledgerId: args.ledgerId,
@@ -62,7 +67,7 @@ export function buildTransactionOrderPayload(
     parameters: {
       type: "XRPL",
       feeStrategy: { priority: args.feePriority ?? "Medium", type: "Priority" },
-      maximumFee: "10000000",
+      ...(maximumFee !== null && { maximumFee }),
       memos: [],
       operation: args.operation,
     },

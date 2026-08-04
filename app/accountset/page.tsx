@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DEFAULT_MAXIMUM_FEE, type MaximumFee } from "../lib/maximum-fee";
 import { JsonViewer } from "../components/JsonViewer";
 import { useSubmitAccountSet } from "../hooks/useSubmitAccountSet";
 import { useDefaultDomain } from "../contexts/DomainContext";
@@ -14,6 +15,7 @@ import {
   PageHeader,
   PageContainer,
   PageHero,
+  MaximumFeeSection,
   SubmitButton,
   ErrorBanner,
   DomainWarning,
@@ -23,21 +25,23 @@ export default function AccountSetPage() {
   const { defaultDomainId } = useDefaultDomain();
   const { mutate, isPending, data: response, error } = useSubmitAccountSet();
 
-  const [account, setAccount] = useState("");
+  const [accountId, setAccountId] = useState("");
   const [setFlag, setSetFlag] = useState<AccountSetFlag | "">("");
   const [clearFlag, setClearFlag] = useState<AccountSetFlag | "">("");
   const [transferRate, setTransferRate] = useState("");
+  const [maximumFee, setMaximumFee] = useState<MaximumFee>(DEFAULT_MAXIMUM_FEE);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!defaultDomainId || !account) return;
+    if (!defaultDomainId || !accountId) return;
 
     mutate({
-      account,
+      accountId,
       domainId: defaultDomainId,
       setFlag: setFlag || undefined,
       clearFlag: clearFlag || undefined,
       transferRate: transferRate.trim() === "" ? undefined : Number(transferRate),
+      maximumFee,
     });
   };
 
@@ -56,7 +60,7 @@ export default function AccountSetPage() {
         {!defaultDomainId && <DomainWarning action="submitting an AccountSet" />}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <AccountSection onChange={setAccount} />
+          <AccountSection onChange={setAccountId} />
 
           <FlagsSection
             setFlag={setFlag}
@@ -70,6 +74,13 @@ export default function AccountSetPage() {
             onChange={setTransferRate}
           />
 
+          <MaximumFeeSection
+            step={4}
+            theme="teal"
+            value={maximumFee}
+            onChange={setMaximumFee}
+          />
+
           <ConfigSummary
             domainId={defaultDomainId}
             setFlag={setFlag}
@@ -80,7 +91,7 @@ export default function AccountSetPage() {
           <SubmitButton
             theme="teal"
             pending={isPending}
-            disabled={!defaultDomainId || !account}
+            disabled={!defaultDomainId || !accountId}
             pendingLabel="Submitting AccountSet..."
           >
             Submit AccountSet
@@ -91,7 +102,7 @@ export default function AccountSetPage() {
 
         {response && (
           <div className="space-y-4">
-            <JsonViewer data={response.submitted} title="Submitted Parameters" />
+            <JsonViewer data={response.request} title="Request Payload" />
             <JsonViewer data={response.response} title="API Response" />
           </div>
         )}

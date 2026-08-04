@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DEFAULT_MAXIMUM_FEE, type MaximumFee } from "../lib/maximum-fee";
 import { JsonViewer } from "../components/JsonViewer";
 import { useAccountsWithAddresses } from "../hooks/useAccountsWithAddresses";
 import { useEndpoints } from "../hooks/useEndpoints";
@@ -14,6 +15,7 @@ import {
   PageHeader,
   PageContainer,
   PageHero,
+  MaximumFeeSection,
   SubmitButton,
   ErrorBanner,
   DomainWarning,
@@ -91,6 +93,7 @@ export default function ClawbackPage() {
   const [value, setValue] = useState("");
   const [description, setDescription] = useState("Clawback");
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [maximumFee, setMaximumFee] = useState<MaximumFee>(DEFAULT_MAXIMUM_FEE);
 
   const buildCurrency = (): ClawbackCurrency => {
     switch (currencyType) {
@@ -134,6 +137,7 @@ export default function ClawbackPage() {
       holder: buildHolder(),
       value: value.trim(),
       customProperties: { description: description.trim() || "Clawback" },
+      maximumFee,
     });
   };
 
@@ -390,6 +394,13 @@ export default function ClawbackPage() {
                 />
               </div>
             </StepCard>
+
+            <MaximumFeeSection
+              step={5}
+              theme="rose"
+              value={maximumFee}
+              onChange={setMaximumFee}
+            />
 
             <SubmitButton
               theme="rose"

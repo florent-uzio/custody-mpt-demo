@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import {
+  DEFAULT_MAXIMUM_FEE,
+  type MaximumFee,
+} from "../../lib/maximum-fee";
 import { JsonViewer } from "../../components/JsonViewer";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useDefaultDomain } from "../../contexts/DomainContext";
@@ -13,6 +17,7 @@ import {
   PageContainer,
   PageHero,
   SectionCard,
+  MaximumFeeSection,
   SubmitButton,
   ErrorBanner,
   DomainWarning,
@@ -136,6 +141,7 @@ export default function MptSetPage() {
   const [canHoldConfidential, setCanHoldConfidential] = useState(false);
   const [issuerKey, setIssuerKey] = useState("");
   const [auditorKey, setAuditorKey] = useState("");
+  const [maximumFee, setMaximumFee] = useState<MaximumFee>(DEFAULT_MAXIMUM_FEE);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,6 +155,7 @@ export default function MptSetPage() {
       canHoldConfidentialBalance: canHoldConfidential,
       issuerEncryptionKey: issuerKey || undefined,
       auditorEncryptionKey: auditorKey || undefined,
+      maximumFee,
     });
   };
 
@@ -185,7 +192,7 @@ export default function MptSetPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Account Selection */}
-          <SectionCard step={1} title="Issuer Account">
+          <SectionCard step={1} theme="violet" title="Issuer Account">
             <div>
               <label
                 htmlFor="accountId"
@@ -225,7 +232,7 @@ export default function MptSetPage() {
           </SectionCard>
 
           {/* MPT Issuance ID */}
-          <SectionCard step={2} title="MPT Issuance">
+          <SectionCard step={2} theme="violet" title="MPT Issuance">
             <div>
               <label
                 htmlFor="issuanceId"
@@ -252,7 +259,7 @@ export default function MptSetPage() {
           </SectionCard>
 
           {/* Lock/Unlock Action */}
-          <SectionCard step={3} title="Action">
+          <SectionCard step={3} theme="violet" title="Action">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {MPT_SET_FLAGS.map((flag) => (
                 <label
@@ -325,7 +332,7 @@ export default function MptSetPage() {
 
           {/* Scope Selection — only meaningful alongside a lock/unlock action */}
           {selectedFlag !== null && (
-          <SectionCard step={4} title="Scope">
+          <SectionCard step={4} theme="violet" title="Scope">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <input
@@ -409,7 +416,7 @@ export default function MptSetPage() {
           )}
 
           {/* Confidential Balances — XLS-96 §12 */}
-          <SectionCard step={5} title="Confidential Balances">
+          <SectionCard step={5} theme="violet" title="Confidential Balances">
             <div className="space-y-5">
               <label
                 className={`flex items-start gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all ${
@@ -490,6 +497,13 @@ export default function MptSetPage() {
               </p>
             </div>
           </SectionCard>
+
+          <MaximumFeeSection
+            step={6}
+            theme="violet"
+            value={maximumFee}
+            onChange={setMaximumFee}
+          />
 
           {/* Configuration Summary */}
           <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">

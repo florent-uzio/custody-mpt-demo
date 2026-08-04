@@ -15,6 +15,7 @@ import {
   type ProposeIntentResult,
 } from "@/app/lib/custody";
 import { buildProposeIntent } from "@/app/lib/intent-builder";
+import type { MaximumFee } from "@/app/lib/maximum-fee";
 import type { IntentsCollection } from "@/app/intents/intents.types";
 
 export type PaymentType = "XRP" | "IOU" | "MPT";
@@ -33,6 +34,8 @@ export type ProposePaymentInput = {
   issuer?: string;
   issuanceId?: string;
   description?: string;
+  /** Cap on the fee this transaction may burn. Omit for the default; `null` to send no cap. */
+  maximumFee?: MaximumFee;
 };
 
 export type ProposeReleaseTransfersInput = {
@@ -160,6 +163,7 @@ export async function proposePayment(
     destinationType = "Address",
     amount,
     description,
+    maximumFee,
   } = input;
 
   if (!domainId) throw new Error("domainId is required");
@@ -179,6 +183,7 @@ export async function proposePayment(
   return proposeXrplTransaction({
     domainId,
     accountId,
+    maximumFee,
     operation: {
       // @ts-expect-error preserved from original route
       destination: buildPaymentDestination(destinationType, input),

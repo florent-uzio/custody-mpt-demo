@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import {
+  DEFAULT_MAXIMUM_FEE,
+  type MaximumFee,
+} from "../../lib/maximum-fee";
 import { JsonViewer } from "../JsonViewer";
 import { useDefaultDomain } from "../../contexts/DomainContext";
 import {
@@ -14,6 +18,7 @@ import {
   PageContainer,
   PageHero,
   SectionCard,
+  MaximumFeeSection,
   SubmitButton,
   ErrorBanner,
   DomainWarning,
@@ -41,11 +46,18 @@ export function ConvertPage({ direction }: { direction: "to" | "from" }) {
     issuanceId: "",
   });
   const [amount, setAmount] = useState("");
+  const [maximumFee, setMaximumFee] = useState<MaximumFee>(DEFAULT_MAXIMUM_FEE);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!defaultDomainId) return;
-    mutate({ domainId: defaultDomainId, accountId, tokenIdentifier, amount });
+    mutate({
+      domainId: defaultDomainId,
+      accountId,
+      tokenIdentifier,
+      amount,
+      maximumFee,
+    });
   };
 
   const title = toConfidential ? "cMPT Convert" : "cMPT Convert Back";
@@ -78,42 +90,51 @@ export function ConvertPage({ direction }: { direction: "to" | "from" }) {
           <DomainWarning action={`submitting a ${txType}`} />
         )}
 
-        <SectionCard
-          step={1}
-          theme={toConfidential ? "violet" : "sky"}
-          title={`${txType} details`}
-        >
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <AccountField
-              value={accountId}
-              onChange={setAccountId}
-              help="The account whose balance is converted. It must already have an ElGamal key pair provisioned."
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <SectionCard
+            step={1}
+            theme={toConfidential ? "violet" : "sky"}
+            title={`${txType} details`}
+          >
+            <div className="space-y-4">
+              <AccountField
+                value={accountId}
+                onChange={setAccountId}
+                help="The account whose balance is converted. It must already have an ElGamal key pair provisioned."
+              />
 
-            <TokenIdentifierField
-              value={tokenIdentifier}
-              onChange={setTokenIdentifier}
-            />
+              <TokenIdentifierField
+                value={tokenIdentifier}
+                onChange={setTokenIdentifier}
+              />
 
-            <TextField
-              label="Amount"
-              value={amount}
-              onChange={setAmount}
-              placeholder="1000"
-              required
-              help="Plaintext MPT amount, in the token's smallest unit."
-            />
+              <TextField
+                label="Amount"
+                value={amount}
+                onChange={setAmount}
+                placeholder="1000"
+                required
+                help="Plaintext MPT amount, in the token's smallest unit."
+              />
+            </div>
+          </SectionCard>
 
-            <SubmitButton
-              theme={toConfidential ? "violet" : "sky"}
-              pending={isPending}
-              disabled={!defaultDomainId || isPending}
-              pendingLabel="Proposing intent…"
-            >
-              Propose {txType} intent
-            </SubmitButton>
-          </form>
-        </SectionCard>
+          <MaximumFeeSection
+            step={2}
+            theme={toConfidential ? "violet" : "sky"}
+            value={maximumFee}
+            onChange={setMaximumFee}
+          />
+
+          <SubmitButton
+            theme={toConfidential ? "violet" : "sky"}
+            pending={isPending}
+            disabled={!defaultDomainId || isPending}
+            pendingLabel="Proposing intent…"
+          >
+            Propose {txType} intent
+          </SubmitButton>
+        </form>
 
         <ErrorBanner error={error} />
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DEFAULT_MAXIMUM_FEE, type MaximumFee } from "../lib/maximum-fee";
 import { JsonViewer } from "../components/JsonViewer";
 import { useAccounts } from "../hooks/useAccounts";
 import { useEndpoints } from "../hooks/useEndpoints";
@@ -13,6 +14,7 @@ import {
   PageContainer,
   PageHero,
   SectionCard,
+  MaximumFeeSection,
   SubmitButton,
   ErrorBanner,
   DomainWarning,
@@ -50,6 +52,7 @@ export default function PaymentPage() {
 
   const [description, setDescription] = useState("Payment");
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [maximumFee, setMaximumFee] = useState<MaximumFee>(DEFAULT_MAXIMUM_FEE);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +71,7 @@ export default function PaymentPage() {
         issuer: paymentType === "IOU" ? issuer : undefined,
         issuanceId: paymentType === "MPT" ? issuanceId : undefined,
         description,
+        maximumFee,
       },
       { onSuccess: () => setShowRequestModal(true) },
     );
@@ -92,107 +96,31 @@ export default function PaymentPage() {
           <DomainWarning action="creating a payment" />
         )}
 
-        <SectionCard title="Payment Details">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Account ID */}
-            <div>
-              <label
-                htmlFor="accountId"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Account ID
-              </label>
-              <select
-                id="accountId"
-                value={accountId}
-                onChange={(e) => setAccountId(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
-                required
-                disabled={accountsLoading}
-              >
-                {accountsLoading ? (
-                  <option>Loading accounts...</option>
-                ) : (
-                  <>
-                    <option value="" disabled>
-                      Select an account
-                    </option>
-                    {accounts.map((account) => (
-                      <option key={account.id} value={account.id}>
-                        {account.alias} ({account.id})
-                      </option>
-                    ))}
-                  </>
-                )}
-              </select>
-            </div>
-
-            {/* Payment Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Payment Type
-              </label>
-              <div className="flex gap-6">
-                {(["XRP", "IOU", "MPT"] as PaymentType[]).map((type) => (
-                  <label
-                    key={type}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <input
-                      type="radio"
-                      name="paymentType"
-                      value={type}
-                      checked={paymentType === type}
-                      onChange={() => setPaymentType(type)}
-                      className="text-blue-600"
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      {type}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Destination */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Destination
-              </label>
-              <div className="flex gap-2 mb-2">
-                {(["Account", "Address", "Endpoint"] as DestinationType[]).map(
-                  (type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setDestinationType(type)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
-                        destinationType === type
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  )
-                )}
-              </div>
-              {destinationType === "Account" && (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <SectionCard title="Payment Details">
+            <div className="space-y-4">
+              {/* Account ID */}
+              <div>
+                <label
+                  htmlFor="accountId"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Account ID
+                </label>
                 <select
-                  value={destinationAccountId}
-                  onChange={(e) => setDestinationAccountId(e.target.value)}
+                  id="accountId"
+                  value={accountId}
+                  onChange={(e) => setAccountId(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
                   required
                   disabled={accountsLoading}
                 >
                   {accountsLoading ? (
                     <option>Loading accounts...</option>
-                  ) : accounts.length === 0 ? (
-                    <option value="">No accounts found in this domain</option>
                   ) : (
                     <>
                       <option value="" disabled>
-                        Select a destination account
+                        Select an account
                       </option>
                       {accounts.map((account) => (
                         <option key={account.id} value={account.id}>
@@ -202,183 +130,267 @@ export default function PaymentPage() {
                     </>
                   )}
                 </select>
-              )}
-              {destinationType === "Address" && (
-                <input
-                  type="text"
-                  value={destinationAddress}
-                  onChange={(e) => setDestinationAddress(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                  placeholder="rXXXX..."
-                  required
-                />
-              )}
-              {destinationType === "Endpoint" && (
-                <select
-                  value={destinationEndpointId}
-                  onChange={(e) => setDestinationEndpointId(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
-                  required
-                  disabled={endpointsLoading}
-                >
-                  {endpointsLoading ? (
-                    <option>Loading endpoints...</option>
-                  ) : endpoints.length === 0 ? (
-                    <option value="">No endpoints found in this domain</option>
-                  ) : (
-                    <>
-                      <option value="" disabled>
-                        Select a destination endpoint
-                      </option>
-                      {endpoints.map((endpoint) => (
-                        <option key={endpoint.id} value={endpoint.id}>
-                          {endpoint.alias} — {endpoint.address}
-                        </option>
-                      ))}
-                    </>
-                  )}
-                </select>
-              )}
-            </div>
+              </div>
 
-            {/* Amount */}
-            <div>
-              <label
-                htmlFor="amount"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Amount
-              </label>
-              <input
-                type="text"
-                id="amount"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                placeholder={
-                  paymentType === "XRP"
-                    ? "Amount in drops (e.g., 1000000 = 1 XRP)"
-                    : "Amount (e.g., 100)"
-                }
-                required
-              />
-              {paymentType === "XRP" && (
-                <p className="mt-1 text-xs text-gray-500">
-                  1 XRP = 1,000,000 drops
-                </p>
-              )}
-            </div>
-
-            {/* IOU Fields */}
-            {paymentType === "IOU" && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="currency"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Currency Code
-                  </label>
-                  <input
-                    type="text"
-                    id="currency"
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                    placeholder="USD, EUR, BTC..."
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="issuer"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Issuer Address
-                  </label>
-                  <input
-                    type="text"
-                    id="issuer"
-                    value={issuer}
-                    onChange={(e) => setIssuer(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                    placeholder="rIssuerXXXX..."
-                    required
-                  />
+              {/* Payment Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Payment Type
+                </label>
+                <div className="flex gap-6">
+                  {(["XRP", "IOU", "MPT"] as PaymentType[]).map((type) => (
+                    <label
+                      key={type}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="paymentType"
+                        value={type}
+                        checked={paymentType === type}
+                        onChange={() => setPaymentType(type)}
+                        className="text-blue-600"
+                      />
+                      <span className="text-sm font-medium text-gray-700">
+                        {type}
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </div>
-            )}
 
-            {/* MPT Fields */}
-            {paymentType === "MPT" && (
+              {/* Destination */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Destination
+                </label>
+                <div className="flex gap-2 mb-2">
+                  {(["Account", "Address", "Endpoint"] as DestinationType[]).map(
+                    (type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setDestinationType(type)}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+                          destinationType === type
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    )
+                  )}
+                </div>
+                {destinationType === "Account" && (
+                  <select
+                    value={destinationAccountId}
+                    onChange={(e) => setDestinationAccountId(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
+                    required
+                    disabled={accountsLoading}
+                  >
+                    {accountsLoading ? (
+                      <option>Loading accounts...</option>
+                    ) : accounts.length === 0 ? (
+                      <option value="">No accounts found in this domain</option>
+                    ) : (
+                      <>
+                        <option value="" disabled>
+                          Select a destination account
+                        </option>
+                        {accounts.map((account) => (
+                          <option key={account.id} value={account.id}>
+                            {account.alias} ({account.id})
+                          </option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+                )}
+                {destinationType === "Address" && (
+                  <input
+                    type="text"
+                    value={destinationAddress}
+                    onChange={(e) => setDestinationAddress(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                    placeholder="rXXXX..."
+                    required
+                  />
+                )}
+                {destinationType === "Endpoint" && (
+                  <select
+                    value={destinationEndpointId}
+                    onChange={(e) => setDestinationEndpointId(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
+                    required
+                    disabled={endpointsLoading}
+                  >
+                    {endpointsLoading ? (
+                      <option>Loading endpoints...</option>
+                    ) : endpoints.length === 0 ? (
+                      <option value="">No endpoints found in this domain</option>
+                    ) : (
+                      <>
+                        <option value="" disabled>
+                          Select a destination endpoint
+                        </option>
+                        {endpoints.map((endpoint) => (
+                          <option key={endpoint.id} value={endpoint.id}>
+                            {endpoint.alias} — {endpoint.address}
+                          </option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+                )}
+              </div>
+
+              {/* Amount */}
               <div>
                 <label
-                  htmlFor="issuanceId"
+                  htmlFor="amount"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  MPT Issuance ID
+                  Amount
                 </label>
                 <input
                   type="text"
-                  id="issuanceId"
-                  value={issuanceId}
-                  onChange={(e) => setIssuanceId(e.target.value)}
+                  id="amount"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                  placeholder="00CA8BD9F2582AF39B51725D510C5401ED4495ECFB250591"
+                  placeholder={
+                    paymentType === "XRP"
+                      ? "Amount in drops (e.g., 1000000 = 1 XRP)"
+                      : "Amount (e.g., 100)"
+                  }
                   required
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  The ID of the MPT issuance created with xrpl.js SDK.
-                </p>
+                {paymentType === "XRP" && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    1 XRP = 1,000,000 drops
+                  </p>
+                )}
               </div>
-            )}
 
-            {/* Description */}
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Description (Optional)
-              </label>
-              <input
-                type="text"
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                placeholder="Enter description"
-              />
-            </div>
+              {/* IOU Fields */}
+              {paymentType === "IOU" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="currency"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Currency Code
+                    </label>
+                    <input
+                      type="text"
+                      id="currency"
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                      placeholder="USD, EUR, BTC..."
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="issuer"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Issuer Address
+                    </label>
+                    <input
+                      type="text"
+                      id="issuer"
+                      value={issuer}
+                      onChange={(e) => setIssuer(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                      placeholder="rIssuerXXXX..."
+                      required
+                    />
+                  </div>
+                </div>
+              )}
 
-            {/* Fixed Configuration */}
-            <div className="bg-gray-50 rounded-lg p-4 text-sm">
-              <h3 className="font-medium text-gray-700 mb-2">
-                Fixed Configuration:
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
+              {/* MPT Fields */}
+              {paymentType === "MPT" && (
                 <div>
-                  <span className="text-gray-600">Domain ID:</span>
-                  <span className="ml-2 font-mono text-xs text-gray-800">
-                    {defaultDomainId}
-                  </span>
+                  <label
+                    htmlFor="issuanceId"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    MPT Issuance ID
+                  </label>
+                  <input
+                    type="text"
+                    id="issuanceId"
+                    value={issuanceId}
+                    onChange={(e) => setIssuanceId(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                    placeholder="00CA8BD9F2582AF39B51725D510C5401ED4495ECFB250591"
+                    required
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    The ID of the MPT issuance created with xrpl.js SDK.
+                  </p>
                 </div>
-                <div>
-                  <span className="text-gray-600">Ledger:</span>
-                  <span className="ml-2 text-gray-800">{defaultLedgerId}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Fee Strategy:</span>
-                  <span className="ml-2 text-gray-800">Medium Priority</span>
+              )}
+
+              {/* Description */}
+              <div>
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Description (Optional)
+                </label>
+                <input
+                  type="text"
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                  placeholder="Enter description"
+                />
+              </div>
+
+              {/* Fixed Configuration */}
+              <div className="bg-gray-50 rounded-lg p-4 text-sm">
+                <h3 className="font-medium text-gray-700 mb-2">
+                  Fixed Configuration:
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-gray-600">Domain ID:</span>
+                    <span className="ml-2 font-mono text-xs text-gray-800">
+                      {defaultDomainId}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Ledger:</span>
+                    <span className="ml-2 text-gray-800">{defaultLedgerId}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Fee Strategy:</span>
+                    <span className="ml-2 text-gray-800">Medium Priority</span>
+                  </div>
                 </div>
               </div>
             </div>
+          </SectionCard>
 
-            <SubmitButton theme="sky" pending={isPending} disabled={isPending}>
-              {isPending ? "Proposing Payment..." : "Propose Payment Intent"}
-            </SubmitButton>
-          </form>
-        </SectionCard>
+          <MaximumFeeSection
+            theme="sky"
+            value={maximumFee}
+            onChange={setMaximumFee}
+          />
+
+          <SubmitButton theme="sky" pending={isPending} disabled={isPending}>
+            {isPending ? "Proposing Payment..." : "Propose Payment Intent"}
+          </SubmitButton>
+        </form>
 
         <ErrorBanner error={error} />
 
