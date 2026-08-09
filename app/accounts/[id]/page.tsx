@@ -1,12 +1,16 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import {
   getAccount,
   getAccountAddresses,
   getAccountBalances,
+  proposeLockAccount,
+  proposeUnlockAccount,
+  type ProposeLockAccountInput,
+  type ProposeUnlockAccountInput,
 } from "../../_actions/accounts";
 import { CopyButton } from "../../components/CopyButton";
 import { JsonViewer } from "../../components/JsonViewer";
@@ -214,6 +218,35 @@ export default function AccountDetailPage() {
   const { data: tickersMap } = useTickers(tickerIds);
 
   const lockStatus = account?.data.lock;
+  const revision = account?.data.metadata?.revision;
+
+  const lockMutation = useMutation({
+    mutationFn: (input: ProposeLockAccountInput) => proposeLockAccount(input),
+  });
+
+  const unlockMutation = useMutation({
+    mutationFn: (input: ProposeUnlockAccountInput) =>
+      proposeUnlockAccount(input),
+  });
+
+  const handleLockToggle = () => {
+    if (revision === undefined) return;
+    const input = { domainId, reference: { id: accountId, revision } };
+    // Reset the sibling so only the latest proposal's result is displayed.
+    if (lockStatus === "Locked") {
+      lockMutation.reset();
+      unlockMutation.mutate(input);
+    } else {
+      unlockMutation.reset();
+      lockMutation.mutate(input);
+    }
+  };
+
+  const isLocked = lockStatus === "Locked";
+  const lockPending = lockMutation.isPending || unlockMutation.isPending;
+  // Proposed lock/unlock intent result (shown inline after a successful submit).
+  const lockResult = lockMutation.data ?? unlockMutation.data;
+
   const processingStatus = account?.additionalDetails?.processing?.status;
   const activatedLedgerId = account?.additionalDetails?.ledgers?.find((l) => l.status === "Activated")?.ledgerId;
   const displayLedgerId = account?.data.ledgerId ?? activatedLedgerId;
@@ -237,15 +270,49 @@ export default function AccountDetailPage() {
           { label: account?.data.alias ?? accountId },
         ]}
         actions={
-          <Link
-            href={`/accounts/${accountId}/manifests?domainId=${domainId}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Manifests
-          </Link>
+          <div className="flex items-center gap-2">
+            {lockStatus && (
+              <button
+                onClick={handleLockToggle}
+                disabled={lockPending || !domainId || revision === undefined}
+                title={
+                  revision === undefined
+                    ? "Account revision unavailable"
+                    : undefined
+                }
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d={
+                      isLocked
+                        ? "M8 11V7a4 4 0 018 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
+                        : "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    }
+                  />
+                </svg>
+                {lockPending
+                  ? isLocked
+                    ? "Unlocking…"
+                    : "Locking…"
+                  : isLocked
+                    ? "Unlock"
+                    : "Lock"}
+              </button>
+            )}
+            <Link
+              href={`/accounts/${accountId}/manifests?domainId=${domainId}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Manifests
+            </Link>
+          </div>
         }
       />
 
@@ -281,6 +348,21 @@ export default function AccountDetailPage() {
             </div>
           )}
         </PageHero>
+
+        {lockMutation.isError && <ErrorBanner error={lockMutation.error} />}
+        {unlockMutation.isError && <ErrorBanner error={unlockMutation.error} />}
+
+        {lockResult && (
+          <div className="space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
+              {lockMutation.data ? "Lock" : "Unlock"} account intent proposed.
+              Intent ID:{" "}
+              <span className="font-mono">{lockResult.request.request.id}</span>
+            </div>
+            <JsonViewer data={lockResult.request} title="Proposed intent (request)" />
+            <JsonViewer data={lockResult.response} title="Response" />
+          </div>
+        )}
 
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-24 gap-4">

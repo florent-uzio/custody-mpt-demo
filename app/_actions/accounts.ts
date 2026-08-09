@@ -6,6 +6,7 @@ import type {
   Core_AddressesCollection,
   Core_ApiAccount,
   Core_BalancesCollection,
+  Core_ProposeIntentBody,
   GetAccountsQueryParams,
 } from "@florent-uzio/custody";
 
@@ -33,6 +34,23 @@ export type AccountFilters = {
   processingStatus?: string;
   additionalLedgerIds?: string[];
   additionalLedgerStatuses?: string[];
+};
+
+type LockAccountPayload = Extract<
+  Core_ProposeIntentBody["request"]["payload"],
+  { type: "v0_LockAccount" }
+>;
+type UnlockAccountPayload = Extract<
+  Core_ProposeIntentBody["request"]["payload"],
+  { type: "v0_UnlockAccount" }
+>;
+
+export type ProposeLockAccountInput = Omit<LockAccountPayload, "type"> & {
+  domainId: string;
+};
+
+export type ProposeUnlockAccountInput = Omit<UnlockAccountPayload, "type"> & {
+  domainId: string;
 };
 
 export type CreateAccountInput = {
@@ -170,6 +188,46 @@ export async function listAccountsWithAddresses(
       };
     }),
   );
+}
+
+export async function proposeLockAccount(
+  input: ProposeLockAccountInput,
+): Promise<ProposeIntentResult> {
+  const { domainId, ...rest } = input;
+  if (!domainId) throw new Error("domainId is required");
+
+  const currentUser = await getCurrentUser(domainId);
+
+  const payload: LockAccountPayload = { ...rest, type: "v0_LockAccount" };
+
+  const request = buildProposeIntent({
+    author: { id: currentUser.userId, domainId: currentUser.domainId },
+    targetDomainId: domainId,
+    payload,
+    description: "Lock account",
+  });
+
+  return proposeIntent(request);
+}
+
+export async function proposeUnlockAccount(
+  input: ProposeUnlockAccountInput,
+): Promise<ProposeIntentResult> {
+  const { domainId, ...rest } = input;
+  if (!domainId) throw new Error("domainId is required");
+
+  const currentUser = await getCurrentUser(domainId);
+
+  const payload: UnlockAccountPayload = { ...rest, type: "v0_UnlockAccount" };
+
+  const request = buildProposeIntent({
+    author: { id: currentUser.userId, domainId: currentUser.domainId },
+    targetDomainId: domainId,
+    payload,
+    description: "Unlock account",
+  });
+
+  return proposeIntent(request);
 }
 
 export async function createAccount(
