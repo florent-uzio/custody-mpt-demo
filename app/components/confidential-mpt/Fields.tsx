@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useAccounts } from "../../hooks/useAccounts";
+import { useAccountsWithAddresses } from "../../hooks/useAccountsWithAddresses";
 import { useEndpoints } from "../../hooks/useEndpoints";
 import type {
   CmptDestination,
@@ -104,6 +106,90 @@ export function AccountField({
 }
 
 /**
+ * A plain XRPL address, picked from a custody account or typed by hand — for
+ * endpoints that take a bare address string rather than a
+ * `Core_TransactionDestination` (see {@link DestinationField} for those).
+ *
+ * The selected account is derived from `value` rather than tracked separately,
+ * so a parent resetting the address also resets the dropdown.
+ */
+export function AddressField({
+  label,
+  value,
+  onChange,
+  help,
+  required,
+}: {
+  label: string;
+  value: string;
+  onChange: (address: string) => void;
+  help?: React.ReactNode;
+  required?: boolean;
+}) {
+  const { accounts, loading } = useAccountsWithAddresses();
+  const [mode, setMode] = useState<"Account" | "Custom">("Account");
+
+  const selectedId = accounts.find((a) => a.address === value)?.id ?? "";
+
+  return (
+    <Field label={label} help={help}>
+      <div className="flex items-center gap-4 mb-2">
+        {(["Account", "Custom"] as const).map((option) => (
+          <label
+            key={option}
+            className="flex items-center gap-1.5 text-sm text-gray-700"
+          >
+            <input
+              type="radio"
+              checked={mode === option}
+              onChange={() => setMode(option)}
+            />
+            {option}
+          </label>
+        ))}
+      </div>
+
+      {mode === "Account" ? (
+        <select
+          value={selectedId}
+          onChange={(e) =>
+            onChange(
+              accounts.find((a) => a.id === e.target.value)?.address ?? "",
+            )
+          }
+          required={required}
+          disabled={loading}
+          className={`${CMPT_INPUT} bg-white`}
+        >
+          <option value="" disabled>
+            {loading ? "Loading accounts…" : "Select an account"}
+          </option>
+          {accounts.map((account) => (
+            <option
+              key={account.id}
+              value={account.id}
+              disabled={!account.address}
+            >
+              {account.address
+                ? `${account.alias} — ${account.address}`
+                : `${account.alias} (no address yet)`}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="r…"
+          required={required}
+          className={`${CMPT_INPUT} font-mono text-sm`}
+        />
+      )}
+    </Field>
+  );
+}
+
+/**
  * `Core_Xrpl_MPTokenIdentifier` — an MPT is addressed either by its on-ledger
  * issuance ID or by a custody ticker ID.
  */
@@ -125,7 +211,9 @@ export function TokenIdentifierField({
           <input
             type="radio"
             checked={isIssuance}
-            onChange={() => onChange({ type: "MPTokenIssuanceId", issuanceId: "" })}
+            onChange={() =>
+              onChange({ type: "MPTokenIssuanceId", issuanceId: "" })
+            }
           />
           MPT Issuance ID
         </label>
@@ -151,7 +239,9 @@ export function TokenIdentifierField({
       ) : (
         <input
           value={value.tickerId}
-          onChange={(e) => onChange({ type: "TickerId", tickerId: e.target.value })}
+          onChange={(e) =>
+            onChange({ type: "TickerId", tickerId: e.target.value })
+          }
           placeholder="Ticker UUID"
           required
           className={`${CMPT_INPUT} font-mono text-sm`}
@@ -176,7 +266,10 @@ export function DestinationField({
     <Field label="Destination">
       <div className="flex items-center gap-4 mb-2">
         {(["Address", "Account", "Endpoint"] as const).map((type) => (
-          <label key={type} className="flex items-center gap-1.5 text-sm text-gray-700">
+          <label
+            key={type}
+            className="flex items-center gap-1.5 text-sm text-gray-700"
+          >
             <input
               type="radio"
               checked={value.type === type}
@@ -198,7 +291,9 @@ export function DestinationField({
       {value.type === "Address" && (
         <input
           value={value.address}
-          onChange={(e) => onChange({ type: "Address", address: e.target.value })}
+          onChange={(e) =>
+            onChange({ type: "Address", address: e.target.value })
+          }
           placeholder="Destination address (r…)"
           required
           className={`${CMPT_INPUT} font-mono text-sm`}
@@ -208,13 +303,17 @@ export function DestinationField({
       {value.type === "Account" && (
         <select
           value={value.accountId}
-          onChange={(e) => onChange({ type: "Account", accountId: e.target.value })}
+          onChange={(e) =>
+            onChange({ type: "Account", accountId: e.target.value })
+          }
           required
           disabled={accountsLoading}
           className={`${CMPT_INPUT} bg-white`}
         >
           <option value="" disabled>
-            {accountsLoading ? "Loading accounts…" : "Select a destination account"}
+            {accountsLoading
+              ? "Loading accounts…"
+              : "Select a destination account"}
           </option>
           {accounts.map((account) => (
             <option key={account.id} value={account.id}>
@@ -227,7 +326,9 @@ export function DestinationField({
       {value.type === "Endpoint" && (
         <select
           value={value.endpointId}
-          onChange={(e) => onChange({ type: "Endpoint", endpointId: e.target.value })}
+          onChange={(e) =>
+            onChange({ type: "Endpoint", endpointId: e.target.value })
+          }
           required
           disabled={endpointsLoading}
           className={`${CMPT_INPUT} bg-white`}
