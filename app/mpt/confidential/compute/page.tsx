@@ -6,10 +6,10 @@ import { CopyButton } from "../../../components/CopyButton";
 import { useDefaultDomain } from "../../../contexts/DomainContext";
 import { useLedgerConfig } from "../../../hooks/useLedgerConfig";
 import {
-  useCmptComputeStatus,
-  useInitiateCmptCompute,
-} from "../../../hooks/useCmptCompute";
-import type { CmptWaitOptions } from "../../../_actions/cmpt-compute";
+  useInitiateParametersCompute,
+  useParametersComputeStatus,
+} from "../../../hooks/useParametersCompute";
+import type { ParametersComputeWaitOptions } from "../../../_actions/parameters-compute";
 import {
   Page,
   PageHeader,
@@ -21,16 +21,17 @@ import {
 } from "../../../components/layout";
 import {
   AccountField,
+  AddressField,
   CMPT_INPUT,
   Field,
   TextField,
 } from "../../../components/confidential-mpt/Fields";
 
-/** `{ cmptComputeId }` from an initiate, `{ compute: { id } }` from an …AndWait. */
+/** `{ id }` from an initiate, `{ compute: { id } }` from an …AndWait. */
 function computeIdOf(result: unknown): string | undefined {
   if (!result || typeof result !== "object") return undefined;
-  const r = result as { cmptComputeId?: string; compute?: { id?: string } };
-  return r.cmptComputeId ?? r.compute?.id;
+  const r = result as { id?: string; compute?: { id?: string } };
+  return r.id ?? r.compute?.id;
 }
 
 function WaitControls({
@@ -42,8 +43,8 @@ function WaitControls({
 }: {
   wait: boolean;
   onWaitChange: (wait: boolean) => void;
-  options: CmptWaitOptions;
-  onOptionsChange: (next: CmptWaitOptions) => void;
+  options: ParametersComputeWaitOptions;
+  onOptionsChange: (next: ParametersComputeWaitOptions) => void;
   label: string;
 }) {
   return (
@@ -69,7 +70,8 @@ function WaitControls({
               onChange={(e) =>
                 onOptionsChange({
                   ...options,
-                  maxRetries: e.target.value === "" ? undefined : Number(e.target.value),
+                  maxRetries:
+                    e.target.value === "" ? undefined : Number(e.target.value),
                 })
               }
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -86,7 +88,8 @@ function WaitControls({
               onChange={(e) =>
                 onOptionsChange({
                   ...options,
-                  intervalMs: e.target.value === "" ? undefined : Number(e.target.value),
+                  intervalMs:
+                    e.target.value === "" ? undefined : Number(e.target.value),
                 })
               }
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -102,8 +105,8 @@ export default function CmptComputePage() {
   const { defaultDomainId } = useDefaultDomain();
   const { ledgerIds, defaultLedgerId } = useLedgerConfig();
 
-  const initiate = useInitiateCmptCompute();
-  const status = useCmptComputeStatus();
+  const initiate = useInitiateParametersCompute();
+  const status = useParametersComputeStatus();
 
   // ── Initiate ──
   const [accountId, setAccountId] = useState("");
@@ -113,12 +116,14 @@ export default function CmptComputePage() {
   const [ticketSequence, setTicketSequence] = useState("");
   const [ledgerId, setLedgerId] = useState<string>();
   const [initiateWait, setInitiateWait] = useState(true);
-  const [initiateOptions, setInitiateOptions] = useState<CmptWaitOptions>({});
+  const [initiateOptions, setInitiateOptions] =
+    useState<ParametersComputeWaitOptions>({});
 
   // ── Status ──
   const [computeId, setComputeId] = useState("");
   const [statusWait, setStatusWait] = useState(false);
-  const [statusOptions, setStatusOptions] = useState<CmptWaitOptions>({});
+  const [statusOptions, setStatusOptions] =
+    useState<ParametersComputeWaitOptions>({});
 
   const selectedLedgerId = ledgerId ?? defaultLedgerId;
 
@@ -133,7 +138,7 @@ export default function CmptComputePage() {
           tokenIdentifier: { issuanceId },
           amount,
           ledgerId: selectedLedgerId,
-          ...(destination.trim() && { destination: destination.trim() }),
+          destination: destination.trim(),
           ...(ticketSequence.trim() && {
             ticketSequence: Number(ticketSequence),
           }),
@@ -173,7 +178,7 @@ export default function CmptComputePage() {
           title="cMPT Compute"
           description="Ask the Custody service to compute the ciphertexts and zero-knowledge proof for a confidential MPT operation, then poll for the result. The returned cryptographicFields feed the Advanced section of cMPT Send and the batch workbench."
           badge={{
-            label: "initiateCmptCompute · getCmptComputeStatus",
+            label: "initiateParametersCompute · getParametersComputeStatus",
             note: "Each step also has an …AndWait variant",
           }}
         />
@@ -221,12 +226,12 @@ export default function CmptComputePage() {
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <TextField
-                label="Destination address (optional)"
+              <AddressField
+                label="Destination address"
                 value={destination}
                 onChange={setDestination}
-                placeholder="r…"
-                help="Set it for a Send computation; leave blank for Convert / Convert Back."
+                required
+                help="The recipient of the Send computation."
               />
               <TextField
                 label="Ticket sequence (optional)"
@@ -241,7 +246,7 @@ export default function CmptComputePage() {
               onWaitChange={setInitiateWait}
               options={initiateOptions}
               onOptionsChange={setInitiateOptions}
-              label="Wait for a terminal status (initiateCmptComputeAndWait)"
+              label="Wait for a terminal status (initiateParametersComputeAndWait)"
             />
 
             <button
@@ -267,15 +272,19 @@ export default function CmptComputePage() {
                 data={initiate.data}
                 title={
                   initiateWait
-                    ? "initiateCmptComputeAndWait result"
-                    : "initiateCmptCompute response"
+                    ? "initiateParametersComputeAndWait result"
+                    : "initiateParametersCompute response"
                 }
               />
             </div>
           )}
         </SectionCard>
 
-        <SectionCard step={2} theme="slate" title="Check a computation's status">
+        <SectionCard
+          step={2}
+          theme="slate"
+          title="Check a computation's status"
+        >
           <form onSubmit={handleStatus} className="space-y-4">
             <Field
               label="Compute ID"
@@ -298,7 +307,7 @@ export default function CmptComputePage() {
               onWaitChange={setStatusWait}
               options={statusOptions}
               onOptionsChange={setStatusOptions}
-              label="Poll until terminal (getCmptComputeStatusAndWait)"
+              label="Poll until terminal (getParametersComputeStatusAndWait)"
             />
 
             <button
@@ -324,8 +333,8 @@ export default function CmptComputePage() {
                 data={status.data}
                 title={
                   statusWait
-                    ? "getCmptComputeStatusAndWait result"
-                    : "getCmptComputeStatus response"
+                    ? "getParametersComputeStatusAndWait result"
+                    : "getParametersComputeStatus response"
                 }
               />
             </div>
