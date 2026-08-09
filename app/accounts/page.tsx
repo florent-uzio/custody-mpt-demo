@@ -99,7 +99,8 @@ function truncateId(id: string) {
   return `${id.slice(0, 8)}…${id.slice(-4)}`;
 }
 
-const EMPTY_FILTERS: AccountFilters = {
+/** Starting point for the filter form, and what "Reset all" restores. */
+const DEFAULT_FILTERS: AccountFilters = {
   limit: "",
   sortBy: "",
   sortOrder: "",
@@ -110,7 +111,8 @@ const EMPTY_FILTERS: AccountFilters = {
   lastModifiedBy: "",
   description: "",
   customProperties: "",
-  locks: [],
+  // Locked accounts are the exception; default the list to the usable ones.
+  locks: ["Unlocked"],
   processingStatus: "",
   additionalLedgerIds: "",
   additionalLedgerStatuses: [],
@@ -120,7 +122,7 @@ export default function AccountsPage() {
   const { defaultDomainId } = useDefaultDomain();
   const { ledgerIds, defaultLedgerId } = useLedgerConfig();
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<AccountFilters>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<AccountFilters>(DEFAULT_FILTERS);
 
   // Until the picker is touched, follow the configured default so a change on
   // the Config page is picked up instead of being frozen at first render.
@@ -309,7 +311,7 @@ export default function AccountsPage() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setFilters(EMPTY_FILTERS)}
+                  onClick={() => setFilters(DEFAULT_FILTERS)}
                   className="text-xs text-gray-500 hover:text-gray-700 underline"
                 >
                   Reset all
