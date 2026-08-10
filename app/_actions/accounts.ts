@@ -156,10 +156,14 @@ export type AccountWithAddress = {
  */
 export async function listAccountsWithAddresses(
   domainId: string,
+  filters: AccountFilters = {},
 ): Promise<AccountWithAddress[]> {
   if (!domainId) throw new Error("domainId is required");
   const sdk = getCustodySDK();
-  const accounts = await sdk.accounts.list({ domainId });
+  const accounts = await sdk.accounts.list(
+    { domainId },
+    buildAccountQueryParams(filters),
+  );
 
   return Promise.all(
     accounts.items.map(async (item): Promise<AccountWithAddress> => {

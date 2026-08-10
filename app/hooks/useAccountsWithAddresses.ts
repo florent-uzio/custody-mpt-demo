@@ -5,6 +5,10 @@ import {
 } from "../_actions/accounts";
 import { useDefaultDomain } from "../contexts/DomainContext";
 
+/**
+ * Same as {@link useAccounts} — unlocked accounts only — enriched with their
+ * ledger addresses.
+ */
 export function useAccountsWithAddresses() {
   const { defaultDomainId } = useDefaultDomain();
 
@@ -14,7 +18,8 @@ export function useAccountsWithAddresses() {
     error,
   } = useQuery<AccountWithAddress[]>({
     queryKey: ["accounts-with-addresses", defaultDomainId],
-    queryFn: () => listAccountsWithAddresses(defaultDomainId!),
+    queryFn: () =>
+      listAccountsWithAddresses(defaultDomainId!, { locks: ["Unlocked"] }),
     enabled: !!defaultDomainId,
     staleTime: 60_000,
   });

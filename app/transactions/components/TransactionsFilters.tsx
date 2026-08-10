@@ -29,7 +29,10 @@ export function TransactionsFilters({
   domainId,
 }: Props) {
   const router = useRouter();
-  const { accounts, loading: accountsLoading } = useAccounts();
+  // Locked accounts can still have past transactions worth filtering on.
+  const { accounts, loading: accountsLoading } = useAccounts({
+    includeLocked: true,
+  });
   const { ledgerIds } = useLedgerConfig();
   const idInputRef = useRef<HTMLInputElement>(null);
 
