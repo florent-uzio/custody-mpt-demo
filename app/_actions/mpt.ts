@@ -1,10 +1,19 @@
 "use server";
 
 import {
+  dryRunXrplTransaction,
   proposeXrplTransaction,
+  type DryRunIntentResult,
   type ProposeIntentResult,
+  type ProposeXrplTransactionArgs,
 } from "@/app/lib/custody";
 import type { MaximumFee } from "@/app/lib/maximum-fee";
+import type { Core_XrplOperation } from "@florent-uzio/custody";
+
+export type MptAuthorizeFlag = Extract<
+  Core_XrplOperation,
+  { type: "MPTokenAuthorize" }
+>["flags"][number];
 
 export type MptCreateInput = {
   domainId: string;
@@ -28,6 +37,9 @@ export type MptAuthorizeInput = {
   domainId: string;
   accountId: string;
   issuanceId: string;
+  /** Issuer-side only: the holder account being (un)authorized. Omit when `accountId` is the holder. */
+  holderAccountId?: string;
+  flags?: MptAuthorizeFlag[];
   /** Cap on the fee this transaction may burn. Omit for the default; `null` to send no cap. */
   maximumFee?: MaximumFee;
 };
@@ -138,27 +150,42 @@ export async function mptCreate(input: MptCreateInput): Promise<ProposeIntentRes
   });
 }
 
-export async function mptAuthorize(
-  input: MptAuthorizeInput,
-): Promise<ProposeIntentResult> {
-  const { domainId, accountId, issuanceId, maximumFee } = input;
+function buildMptAuthorizeArgs(input: MptAuthorizeInput): ProposeXrplTransactionArgs {
+  const { domainId, accountId, issuanceId, holderAccountId, flags, maximumFee } = input;
   if (!domainId) throw new Error("domainId is required");
   if (!issuanceId) throw new Error("issuanceId is required");
   if (!accountId) throw new Error("accountId is required");
+  if (holderAccountId && holderAccountId === accountId)
+    throw new Error("holder must differ from the sending account");
 
-  return proposeXrplTransaction({
+  return {
     domainId,
     accountId,
     maximumFee,
     operation: {
       type: "MPTokenAuthorize",
       tokenIdentifier: { type: "MPTokenIssuanceId", issuanceId },
-      flags: [],
+      flags: flags ?? [],
+      ...(holderAccountId && {
+        holder: { type: "Account", accountId: holderAccountId },
+      }),
     },
     description: "Transfer order creation intent",
     customProperties: { property1: "flo" },
     payloadDescription: "Test MPT Authorize",
-  });
+  };
+}
+
+export async function mptAuthorize(
+  input: MptAuthorizeInput,
+): Promise<ProposeIntentResult> {
+  return proposeXrplTransaction(buildMptAuthorizeArgs(input));
+}
+
+export async function mptAuthorizeDryRun(
+  input: MptAuthorizeInput,
+): Promise<DryRunIntentResult> {
+  return dryRunXrplTransaction(buildMptAuthorizeArgs(input));
 }
 
 export async function mptDestroy(input: MptDestroyInput): Promise<ProposeIntentResult> {
