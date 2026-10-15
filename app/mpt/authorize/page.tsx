@@ -7,7 +7,8 @@ import { useAccounts } from "../../hooks/useAccounts";
 import { useDefaultDomain } from "../../contexts/DomainContext";
 import { useLedgerConfig } from "../../hooks/useLedgerConfig";
 import type { MptAuthorizeFlag } from "../../_actions/mpt";
-import { DryRunResult } from "../../components/mpt-authorize/DryRunResult";
+import { DryRunButton } from "../../components/DryRunButton";
+import { DryRunResult } from "../../components/DryRunResult";
 import { useDryRunMPTokenAuthorize } from "../../hooks/useDryRunMPTokenAuthorize";
 import { useSubmitMPTokenAuthorize } from "../../hooks/useSubmitMPTokenAuthorize";
 import {
@@ -226,18 +227,12 @@ export default function MptAuthorizePage() {
             onChange={setMaximumFee}
           />
 
-          <button
-            type="button"
+          <DryRunButton
             onClick={handleDryRun}
-            disabled={
-              !defaultDomainId || !issuanceId || !accountId || dryRun.isPending
-            }
-            className="w-full px-6 py-3 rounded-xl border-2 border-emerald-600 text-emerald-700 font-semibold bg-white hover:bg-emerald-50 disabled:border-gray-300 disabled:text-gray-400 disabled:bg-gray-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {dryRun.isPending
-              ? "Running dry run..."
-              : "🧪 Dry Run (nothing is submitted)"}
-          </button>
+            pending={dryRun.isPending}
+            disabled={!defaultDomainId || !issuanceId || !accountId}
+            className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+          />
 
           <SubmitButton
             theme="emerald"

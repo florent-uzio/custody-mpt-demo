@@ -10,10 +10,13 @@ import type {
 
 import {
   getCurrentUser,
+  dryRunXrplTransaction,
   getCustodySDK,
   proposeIntent,
   proposeXrplTransaction,
+  type DryRunIntentResult,
   type ProposeIntentResult,
+  type ProposeXrplTransactionArgs,
 } from "@/app/lib/custody";
 import { buildProposeIntent } from "@/app/lib/intent-builder";
 import type { MaximumFee } from "@/app/lib/maximum-fee";
@@ -159,9 +162,7 @@ function buildPaymentCurrency(
   return undefined;
 }
 
-export async function proposePayment(
-  input: ProposePaymentInput,
-): Promise<ProposeIntentResult> {
+function buildPaymentArgs(input: ProposePaymentInput): ProposeXrplTransactionArgs {
   const {
     domainId,
     accountId,
@@ -188,7 +189,7 @@ export async function proposePayment(
 
   const currency = buildPaymentCurrency(paymentType, input);
 
-  return proposeXrplTransaction({
+  return {
     domainId,
     accountId,
     maximumFee,
@@ -200,7 +201,19 @@ export async function proposePayment(
     },
     description: description || "Payment",
     customProperties: { property1: "flo" },
-  });
+  };
+}
+
+export async function proposePayment(
+  input: ProposePaymentInput,
+): Promise<ProposeIntentResult> {
+  return proposeXrplTransaction(buildPaymentArgs(input));
+}
+
+export async function proposePaymentDryRun(
+  input: ProposePaymentInput,
+): Promise<DryRunIntentResult> {
+  return dryRunXrplTransaction(buildPaymentArgs(input));
 }
 
 export async function proposeReleaseTransfers(

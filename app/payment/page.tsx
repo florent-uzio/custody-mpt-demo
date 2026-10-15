@@ -7,6 +7,9 @@ import { useAccounts } from "../hooks/useAccounts";
 import { useEndpoints } from "../hooks/useEndpoints";
 import { useDefaultDomain } from "../contexts/DomainContext";
 import { useLedgerConfig } from "../hooks/useLedgerConfig";
+import { DryRunButton } from "../components/DryRunButton";
+import { DryRunResult } from "../components/DryRunResult";
+import { useDryRunPayment } from "../hooks/useDryRunPayment";
 import { useSubmitPayment } from "../hooks/useSubmitPayment";
 import {
   Page,
@@ -29,6 +32,7 @@ export default function PaymentPage() {
   const { defaultDomainId } = useDefaultDomain();
   const { defaultLedgerId } = useLedgerConfig();
   const { mutate, isPending, data: response, error } = useSubmitPayment();
+  const dryRun = useDryRunPayment();
 
   const [accountId, setAccountId] = useState("");
   const [paymentType, setPaymentType] = useState<PaymentType>("XRP");
@@ -54,27 +58,40 @@ export default function PaymentPage() {
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [maximumFee, setMaximumFee] = useState<MaximumFee>(DEFAULT_MAXIMUM_FEE);
 
+  const input = () => ({
+    accountId,
+    paymentType,
+    destinationType,
+    destinationAddress,
+    destinationAccountId,
+    destinationEndpointId,
+    domainId: defaultDomainId!,
+    amount,
+    currency: paymentType === "IOU" ? currency : undefined,
+    issuer: paymentType === "IOU" ? issuer : undefined,
+    issuanceId: paymentType === "MPT" ? issuanceId : undefined,
+    description,
+    maximumFee,
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!defaultDomainId) return;
-    mutate(
-      {
-        accountId,
-        paymentType,
-        destinationType,
-        destinationAddress,
-        destinationAccountId,
-        destinationEndpointId,
-        domainId: defaultDomainId,
-        amount,
-        currency: paymentType === "IOU" ? currency : undefined,
-        issuer: paymentType === "IOU" ? issuer : undefined,
-        issuanceId: paymentType === "MPT" ? issuanceId : undefined,
-        description,
-        maximumFee,
-      },
-      { onSuccess: () => setShowRequestModal(true) },
-    );
+    mutate(input(), { onSuccess: () => setShowRequestModal(true) });
+  };
+
+  const destinationFilled =
+    destinationType === "Account"
+      ? destinationAccountId
+      : destinationType === "Address"
+        ? destinationAddress
+        : destinationEndpointId;
+  const typeFieldsFilled =
+    paymentType === "IOU" ? currency && issuer : paymentType === "MPT" ? issuanceId : true;
+
+  const handleDryRun = () => {
+    if (!defaultDomainId) return;
+    dryRun.mutate(input());
   };
 
   return (
@@ -387,10 +404,26 @@ export default function PaymentPage() {
             onChange={setMaximumFee}
           />
 
+          <DryRunButton
+            onClick={handleDryRun}
+            pending={dryRun.isPending}
+            disabled={
+              !defaultDomainId ||
+              !accountId ||
+              !amount ||
+              !destinationFilled ||
+              !typeFieldsFilled
+            }
+            className="border-sky-600 text-sky-700 hover:bg-sky-50"
+          />
+
           <SubmitButton theme="sky" pending={isPending} disabled={isPending}>
             {isPending ? "Proposing Payment..." : "Propose Payment Intent"}
           </SubmitButton>
         </form>
+
+        <ErrorBanner error={dryRun.error} />
+        {dryRun.data && <DryRunResult data={dryRun.data} />}
 
         <ErrorBanner error={error} />
 

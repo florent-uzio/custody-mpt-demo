@@ -1,5 +1,5 @@
 import type { DryRunIntentResult } from "@/app/lib/custody";
-import { JsonViewer } from "../JsonViewer";
+import { JsonViewer } from "./JsonViewer";
 
 type TransactionOrderDryRun = Extract<
   DryRunIntentResult["response"],
