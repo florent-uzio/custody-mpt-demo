@@ -8,6 +8,12 @@ import {
   type ProposeXrplTransactionArgs,
 } from "@/app/lib/custody";
 import type { MaximumFee } from "@/app/lib/maximum-fee";
+import type { Core_XrplOperation } from "@florent-uzio/custody";
+
+export type MptAuthorizeFlag = Extract<
+  Core_XrplOperation,
+  { type: "MPTokenAuthorize" }
+>["flags"][number];
 
 export type MptCreateInput = {
   domainId: string;
@@ -31,6 +37,9 @@ export type MptAuthorizeInput = {
   domainId: string;
   accountId: string;
   issuanceId: string;
+  /** Issuer-side only: the holder account being (un)authorized. Omit when `accountId` is the holder. */
+  holderAccountId?: string;
+  flags?: MptAuthorizeFlag[];
   /** Cap on the fee this transaction may burn. Omit for the default; `null` to send no cap. */
   maximumFee?: MaximumFee;
 };
@@ -142,10 +151,12 @@ export async function mptCreate(input: MptCreateInput): Promise<ProposeIntentRes
 }
 
 function buildMptAuthorizeArgs(input: MptAuthorizeInput): ProposeXrplTransactionArgs {
-  const { domainId, accountId, issuanceId, maximumFee } = input;
+  const { domainId, accountId, issuanceId, holderAccountId, flags, maximumFee } = input;
   if (!domainId) throw new Error("domainId is required");
   if (!issuanceId) throw new Error("issuanceId is required");
   if (!accountId) throw new Error("accountId is required");
+  if (holderAccountId && holderAccountId === accountId)
+    throw new Error("holder must differ from the sending account");
 
   return {
     domainId,
@@ -154,7 +165,10 @@ function buildMptAuthorizeArgs(input: MptAuthorizeInput): ProposeXrplTransaction
     operation: {
       type: "MPTokenAuthorize",
       tokenIdentifier: { type: "MPTokenIssuanceId", issuanceId },
-      flags: [],
+      flags: flags ?? [],
+      ...(holderAccountId && {
+        holder: { type: "Account", accountId: holderAccountId },
+      }),
     },
     description: "Transfer order creation intent",
     customProperties: { property1: "flo" },
