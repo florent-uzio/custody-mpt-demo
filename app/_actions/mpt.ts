@@ -1,8 +1,11 @@
 "use server";
 
 import {
+  dryRunXrplTransaction,
   proposeXrplTransaction,
+  type DryRunIntentResult,
   type ProposeIntentResult,
+  type ProposeXrplTransactionArgs,
 } from "@/app/lib/custody";
 import type { MaximumFee } from "@/app/lib/maximum-fee";
 
@@ -138,15 +141,13 @@ export async function mptCreate(input: MptCreateInput): Promise<ProposeIntentRes
   });
 }
 
-export async function mptAuthorize(
-  input: MptAuthorizeInput,
-): Promise<ProposeIntentResult> {
+function buildMptAuthorizeArgs(input: MptAuthorizeInput): ProposeXrplTransactionArgs {
   const { domainId, accountId, issuanceId, maximumFee } = input;
   if (!domainId) throw new Error("domainId is required");
   if (!issuanceId) throw new Error("issuanceId is required");
   if (!accountId) throw new Error("accountId is required");
 
-  return proposeXrplTransaction({
+  return {
     domainId,
     accountId,
     maximumFee,
@@ -158,7 +159,19 @@ export async function mptAuthorize(
     description: "Transfer order creation intent",
     customProperties: { property1: "flo" },
     payloadDescription: "Test MPT Authorize",
-  });
+  };
+}
+
+export async function mptAuthorize(
+  input: MptAuthorizeInput,
+): Promise<ProposeIntentResult> {
+  return proposeXrplTransaction(buildMptAuthorizeArgs(input));
+}
+
+export async function mptAuthorizeDryRun(
+  input: MptAuthorizeInput,
+): Promise<DryRunIntentResult> {
+  return dryRunXrplTransaction(buildMptAuthorizeArgs(input));
 }
 
 export async function mptDestroy(input: MptDestroyInput): Promise<ProposeIntentResult> {

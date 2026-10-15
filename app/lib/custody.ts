@@ -1,5 +1,7 @@
 import {
   RippleCustody,
+  type Core_IntentDryRunRequest,
+  type Core_IntentDryRunResponse,
   type Core_IntentResponse,
   type Core_MeReference,
   type Core_ProposeIntentBody,
@@ -42,18 +44,31 @@ export type ProposeXrplTransactionArgs = {
   payloadCustomProperties?: BuildTransactionOrderArgs["customProperties"];
 };
 
+export type DryRunIntentResult = {
+  request: Core_IntentDryRunRequest;
+  response: Core_IntentDryRunResponse;
+};
+
+/** Dry-runs an intent: the platform validates and estimates it without creating it. */
+export async function dryRunIntent(
+  request: Core_IntentDryRunRequest,
+): Promise<DryRunIntentResult> {
+  const response = await getCustodySDK().intents.dryRun(request);
+  return { request, response };
+}
+
 /**
  * Shared builder for XRPL `v0_CreateTransactionOrder` intents. Resolves the
- * current user + account ledger, assembles the propose envelope, and submits
- * it — collapsing the boilerplate that every XRPL operation action repeated.
+ * current user + account ledger and assembles the propose envelope, collapsing
+ * the boilerplate that every XRPL operation action repeated.
  *
  * Note: `author.domainId` and `targetDomainId` both use the input `domainId`;
  * since `getCurrentUser(domainId)` returns the matching domain, that domain's
  * id always equals the input `domainId`.
  */
-export async function proposeXrplTransaction(
+async function buildXrplIntent(
   args: ProposeXrplTransactionArgs,
-): Promise<ProposeIntentResult> {
+): Promise<Core_ProposeIntentBody> {
   const { domainId, accountId, operation, maximumFee } = args;
   if (!domainId) throw new Error("domainId is required");
   if (!accountId) throw new Error("accountId is required");
@@ -65,7 +80,7 @@ export async function proposeXrplTransaction(
     getAccountLedgerId(domainId, accountId),
   ]);
 
-  const request = buildProposeIntent({
+  return buildProposeIntent({
     author: { id: currentUser.userId, domainId },
     targetDomainId: domainId,
     payload: buildTransactionOrderPayload({
@@ -80,8 +95,23 @@ export async function proposeXrplTransaction(
     description: args.description,
     customProperties: args.customProperties,
   });
+}
 
-  return proposeIntent(request);
+/** Builds and submits an XRPL `v0_CreateTransactionOrder` intent. */
+export async function proposeXrplTransaction(
+  args: ProposeXrplTransactionArgs,
+): Promise<ProposeIntentResult> {
+  return proposeIntent(await buildXrplIntent(args));
+}
+
+/** Builds the same intent as {@link proposeXrplTransaction} but only dry-runs it. */
+export async function dryRunXrplTransaction(
+  args: ProposeXrplTransactionArgs,
+): Promise<DryRunIntentResult> {
+  const { request } = await buildXrplIntent(args);
+  // A dry-run request is a propose request without its `type` discriminator.
+  const { type: _type, ...dryRunRequest } = request;
+  return dryRunIntent(dryRunRequest as Core_IntentDryRunRequest);
 }
 
 let custodyInstance: RippleCustody | null = null;

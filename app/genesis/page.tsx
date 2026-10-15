@@ -206,7 +206,7 @@ export default function RunGenesisPage() {
       }),
     };
 
-    const body: RunGenesisBody = { rootDomainSetup };
+    const body: RunGenesisBody = { rootDomainSetup, antiRewindMode: "BALANCED" };
     if (cryptoOverride) {
       body.cryptoSetup = { apiSigning, collectionSigning, messageSigning };
     }

@@ -9,6 +9,8 @@ import { JsonViewer } from "../../components/JsonViewer";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useDefaultDomain } from "../../contexts/DomainContext";
 import { useLedgerConfig } from "../../hooks/useLedgerConfig";
+import { DryRunResult } from "../../components/mpt-authorize/DryRunResult";
+import { useDryRunMPTokenAuthorize } from "../../hooks/useDryRunMPTokenAuthorize";
 import { useSubmitMPTokenAuthorize } from "../../hooks/useSubmitMPTokenAuthorize";
 import {
   Page,
@@ -27,6 +29,7 @@ export default function MptAuthorizePage() {
   const { defaultLedgerId } = useLedgerConfig();
   const { accounts, loading: accountsLoading } = useAccounts();
   const { mutate, isPending, data: response, error } = useSubmitMPTokenAuthorize();
+  const dryRun = useDryRunMPTokenAuthorize();
   const [issuanceId, setIssuanceId] = useState("");
   const [accountId, setAccountId] = useState("");
   const [maximumFee, setMaximumFee] = useState<MaximumFee>(DEFAULT_MAXIMUM_FEE);
@@ -35,6 +38,11 @@ export default function MptAuthorizePage() {
     e.preventDefault();
     if (!defaultDomainId) return;
     mutate({ domainId: defaultDomainId, issuanceId, accountId, maximumFee });
+  };
+
+  const handleDryRun = () => {
+    if (!defaultDomainId) return;
+    dryRun.mutate({ domainId: defaultDomainId, issuanceId, accountId, maximumFee });
   };
 
   return (
@@ -142,6 +150,17 @@ export default function MptAuthorizePage() {
             onChange={setMaximumFee}
           />
 
+          <button
+            type="button"
+            onClick={handleDryRun}
+            disabled={
+              !defaultDomainId || !issuanceId || !accountId || dryRun.isPending
+            }
+            className="w-full px-6 py-3 rounded-xl border-2 border-emerald-600 text-emerald-700 font-semibold bg-white hover:bg-emerald-50 disabled:border-gray-300 disabled:text-gray-400 disabled:bg-gray-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {dryRun.isPending ? "Running dry run..." : "🧪 Dry Run (nothing is submitted)"}
+          </button>
+
           <SubmitButton
             theme="emerald"
             pending={isPending}
@@ -151,6 +170,9 @@ export default function MptAuthorizePage() {
             Propose Authorize Intent
           </SubmitButton>
         </form>
+
+        <ErrorBanner error={dryRun.error} />
+        {dryRun.data && <DryRunResult data={dryRun.data} />}
 
         <ErrorBanner error={error} />
 
